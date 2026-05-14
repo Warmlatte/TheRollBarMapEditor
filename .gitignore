@@ -1,0 +1,10 @@
+.spectra/
+openspec/.vector-search.db*
+docs/
+openspec/
+.claude/
+.agents/
+CLAUDE.md
+AGENTS.md
+node_modules/
+dist/
