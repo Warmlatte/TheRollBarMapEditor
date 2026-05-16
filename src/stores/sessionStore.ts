@@ -5,7 +5,9 @@ import type { Command } from '../commands/types'
 import { useArchiveStore } from './archiveStore'
 import type { ArchiveEntry } from './archiveStore'
 import { useToastStore } from './toastStore'
+import { useAutoSaveStore } from './autoSaveStore'
 import { fileLock } from '../lib/fileLock'
+import { saveHandle } from '../storage/fileHandlePersistence'
 
 export type Session = {
   id: string
@@ -44,6 +46,8 @@ export const useSessionStore = defineStore('session', () => {
     session.isDirty = true
     const archiveStore = useArchiveStore()
     archiveStore.claimSession(session)
+    const autoSaveStore = useAutoSaveStore()
+    autoSaveStore.scheduleAutoSave(id)
   }
 
   function renameSession(id: string, name: string): void {
@@ -112,6 +116,7 @@ export const useSessionStore = defineStore('session', () => {
     const session = makeSession(mapData)
     session.fileHandle = handle
     setActive(session.id)
+    await saveHandle(session.id, typeof handle === 'string' ? null : handle)
     fileLock.broadcastLock(fileId)
     return session
   }

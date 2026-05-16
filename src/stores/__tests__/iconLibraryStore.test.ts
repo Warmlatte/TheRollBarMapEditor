@@ -123,7 +123,7 @@ describe('iconLibraryStore.addIcon', () => {
     expect(store.icons.some((e) => e.name === 'sword')).toBe(true)
   })
 
-  it('stores original rawSvg (not sanitized)', async () => {
+  it('stores sanitized rawSvg', async () => {
     buildFakeIDB()
     const { useIconLibraryStore } = await import('../iconLibraryStore')
     const store = useIconLibraryStore()
@@ -132,7 +132,7 @@ describe('iconLibraryStore.addIcon', () => {
     await store.addIcon(malicious, 'bad')
     await store.loadIcons()
     const entry = store.icons.find((e) => e.name === 'bad')!
-    expect(entry.rawSvg).toBe(malicious)
+    expect(entry.rawSvg).toBe('<svg></svg>')
   })
 
   it('sanitizeSvgIcon called with the rawSvg removes <script> from result', async () => {

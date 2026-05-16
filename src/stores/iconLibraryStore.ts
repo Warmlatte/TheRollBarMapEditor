@@ -69,10 +69,10 @@ export const useIconLibraryStore = defineStore('iconLibrary', () => {
   }
 
   async function addIcon(rawSvg: string, name: string): Promise<void> {
-    sanitizeSvgIcon(rawSvg)
+    const sanitizedSvg = sanitizeSvgIcon(rawSvg)
     const entry: IconEntry = {
       id: crypto.randomUUID(),
-      rawSvg,
+      rawSvg: sanitizedSvg,
       name,
       createdAt: Date.now(),
     }
