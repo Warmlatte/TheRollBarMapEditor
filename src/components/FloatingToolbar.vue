@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { useBrushStore } from '../stores/brushStore'
 import type { Tool } from '../stores/brushStore'
+import { useI18nStore } from '../stores/i18nStore'
 import { TOOLS } from '../tools/registry'
 
 const brushStore = useBrushStore()
+const i18n = useI18nStore()
 
 function selectTool(id: string) {
   brushStore.setTool(id as Tool)
@@ -15,7 +17,7 @@ function selectTool(id: string) {
     <button
       v-for="tool in TOOLS"
       :key="tool.id"
-      :title="tool.i18nKey"
+      :title="i18n.t(tool.i18nKey)"
       :class="[
         'tool-btn',
         tool.variant === 'danger' ? 'btn-danger' : '',
