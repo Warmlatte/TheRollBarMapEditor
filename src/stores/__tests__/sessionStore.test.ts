@@ -4,12 +4,27 @@ import { useSessionStore } from '../sessionStore'
 import { useArchiveStore } from '../archiveStore'
 import type { MapData } from '../../data/types'
 
+const { mockScheduleAutoSave, mockSaveHandle } = vi.hoisted(() => ({
+  mockScheduleAutoSave: vi.fn(),
+  mockSaveHandle: vi.fn(),
+}))
+
 vi.mock('../../lib/fileLock', () => ({
   fileLock: {
     broadcastLock: vi.fn(),
     broadcastUnlock: vi.fn(),
     isLockedByOtherTab: vi.fn(() => false),
   },
+}))
+
+vi.mock('../autoSaveStore', () => ({
+  useAutoSaveStore: vi.fn(() => ({
+    scheduleAutoSave: mockScheduleAutoSave,
+  })),
+}))
+
+vi.mock('../../storage/fileHandlePersistence', () => ({
+  saveHandle: mockSaveHandle,
 }))
 
 const emptyMapData: MapData = {
@@ -117,6 +132,15 @@ describe('sessionStore.createSessionFromFile', () => {
     await store.createSessionFromFile(emptyMapData, '/maps/new.trbm')
     expect(fileLock.broadcastLock).toHaveBeenCalledWith('/maps/new.trbm')
   })
+
+  it('persists the file handle for the new session', async () => {
+    const { fileLock } = await import('../../lib/fileLock')
+    vi.mocked(fileLock.isLockedByOtherTab).mockReturnValue(false)
+    const store = useSessionStore()
+    const handle = { name: 'new.trbm' } as FileSystemFileHandle
+    const result = await store.createSessionFromFile(emptyMapData, handle)
+    expect(mockSaveHandle).toHaveBeenCalledWith(result?.id, handle)
+  })
 })
 
 describe('sessionStore.closeSession - file lock broadcast', () => {
@@ -164,6 +188,13 @@ describe('sessionStore.markSessionDirty', () => {
     const s = store.makeSession()
     await store.markSessionDirty(s.id)
     expect(claimSpy).toHaveBeenCalledWith(expect.objectContaining({ id: s.id }))
+  })
+
+  it('schedules autosave for the dirty session', () => {
+    const store = useSessionStore()
+    const s = store.makeSession()
+    store.markSessionDirty(s.id)
+    expect(mockScheduleAutoSave).toHaveBeenCalledWith(s.id)
   })
 })
 
