@@ -1,18 +1,36 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted } from 'vue'
 import FloatingToolbar from './components/FloatingToolbar.vue'
+import HexCanvas from './render/HexCanvas.vue'
 import { TOOLS } from './tools/registry'
 import { useBrushStore } from './stores/brushStore'
+import { useMapStore } from './stores/mapStore'
 import { useAutoSaveStore } from './stores/autoSaveStore'
 import { useSessionStore } from './stores/sessionStore'
 import { loadWorkspace } from './storage/persist'
 import { loadHandle } from './storage/fileHandlePersistence'
 
 const brushStore = useBrushStore()
+const mapStore = useMapStore()
 const activeHud = computed(() => TOOLS.find(t => t.id === brushStore.tool)?.hud)
 
 const autoSaveStore = useAutoSaveStore()
 const sessionStore = useSessionStore()
+
+function handleKeyDown(e: KeyboardEvent): void {
+  const mod = e.metaKey || e.ctrlKey
+  if (!mod) return
+  if (e.key === 'z' && !e.shiftKey) {
+    e.preventDefault()
+    mapStore.undo()
+  } else if (e.key === 'z' && e.shiftKey) {
+    e.preventDefault()
+    mapStore.redo()
+  } else if (e.key === 'y') {
+    e.preventDefault()
+    mapStore.redo()
+  }
+}
 
 function handleBeforeUnload(): void {
   autoSaveStore.flushAllNow()
@@ -50,16 +68,19 @@ async function restoreWorkspace(): Promise<void> {
 
 onMounted(async () => {
   window.addEventListener('beforeunload', handleBeforeUnload)
+  window.addEventListener('keydown', handleKeyDown)
   await restoreWorkspace()
 })
 
 onUnmounted(() => {
   window.removeEventListener('beforeunload', handleBeforeUnload)
+  window.removeEventListener('keydown', handleKeyDown)
 })
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-900 text-white">
+  <div class="min-h-screen bg-gray-900 text-white" style="position: relative; overflow: hidden;">
+    <HexCanvas style="position: absolute; inset: 0;" />
     <div class="hud-panel">
       <component :is="activeHud" v-if="activeHud" />
     </div>
