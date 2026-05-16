@@ -8,6 +8,9 @@ describe('hsvToHex', () => {
     [0, 1, 1, '#ff0000'],
     [120, 1, 1, '#00ff00'],
     [240, 1, 1, '#0000ff'],
+    [60, 1, 1, '#ffff00'],
+    [180, 1, 1, '#00ffff'],
+    [300, 1, 1, '#ff00ff'],
   ])('hsvToHex(%i, %i, %i) = %s', (h, s, v, expected) => {
     expect(hsvToHex(h, s, v)).toBe(expected)
   })
@@ -29,5 +32,24 @@ describe('hexToHsv', () => {
         )
       expect(diff(hex, result)).toBeLessThanOrEqual(1)
     }
+  })
+
+  it('#ff0000 -> h=0, s=1, v=1', () => {
+    const { h, s, v } = hexToHsv('#ff0000')
+    expect(h).toBeCloseTo(0, 0)
+    expect(s).toBeCloseTo(1, 5)
+    expect(v).toBeCloseTo(1, 5)
+  })
+
+  it('#000000 -> s=0, v=0', () => {
+    const { s, v } = hexToHsv('#000000')
+    expect(s).toBe(0)
+    expect(v).toBe(0)
+  })
+
+  it('#ffffff -> s=0, v=1', () => {
+    const { s, v } = hexToHsv('#ffffff')
+    expect(s).toBe(0)
+    expect(v).toBe(1)
   })
 })
