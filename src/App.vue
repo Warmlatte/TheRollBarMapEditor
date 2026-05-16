@@ -22,11 +22,9 @@ async function restoreWorkspace(): Promise<void> {
   const workspace = loadWorkspace()
   if (!workspace || workspace.tabs.length === 0) return
 
-  // Clear the default empty session created on init
-  const currentSessions = [...sessionStore.sessions]
-  for (const s of currentSessions) {
-    sessionStore.closeSession(s.id)
-  }
+  // Replace any startup placeholder sessions without triggering closeSession's
+  // last-session replacement behavior.
+  sessionStore.sessions.splice(0, sessionStore.sessions.length)
 
   // Restore sessions from workspace tabs, preserving IDs
   for (const tab of workspace.tabs) {
