@@ -4,6 +4,14 @@ import { useSessionStore } from '../sessionStore'
 import { useArchiveStore } from '../archiveStore'
 import type { MapData } from '../../data/types'
 
+vi.mock('../../lib/fileLock', () => ({
+  fileLock: {
+    broadcastLock: vi.fn(),
+    broadcastUnlock: vi.fn(),
+    isLockedByOtherTab: vi.fn(() => false),
+  },
+}))
+
 const emptyMapData: MapData = {
   name: 'Test',
   bounds: { radius: 3 },
@@ -12,6 +20,32 @@ const emptyMapData: MapData = {
   lines: [],
   doodles: [],
 }
+
+describe('sessionStore.closeSession - file lock broadcast', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    vi.clearAllMocks()
+  })
+
+  it('broadcasts unlock when closing a session with a fileHandle', async () => {
+    const { fileLock } = await import('../../lib/fileLock')
+    const store = useSessionStore()
+    const s = store.makeSession()
+    // Simulate session having a fileHandle (string path for fallback adapter)
+    const session = store.sessions.find((x) => x.id === s.id)!
+    session.fileHandle = '/maps/dungeon.trbm'
+    store.closeSession(s.id)
+    expect(fileLock.broadcastUnlock).toHaveBeenCalledWith('/maps/dungeon.trbm')
+  })
+
+  it('does not broadcast unlock for blank session (no fileHandle)', async () => {
+    const { fileLock } = await import('../../lib/fileLock')
+    const store = useSessionStore()
+    const s = store.makeSession()
+    store.closeSession(s.id)
+    expect(fileLock.broadcastUnlock).not.toHaveBeenCalled()
+  })
+})
 
 describe('sessionStore.markSessionDirty', () => {
   beforeEach(() => {

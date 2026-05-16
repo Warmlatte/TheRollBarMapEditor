@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import type { MapData } from '../data/types'
 import type { Command } from '../commands/types'
 import { useArchiveStore } from './archiveStore'
+import { fileLock } from '../lib/fileLock'
 
 export type Session = {
   id: string
@@ -53,6 +54,14 @@ export const useSessionStore = defineStore('session', () => {
   function closeSession(id: string): void {
     const idx = sessions.value.findIndex((s) => s.id === id)
     if (idx === -1) return
+    const session = sessions.value[idx]
+    if (session.fileHandle !== null) {
+      const fileId =
+        typeof session.fileHandle === 'string'
+          ? session.fileHandle
+          : session.fileHandle.name
+      fileLock.broadcastUnlock(fileId)
+    }
     sessions.value.splice(idx, 1)
     if (sessions.value.length === 0) {
       makeSession()
