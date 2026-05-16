@@ -21,6 +21,59 @@ const emptyMapData: MapData = {
   doodles: [],
 }
 
+describe('sessionStore.createSessionFromArchive', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    vi.clearAllMocks()
+  })
+
+  it('switches to existing session when id matches', () => {
+    const store = useSessionStore()
+    const s = store.makeSession()
+    store.setActive(s.id)
+    const entry = {
+      id: s.id,
+      name: 'Test',
+      mapData: emptyMapData,
+      fileHandle: null,
+      order: 1,
+    }
+    const result = store.createSessionFromArchive(entry)
+    expect(store.sessions.length).toBe(1)
+    expect(store.activeId).toBe(s.id)
+    expect(result.id).toBe(s.id)
+  })
+
+  it('creates new session with entry.id when not already open', () => {
+    const store = useSessionStore()
+    const entry = {
+      id: 'archive-uuid-1234',
+      name: 'Archived Map',
+      mapData: emptyMapData,
+      fileHandle: null,
+      order: 1,
+    }
+    const result = store.createSessionFromArchive(entry)
+    expect(result.id).toBe('archive-uuid-1234')
+    expect(store.sessions.some((s) => s.id === 'archive-uuid-1234')).toBe(true)
+  })
+
+  it('does not increase sessions.length when reopening existing', () => {
+    const store = useSessionStore()
+    const s = store.makeSession()
+    const entry = {
+      id: s.id,
+      name: 'Test',
+      mapData: emptyMapData,
+      fileHandle: null,
+      order: 1,
+    }
+    const before = store.sessions.length
+    store.createSessionFromArchive(entry)
+    expect(store.sessions.length).toBe(before)
+  })
+})
+
 describe('sessionStore.createSessionFromFile', () => {
   beforeEach(() => {
     setActivePinia(createPinia())

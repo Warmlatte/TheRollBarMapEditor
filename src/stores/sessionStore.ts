@@ -3,9 +3,9 @@ import { ref, computed } from 'vue'
 import type { MapData } from '../data/types'
 import type { Command } from '../commands/types'
 import { useArchiveStore } from './archiveStore'
+import type { ArchiveEntry } from './archiveStore'
 import { useToastStore } from './toastStore'
 import { fileLock } from '../lib/fileLock'
-import type { MapFile } from '../data/types'
 
 export type Session = {
   id: string
@@ -116,6 +116,19 @@ export const useSessionStore = defineStore('session', () => {
     return session
   }
 
+  function createSessionFromArchive(entry: ArchiveEntry): Session {
+    const existing = sessions.value.find((s) => s.id === entry.id)
+    if (existing) {
+      setActive(existing.id)
+      return existing
+    }
+    const newSession = makeSession(entry.mapData)
+    // Force the archive entry's ID so the record isn't duplicated
+    newSession.id = entry.id
+    setActive(newSession.id)
+    return newSession
+  }
+
   return {
     sessions,
     activeId,
@@ -126,5 +139,6 @@ export const useSessionStore = defineStore('session', () => {
     renameSession,
     markSessionDirty,
     createSessionFromFile,
+    createSessionFromArchive,
   }
 })
