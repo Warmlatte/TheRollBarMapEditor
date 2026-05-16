@@ -23,14 +23,31 @@ const messages: Dictionary = {
   },
 }
 
+const PREF_KEY = 'hexmap.i18n.v1'
+
 function detectLocale(): Locale {
   const lang = navigator.language
   if (lang.startsWith('zh')) return 'zh-TW'
   return 'en'
 }
 
+function loadPref(): Locale {
+  try {
+    const raw = localStorage.getItem(PREF_KEY)
+    if (raw === null) return detectLocale()
+    const parsed = JSON.parse(raw) as { locale: Locale }
+    return parsed.locale === 'en' ? 'en' : 'zh-TW'
+  } catch {
+    return detectLocale()
+  }
+}
+
+function savePref(locale: Locale): void {
+  localStorage.setItem(PREF_KEY, JSON.stringify({ locale }))
+}
+
 export const useI18nStore = defineStore('i18n', () => {
-  const locale = ref<Locale>(detectLocale())
+  const locale = ref<Locale>(loadPref())
 
   const dict = computed(() => messages[locale.value])
 
@@ -40,6 +57,7 @@ export const useI18nStore = defineStore('i18n', () => {
 
   function setLocale(l: Locale) {
     locale.value = l
+    savePref(locale.value)
   }
 
   return { locale, t, setLocale }

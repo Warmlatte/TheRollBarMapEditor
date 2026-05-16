@@ -1,7 +1,9 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useI18nStore } from '../i18nStore'
 import { TOOLS } from '../../tools/registry'
+
+const I18N_KEY = 'hexmap.i18n.v1'
 
 describe('All tool i18nKeys have translations in both supported locales', () => {
   beforeEach(() => {
@@ -48,5 +50,40 @@ describe('All tool i18nKeys have translations in both supported locales', () => 
     const store = useI18nStore()
     store.setLocale('en')
     expect(store.t('nonexistent.key')).toBe('nonexistent.key')
+  })
+})
+
+describe('i18nStore preference persistence', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    localStorage.clear()
+  })
+
+  afterEach(() => {
+    localStorage.clear()
+  })
+
+  it('restores locale from localStorage on init', () => {
+    localStorage.setItem(I18N_KEY, JSON.stringify({ locale: 'en' }))
+    const store = useI18nStore()
+    expect(store.locale).toBe('en')
+  })
+
+  it('uses default locale when key is absent', () => {
+    const store = useI18nStore()
+    expect(['zh-TW', 'en']).toContain(store.locale)
+  })
+
+  it('uses default locale when key contains invalid JSON', () => {
+    localStorage.setItem(I18N_KEY, '{invalid')
+    const store = useI18nStore()
+    expect(['zh-TW', 'en']).toContain(store.locale)
+  })
+
+  it('writes to localStorage when setLocale is called', () => {
+    const store = useI18nStore()
+    store.setLocale('en')
+    const stored = JSON.parse(localStorage.getItem(I18N_KEY)!)
+    expect(stored.locale).toBe('en')
   })
 })
