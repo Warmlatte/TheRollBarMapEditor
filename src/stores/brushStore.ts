@@ -11,5 +11,9 @@ export const useBrushStore = defineStore('brush', () => {
     tool.value = t
   }
 
-  return { tool, color, setTool }
+  function setColor(c: string) {
+    color.value = c
+  }
+
+  return { tool, color, setTool, setColor }
 })
