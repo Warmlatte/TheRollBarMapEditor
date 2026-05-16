@@ -21,6 +21,51 @@ const emptyMapData: MapData = {
   doodles: [],
 }
 
+describe('sessionStore.createSessionFromFile', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    vi.clearAllMocks()
+  })
+
+  it('creates a new session with the given mapFile and handle', async () => {
+    const { fileLock } = await import('../../lib/fileLock')
+    vi.mocked(fileLock.isLockedByOtherTab).mockReturnValue(false)
+    const store = useSessionStore()
+    const result = await store.createSessionFromFile(emptyMapData, '/maps/test.trbm')
+    expect(result).not.toBeNull()
+    expect(store.sessions.length).toBe(1)
+    expect(store.sessions[0].fileHandle).toBe('/maps/test.trbm')
+  })
+
+  it('switches to existing session if same handle is already open', async () => {
+    const { fileLock } = await import('../../lib/fileLock')
+    vi.mocked(fileLock.isLockedByOtherTab).mockReturnValue(false)
+    const store = useSessionStore()
+    const first = await store.createSessionFromFile(emptyMapData, '/maps/dup.trbm')
+    const second = await store.createSessionFromFile(emptyMapData, '/maps/dup.trbm')
+    expect(store.sessions.length).toBe(1)
+    expect(store.activeId).toBe(first?.id)
+    expect(second?.id).toBe(first?.id)
+  })
+
+  it('returns null if file is locked by another tab', async () => {
+    const { fileLock } = await import('../../lib/fileLock')
+    vi.mocked(fileLock.isLockedByOtherTab).mockReturnValue(true)
+    const store = useSessionStore()
+    const result = await store.createSessionFromFile(emptyMapData, '/maps/locked.trbm')
+    expect(result).toBeNull()
+    expect(store.sessions.length).toBe(0)
+  })
+
+  it('broadcasts lock on successful file open', async () => {
+    const { fileLock } = await import('../../lib/fileLock')
+    vi.mocked(fileLock.isLockedByOtherTab).mockReturnValue(false)
+    const store = useSessionStore()
+    await store.createSessionFromFile(emptyMapData, '/maps/new.trbm')
+    expect(fileLock.broadcastLock).toHaveBeenCalledWith('/maps/new.trbm')
+  })
+})
+
 describe('sessionStore.closeSession - file lock broadcast', () => {
   beforeEach(() => {
     setActivePinia(createPinia())

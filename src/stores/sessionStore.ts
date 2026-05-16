@@ -3,7 +3,9 @@ import { ref, computed } from 'vue'
 import type { MapData } from '../data/types'
 import type { Command } from '../commands/types'
 import { useArchiveStore } from './archiveStore'
+import { useToastStore } from './toastStore'
 import { fileLock } from '../lib/fileLock'
+import type { MapFile } from '../data/types'
 
 export type Session = {
   id: string
@@ -84,6 +86,36 @@ export const useSessionStore = defineStore('session', () => {
     return session
   }
 
+  async function createSessionFromFile(
+    mapData: MapData,
+    handle: FileSystemFileHandle | string,
+  ): Promise<Session | null> {
+    const fileId = typeof handle === 'string' ? handle : handle.name
+
+    // Same handle already open in this tab → switch to it
+    const existing = sessions.value.find((s) => s.fileHandle === handle)
+    if (existing) {
+      setActive(existing.id)
+      return existing
+    }
+
+    // Locked by another tab
+    if (fileLock.isLockedByOtherTab(fileId)) {
+      const toastStore = useToastStore()
+      toastStore.push(
+        `此檔案已在另一個視窗開啟：${fileId}`,
+        'warn',
+      )
+      return null
+    }
+
+    const session = makeSession(mapData)
+    session.fileHandle = handle
+    setActive(session.id)
+    fileLock.broadcastLock(fileId)
+    return session
+  }
+
   return {
     sessions,
     activeId,
@@ -93,5 +125,6 @@ export const useSessionStore = defineStore('session', () => {
     setActive,
     renameSession,
     markSessionDirty,
+    createSessionFromFile,
   }
 })
