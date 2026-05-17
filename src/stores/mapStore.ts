@@ -4,14 +4,20 @@ import type { MapData } from '../data/types'
 import type { Command } from '../commands/types'
 import { BatchCommand } from '../commands/batchCommand'
 import { useSessionStore } from './sessionStore'
+import { hexesInRadius } from '../lib/hexMath'
 
-const DEFAULT_MAP_DATA: MapData = {
-  name: 'New Map',
-  bounds: { radius: 10 },
-  hexes: [],
-  icons: [],
-  lines: [],
-  doodles: [],
+const DEFAULT_RADIUS = 10
+const DEFAULT_HEX_COLOR = '#4a7a3a'
+
+function makeDefaultMapData(): MapData {
+  return {
+    name: 'New Map',
+    bounds: { radius: DEFAULT_RADIUS },
+    hexes: hexesInRadius(DEFAULT_RADIUS).map(({ q, r }) => ({ q, r, color: DEFAULT_HEX_COLOR })),
+    icons: [],
+    lines: [],
+    doodles: [],
+  }
 }
 
 function cloneMapData(data: MapData): MapData {
@@ -19,7 +25,7 @@ function cloneMapData(data: MapData): MapData {
 }
 
 export const useMapStore = defineStore('map', () => {
-  const mapData = ref<MapData>(structuredClone(DEFAULT_MAP_DATA))
+  const mapData = ref<MapData>(makeDefaultMapData())
   const undoStack = ref<Command[]>([])
   const redoStack = ref<Command[]>([])
 

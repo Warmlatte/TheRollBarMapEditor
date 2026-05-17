@@ -174,7 +174,8 @@ describe('paintHandler', () => {
 
       paintHandler.onPointerDown(ctx, fakeEvent())
 
-      expect(mapStore.mapData.hexes[0]?.color).toBe('#ff0000')
+      const painted = mapStore.mapData.hexes.find((h) => h.q === 0 && h.r === 0)
+      expect(painted?.color).toBe('#ff0000')
     })
   })
 })

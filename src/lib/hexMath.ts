@@ -40,6 +40,18 @@ export function hexCorners(cx: number, cy: number, size: number): string {
   }).join(' ')
 }
 
+export function hexesInRadius(radius: number): { q: number; r: number }[] {
+  const result: { q: number; r: number }[] = []
+  for (let q = -radius; q <= radius; q++) {
+    const r1 = Math.max(-radius, -q - radius)
+    const r2 = Math.min(radius, -q + radius)
+    for (let r = r1; r <= r2; r++) {
+      result.push({ q, r })
+    }
+  }
+  return result
+}
+
 export function hexDistance(
   a: { q: number; r: number },
   b: { q: number; r: number },
