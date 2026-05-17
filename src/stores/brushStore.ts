@@ -15,5 +15,13 @@ export const useBrushStore = defineStore('brush', () => {
     color.value = c
   }
 
-  return { tool, color, setTool, setColor }
+  const savedCells = ref<string[]>([])
+
+  function saveCurrentCell(): void {
+    if (!savedCells.value.includes(color.value)) {
+      savedCells.value = [...savedCells.value, color.value]
+    }
+  }
+
+  return { tool, color, savedCells, setTool, setColor, saveCurrentCell }
 })

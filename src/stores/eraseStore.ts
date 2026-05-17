@@ -18,13 +18,25 @@ function savePref(radius: number): void {
   localStorage.setItem(PREF_KEY, JSON.stringify({ radius }))
 }
 
+type EraseTarget = 'hex' | 'icon' | 'line' | 'doodle'
+
 export const useEraseStore = defineStore('erase', () => {
   const eraseRadius = ref(loadPref())
+  const targets = ref<Record<EraseTarget, boolean>>({
+    hex: true,
+    icon: true,
+    line: true,
+    doodle: true,
+  })
 
   function setRadius(r: number): void {
     eraseRadius.value = r
     savePref(eraseRadius.value)
   }
 
-  return { eraseRadius, setRadius }
+  function toggleTarget(key: EraseTarget): void {
+    targets.value = { ...targets.value, [key]: !targets.value[key] }
+  }
+
+  return { eraseRadius, targets, setRadius, toggleTarget }
 })
