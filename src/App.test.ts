@@ -28,6 +28,15 @@ const mapData: MapData = {
   doodles: [],
 }
 
+const alternateMapData: MapData = {
+  name: 'Alternate Map',
+  bounds: { radius: 2 },
+  hexes: [{ q: 0, r: 0, color: '#00ff00' }],
+  icons: [],
+  lines: [],
+  doodles: [],
+}
+
 describe('App workspace restore', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
@@ -61,6 +70,27 @@ describe('App workspace restore', () => {
     await flushPromises()
 
     expect(mapStore.mapData).toEqual(mapData)
+    expect(mapStore.canUndo).toBe(false)
+  })
+
+  it('loads mapData when active session changes after mount', async () => {
+    vi.mocked(loadWorkspace).mockReturnValue({
+      tabs: [
+        { id: 'tab-1', name: 'Restored Map', mapData },
+        { id: 'tab-2', name: 'Alternate Map', mapData: alternateMapData },
+      ],
+      activeTabId: 'tab-1',
+    })
+
+    const sessionStore = useSessionStore()
+    const mapStore = useMapStore()
+    mount(App)
+    await flushPromises()
+
+    sessionStore.setActive('tab-2')
+    await flushPromises()
+
+    expect(mapStore.mapData).toEqual(alternateMapData)
     expect(mapStore.canUndo).toBe(false)
   })
 })

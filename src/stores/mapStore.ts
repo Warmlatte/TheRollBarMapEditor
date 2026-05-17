@@ -14,6 +14,10 @@ const DEFAULT_MAP_DATA: MapData = {
   doodles: [],
 }
 
+function cloneMapData(data: MapData): MapData {
+  return JSON.parse(JSON.stringify(data)) as MapData
+}
+
 export const useMapStore = defineStore('map', () => {
   const mapData = ref<MapData>(structuredClone(DEFAULT_MAP_DATA))
   const undoStack = ref<Command[]>([])
@@ -30,7 +34,7 @@ export const useMapStore = defineStore('map', () => {
     const sessionStore = useSessionStore()
     const active = sessionStore.activeSession
     if (!active) return
-    active.mapData = data
+    active.mapData = cloneMapData(data)
     sessionStore.markSessionDirty(active.id)
   }
 
@@ -87,7 +91,7 @@ export const useMapStore = defineStore('map', () => {
     // structuredClone(toRaw(data)) only unwraps the top-level Proxy; nested objects
     // accessed through Vue's reactive proxy during dispatch remain as Proxies and
     // cause DATA_CLONE_ERR (code 25) in happy-dom and some browsers.
-    mapData.value = JSON.parse(JSON.stringify(data)) as MapData
+    mapData.value = cloneMapData(data)
     undoStack.value = []
     redoStack.value = []
     pendingInverses.value = []

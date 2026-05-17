@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
+import { toRaw } from 'vue'
 import { useMapStore } from '../mapStore'
 import { useSessionStore } from '../sessionStore'
 import { PaintHexCommand } from '../../commands/hexCommands'
@@ -274,6 +275,17 @@ describe('mapStore dispatch/undo/redo sync to sessionStore', () => {
     mapStore.dispatch(new PaintHexCommand({ q: 1, r: 1 }, '#ff0000'))
 
     expect(sessionStore.activeSession?.mapData).toEqual(mapStore.mapData)
+  })
+
+  it('dispatch stores a separate mapData object on the active session', () => {
+    const mapStore = useMapStore()
+    const sessionStore = useSessionStore()
+    const session = sessionStore.makeSession()
+    sessionStore.setActive(session.id)
+
+    mapStore.dispatch(new PaintHexCommand({ q: 1, r: 1 }, '#ff0000'))
+
+    expect(toRaw(sessionStore.activeSession?.mapData)).not.toBe(toRaw(mapStore.mapData))
   })
 
   it('dispatch marks session dirty', () => {
