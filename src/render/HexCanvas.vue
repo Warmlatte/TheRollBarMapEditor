@@ -86,7 +86,9 @@ onMounted(() => {
   if (!el) return
   const w = el.clientWidth
   const h = el.clientHeight
-  viewportStore.setPan(-w / 2, -h / 2)
+  const initialZoom = 0.5
+  viewportStore.setZoom(initialZoom)
+  viewportStore.setPan(-w / (2 * initialZoom), -h / (2 * initialZoom))
 })
 
 function onPointerDown(e: PointerEvent) {
@@ -123,9 +125,9 @@ function onPointerUp(e: PointerEvent) {
         v-for="hex in allHexPositions"
         :key="`${hex.q},${hex.r}`"
         :points="hexPolygonPoints(hex.q, hex.r)"
-        fill="none"
-        stroke="#d1d5db"
-        stroke-width="0.5"
+        fill="rgba(255,255,255,0.02)"
+        stroke="#444"
+        stroke-width="1"
       />
     </g>
 
@@ -136,7 +138,8 @@ function onPointerUp(e: PointerEvent) {
         :key="`${hex.q},${hex.r}`"
         :points="hexPolygonPoints(hex.q, hex.r)"
         :fill="hex.color"
-        stroke="none"
+        stroke="#222"
+        stroke-width="1"
       />
     </g>
 

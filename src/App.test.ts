@@ -119,7 +119,7 @@ describe('App workspace restore — no workspace', () => {
     mount(App)
     await flushPromises()
 
-    expect(mapStore.mapData.bounds.radius).toBe(5)
+    expect(mapStore.mapData.bounds.radius).toBe(10)
     expect(mapStore.canUndo).toBe(false)
   })
 })

@@ -1,8 +1,10 @@
 <template>
-  <div class="color-picker-grid">
+  <div class="my-1 grid grid-cols-2 items-center gap-x-2 gap-y-1.5">
     <SvSquare />
-    <HuePicker />
+    <slot name="preview" />
+    <HuePicker class="col-span-2" />
     <HexInput />
+    <span class="overflow-hidden text-ellipsis whitespace-nowrap text-right font-mono text-[11px]" :style="{ color: brush.color }">{{ brush.color }}</span>
   </div>
 </template>
 
@@ -25,12 +27,3 @@ onMounted(() => {
   )
 })
 </script>
-
-<style scoped>
-.color-picker-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 8px;
-}
-</style>

@@ -74,8 +74,10 @@ function onPointerUp() {
   aspect-ratio: 1;
   cursor: crosshair;
   border-radius: 4px;
+  border: 1px solid #555;
   overflow: hidden;
   user-select: none;
+  touch-action: none;
 }
 
 .sv-white-overlay {
@@ -94,11 +96,11 @@ function onPointerUp() {
 
 .sv-cursor {
   position: absolute;
-  width: 12px;
-  height: 12px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
-  border: 2px solid white;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4);
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
   transform: translate(-50%, -50%);
   pointer-events: none;
 }

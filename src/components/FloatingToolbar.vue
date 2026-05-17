@@ -13,7 +13,7 @@ function selectTool(id: string) {
 </script>
 
 <template>
-  <div class="floating-toolbar">
+  <div class="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 gap-1 rounded-md bg-black/65 p-1.5 backdrop-blur">
     <button
       v-for="tool in TOOLS"
       :key="tool.id"
@@ -24,6 +24,6 @@ function selectTool(id: string) {
         brushStore.tool === tool.id ? 'active' : '',
       ]"
       @click="selectTool(tool.id)"
-    />
+    >{{ i18n.t(tool.i18nKey) }}</button>
   </div>
 </template>

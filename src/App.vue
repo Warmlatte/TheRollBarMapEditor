@@ -7,12 +7,16 @@ import { useBrushStore } from './stores/brushStore'
 import { useMapStore } from './stores/mapStore'
 import { useAutoSaveStore } from './stores/autoSaveStore'
 import { useSessionStore } from './stores/sessionStore'
+import { useI18nStore } from './stores/i18nStore'
 import { loadWorkspace } from './storage/persist'
 import { loadHandle } from './storage/fileHandlePersistence'
 
 const brushStore = useBrushStore()
 const mapStore = useMapStore()
-const activeHud = computed(() => TOOLS.find(t => t.id === brushStore.tool)?.hud)
+const i18n = useI18nStore()
+const activeTool = computed(() => TOOLS.find(t => t.id === brushStore.tool))
+const activeHud = computed(() => activeTool.value?.hud)
+const activeToolName = computed(() => i18n.t(activeTool.value?.i18nKey ?? ''))
 
 const autoSaveStore = useAutoSaveStore()
 const sessionStore = useSessionStore()
@@ -98,24 +102,41 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-900 text-white" style="position: relative; overflow: hidden;">
-    <HexCanvas style="position: absolute; inset: 0;" />
-    <div class="hud-panel">
+  <div class="relative h-screen w-screen overflow-hidden">
+    <HexCanvas class="absolute inset-0" />
+
+    <div class="hud-panel absolute right-2 top-2">
+      <div class="flex items-center gap-1.5">
+        <span class="flex-1 text-xs font-semibold text-text-dim">{{ activeToolName }}</span>
+        <button class="hud-btn" :disabled="!mapStore.canUndo" @click="mapStore.undo()">↩</button>
+        <button class="hud-btn" :disabled="!mapStore.canRedo" @click="mapStore.redo()">↪</button>
+      </div>
+      <hr class="hud-divider" />
       <component :is="activeHud" v-if="activeHud" />
     </div>
+
+    <button class="settings-btn">⚙</button>
+
     <FloatingToolbar />
   </div>
 </template>
 
 <style>
-.hud-panel {
-  position: fixed;
-  top: 16px;
-  left: 16px;
-  width: 220px;
-  background: rgba(30, 30, 40, 0.92);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
+.settings-btn {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.65);
+  border: 1px solid #555;
+  color: #ddd;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   z-index: 10;
 }
 </style>

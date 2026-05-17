@@ -19,13 +19,15 @@ export type Session = {
   isDirty: boolean
 }
 
-const DEFAULT_MAP_DATA: MapData = {
-  name: 'New Map',
-  bounds: { radius: 5 },
-  hexes: [],
-  icons: [],
-  lines: [],
-  doodles: [],
+function makeDefaultMapData(): MapData {
+  return {
+    name: 'New Map',
+    bounds: { radius: 10 },
+    hexes: [],
+    icons: [],
+    lines: [],
+    doodles: [],
+  }
 }
 
 export const useSessionStore = defineStore('session', () => {
@@ -80,7 +82,7 @@ export const useSessionStore = defineStore('session', () => {
       name: initialMapData?.name ?? 'New Map',
       mapData: initialMapData
         ? structuredClone(initialMapData)
-        : structuredClone(DEFAULT_MAP_DATA),
+        : makeDefaultMapData(),
       fileHandle: null,
       undoStack: [],
       redoStack: [],

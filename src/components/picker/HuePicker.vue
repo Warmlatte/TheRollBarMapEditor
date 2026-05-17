@@ -51,20 +51,22 @@ function onPointerUp() {
 .hue-picker {
   position: relative;
   width: 100%;
-  height: 12px;
-  border-radius: 6px;
+  height: 14px;
+  border-radius: 7px;
+  border: 1px solid #555;
   background: linear-gradient(
     to right,
-    #ff0000,
-    #ffff00,
-    #00ff00,
-    #00ffff,
-    #0000ff,
-    #ff00ff,
-    #ff0000
+    hsl(0, 100%, 50%),
+    hsl(60, 100%, 50%),
+    hsl(120, 100%, 50%),
+    hsl(180, 100%, 50%),
+    hsl(240, 100%, 50%),
+    hsl(300, 100%, 50%),
+    hsl(360, 100%, 50%)
   );
   cursor: pointer;
   user-select: none;
+  touch-action: none;
 }
 
 .hue-cursor {
@@ -74,8 +76,8 @@ function onPointerUp() {
   height: 14px;
   border-radius: 50%;
   background: white;
-  border: 2px solid white;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4);
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
   transform: translate(-50%, -50%);
   pointer-events: none;
 }

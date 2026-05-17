@@ -1,3 +1,172 @@
 @tailwind base;
+
+html, body {
+  background: #1a1a1a;
+  color: #ddd;
+  font-family: system-ui, sans-serif;
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+body { overflow: hidden; }
+
 @tailwind components;
+
+@layer components {
+  .hud-panel {
+    width: 264px;
+    max-height: calc(100vh - 80px);
+    overflow-y: scroll;
+    overflow-x: hidden;
+    background: rgba(0, 0, 0, 0.65);
+    border-radius: 6px;
+    font-size: 13px;
+    color: #ddd;
+    backdrop-filter: blur(4px);
+    z-index: 10;
+    padding: 10px 12px;
+    scrollbar-width: thin;
+    scrollbar-color: #555 transparent;
+  }
+
+  .hud-btn {
+    background: #333;
+    border: 1px solid #555;
+    color: #ddd;
+    border-radius: 4px;
+    padding: 3px 8px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .hud-btn:hover:not(:disabled) { background: #444; }
+  .hud-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .hud-divider {
+    border: none;
+    border-top: 1px solid #444;
+    margin: 8px 0;
+  }
+
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 4px 0;
+  }
+
+  .slabel {
+    font-size: 11px;
+    color: #aaa;
+    white-space: nowrap;
+    min-width: 40px;
+  }
+
+  .value-mini {
+    font-size: 11px;
+    color: #ddd;
+    white-space: nowrap;
+    min-width: 24px;
+    text-align: right;
+  }
+
+  .icon-preview {
+    width: 100%;
+    border: 1px solid #444;
+    border-radius: 4px;
+    background: #111;
+    overflow: hidden;
+    display: block;
+  }
+
+  .hud-input {
+    background: #1f1f1f;
+    border: 1px solid #555;
+    color: #ddd;
+    border-radius: 3px;
+    padding: 3px 4px;
+    font-size: 11px;
+  }
+  .hud-input:focus {
+    border-color: #6a9a52;
+    outline: none;
+  }
+
+  .target-btn {
+    background: #2a2a2a;
+    border: 1px solid #555;
+    color: #ddd;
+    border-radius: 4px;
+    padding: 4px 6px;
+    font-size: 11px;
+    cursor: pointer;
+    text-align: center;
+  }
+  .target-btn.active {
+    background: #6a2a2a;
+    border-color: #c25a4a;
+    color: #fff;
+  }
+  .target-btn:hover { border-color: #777; }
+
+  .tool-btn {
+    background: #333;
+    border: 1px solid #555;
+    color: #ddd;
+    border-radius: 4px;
+    padding: 6px 12px;
+    min-width: 60px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .tool-btn:hover { background: #444; }
+
+  .tool-btn.active {
+    background: #4a6e3a;
+    border-color: #6a9a52;
+    color: #fff;
+  }
+  .tool-btn.active:hover { background: #5a8045; }
+
+  .tool-btn.btn-danger.active {
+    background: #8a3a2e;
+    border-color: #c25a4a;
+    color: #fff;
+  }
+  .tool-btn.btn-danger.active:hover { background: #a14538; }
+}
+
 @tailwind utilities;
+
+/* Thin scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-thumb { background: #555; border-radius: 2px; }
+
+/* Range input track */
+input[type="range"] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 14px;
+  border-radius: 7px;
+  border: 1px solid #555;
+  background: #333;
+  cursor: pointer;
+}
+
+/* Range input thumb */
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 18px;
+  background: #fff;
+  border: 1px solid #000;
+  border-radius: 3px;
+  cursor: pointer;
+}
+input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 18px;
+  background: #fff;
+  border: 1px solid #000;
+  border-radius: 3px;
+  cursor: pointer;
+}
