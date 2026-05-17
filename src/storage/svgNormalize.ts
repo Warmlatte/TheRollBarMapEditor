@@ -1,8 +1,17 @@
 import DOMPurify from 'dompurify'
 
+export const SVG_ALLOWED_TAGS: readonly string[] = [
+  'svg', 'g', 'path', 'circle', 'rect', 'line', 'polyline', 'polygon', 'ellipse',
+  'text', 'tspan', 'defs', 'use', 'symbol', 'clipPath', 'mask',
+  'linearGradient', 'radialGradient', 'stop', 'title', 'desc',
+]
+
 export function sanitizeSvgIcon(rawSvg: string): string {
   try {
-    return DOMPurify.sanitize(rawSvg, { USE_PROFILES: { svg: true, svgFilters: true } })
+    return DOMPurify.sanitize(rawSvg, {
+      USE_PROFILES: { svg: true, svgFilters: true },
+      ALLOWED_TAGS: SVG_ALLOWED_TAGS as string[],
+    })
   } catch {
     return ''
   }
