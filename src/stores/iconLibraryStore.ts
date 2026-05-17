@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { ICON_PATHS } from '../assets/iconPaths'
 import { sanitizeSvgIcon, normalizeSvgIcon } from '../storage/svgNormalize'
 
 export type IconEntry = {
@@ -12,6 +13,12 @@ export type IconEntry = {
 const DB_NAME = 'hexmap'
 const STORE_NAME = 'icons'
 const DB_VERSION = 1
+const DEFAULT_SEEDS: ReadonlyArray<{ id: string; name: string; rawSvg: string }> =
+  Object.entries(ICON_PATHS).map(([id, path]) => ({
+    id,
+    name: id,
+    rawSvg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">${path}</svg>`,
+  }))
 
 function openDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -59,13 +66,39 @@ export function getDisplaySvg(rawSvg: string): string {
   return normalizeSvgIcon(sanitizeSvgIcon(rawSvg))
 }
 
+function sortIconEntries(entries: IconEntry[]): IconEntry[] {
+  return [...entries].sort((a, b) => {
+    const aIdx = DEFAULT_SEEDS.findIndex((seed) => seed.id === a.id)
+    const bIdx = DEFAULT_SEEDS.findIndex((seed) => seed.id === b.id)
+    if (aIdx !== -1 || bIdx !== -1) {
+      return (aIdx === -1 ? Number.MAX_SAFE_INTEGER : aIdx) -
+        (bIdx === -1 ? Number.MAX_SAFE_INTEGER : bIdx)
+    }
+    return a.createdAt - b.createdAt
+  })
+}
+
 export const useIconLibraryStore = defineStore('iconLibrary', () => {
   const icons = ref<IconEntry[]>([])
   let db: IDBDatabase | null = null
 
   async function loadIcons(): Promise<void> {
     db = await openDB()
-    icons.value = await idbGetAll(db)
+    const loaded = await idbGetAll(db)
+    if (loaded.length === 0) {
+      const seeded = DEFAULT_SEEDS.map((seed, index) => ({
+        id: seed.id,
+        rawSvg: seed.rawSvg,
+        name: seed.name,
+        createdAt: index + 1,
+      }))
+      for (const entry of seeded) {
+        await idbPut(db, entry)
+      }
+      icons.value = seeded
+      return
+    }
+    icons.value = sortIconEntries(loaded)
   }
 
   async function addIcon(rawSvg: string, name: string): Promise<void> {

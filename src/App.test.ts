@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { setActivePinia, createPinia } from 'pinia'
 import App from './App.vue'
@@ -37,10 +37,45 @@ const alternateMapData: MapData = {
   doodles: [],
 }
 
+function stubIndexedDB(): void {
+  const entries = new Map<string, unknown>()
+  const fakeObjectStore = {
+    getAll() {
+      const req: { onsuccess?: (e: { target: { result: unknown[] } }) => void } = {}
+      queueMicrotask(() => req.onsuccess?.({ target: { result: Array.from(entries.values()) } }))
+      return req
+    },
+    put(entry: { id: string }) {
+      const req: { onsuccess?: () => void } = {}
+      entries.set(entry.id, { ...entry })
+      queueMicrotask(() => req.onsuccess?.())
+      return req
+    },
+  }
+  const fakeDB = {
+    objectStoreNames: { contains: () => true },
+    transaction: () => ({
+      objectStore: () => fakeObjectStore,
+    }),
+  }
+  vi.stubGlobal('indexedDB', {
+    open: () => {
+      const req: { onsuccess?: (e: { target: { result: typeof fakeDB } }) => void } = {}
+      queueMicrotask(() => req.onsuccess?.({ target: { result: fakeDB } }))
+      return req
+    },
+  })
+}
+
 describe('App workspace restore', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
+    stubIndexedDB()
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
   })
 
   it('replaces the preexisting blank session with restored workspace tabs', async () => {
@@ -99,6 +134,11 @@ describe('App workspace restore — no workspace', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
+    stubIndexedDB()
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
   })
 
   it('creates initial session when no workspace exists', async () => {

@@ -14,10 +14,12 @@ import DoodleCursor from './cursors/DoodleCursor.vue'
 import IconGhost from './cursors/IconGhost.vue'
 import LineCursorAndPreview from './cursors/LineCursorAndPreview.vue'
 import ShiftErasePreview from './cursors/ShiftErasePreview.vue'
+import { useIconLibraryStore, getDisplaySvg } from '../stores/iconLibraryStore'
 
 const mapStore = useMapStore()
 const brushStore = useBrushStore()
 const viewportStore = useViewportStore()
+const iconLibraryStore = useIconLibraryStore()
 
 const svgEl = ref<SVGSVGElement | null>(null)
 const cursorX = ref(0)
@@ -60,6 +62,11 @@ function hexPolygonPoints(q: number, r: number): string {
 
 function iconCenter(q: number, r: number) {
   return hexToPixel(q, r)
+}
+
+function iconSvg(svgId: string): string {
+  const entry = iconLibraryStore.icons.find((icon) => icon.id === svgId)
+  return entry ? getDisplaySvg(entry.rawSvg) : ''
 }
 
 function buildContext(_e: PointerEvent): ToolContext {
@@ -164,8 +171,11 @@ function onPointerUp(e: PointerEvent) {
       <g
         v-for="icon in mapData.icons"
         :key="icon.id"
-        :transform="`translate(${iconCenter(icon.q, icon.r).x}, ${iconCenter(icon.q, icon.r).y}) rotate(${icon.rotation}) scale(${icon.size})`"
-        v-html="icon.svgId"
+        :data-testid="`placed-icon-${icon.id}`"
+        :transform="`translate(${iconCenter(icon.q, icon.r).x}, ${iconCenter(icon.q, icon.r).y}) rotate(${icon.rotation}) scale(${icon.size / 100}) translate(-50,-50)`"
+        :fill="icon.color"
+        :stroke="icon.color"
+        v-html="iconSvg(icon.svgId)"
       />
     </g>
 

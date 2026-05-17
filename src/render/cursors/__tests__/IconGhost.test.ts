@@ -115,7 +115,7 @@ describe('IconGhost — displays safe SVG when icon selected', () => {
     wrapper.unmount()
   })
 
-  it('applies opacity 0.5 for ghost effect', async () => {
+  it('applies opacity 0.45 for ghost effect', async () => {
     const brushStore = useBrushStore()
     const iconStore = useIconStore()
     const libStore = useIconLibraryStore()
@@ -124,7 +124,7 @@ describe('IconGhost — displays safe SVG when icon selected', () => {
     libStore.icons = [{ id: 'icon-1', rawSvg: '<svg/>', name: 'Test', createdAt: 1000 }]
     const wrapper = await mountGhost(pinia)
     const rootG = wrapper.find('g')
-    expect(rootG.attributes('opacity')).toBe('0.5')
+    expect(rootG.attributes('opacity')).toBe('0.45')
     wrapper.unmount()
   })
 
@@ -141,8 +141,24 @@ describe('IconGhost — displays safe SVG when icon selected', () => {
     const rootG = wrapper.find('g')
     const transform = rootG.attributes('transform') ?? ''
     expect(transform).toContain('translate(150, 250)')
-    expect(transform).toContain('60')
+    expect(transform).toContain('scale(0.6)')
     expect(transform).toContain('45')
+    expect(transform).toContain('translate(-50,-50)')
+    wrapper.unmount()
+  })
+
+  it('inherits icon color through fill and stroke like placed SVG icons', async () => {
+    const brushStore = useBrushStore()
+    const iconStore = useIconStore()
+    const libStore = useIconLibraryStore()
+    brushStore.tool = 'icon'
+    iconStore.setColor('#336699')
+    iconStore.setSelectedSvgId('icon-1')
+    libStore.icons = [{ id: 'icon-1', rawSvg: '<svg/>', name: 'Test', createdAt: 1000 }]
+    const wrapper = await mountGhost(pinia)
+    const rootG = wrapper.find('g')
+    expect(rootG.attributes('fill')).toBe('#336699')
+    expect(rootG.attributes('stroke')).toBe('#336699')
     wrapper.unmount()
   })
 })

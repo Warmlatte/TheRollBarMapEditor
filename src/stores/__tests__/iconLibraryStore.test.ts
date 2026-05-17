@@ -108,6 +108,15 @@ describe('iconLibraryStore.loadIcons', () => {
     expect(store.icons.map((e) => e.name)).toContain('alpha')
   })
 
+  it('seeds the default SVG icons when IndexedDB is empty', async () => {
+    buildFakeIDB()
+    const { useIconLibraryStore } = await import('../iconLibraryStore')
+    const store = useIconLibraryStore()
+    await store.loadIcons()
+    expect(store.icons.map((e) => e.id)).toEqual(['mountain', 'tree', 'tower', 'skull'])
+    expect(store.icons.every((e) => e.rawSvg.startsWith('<svg'))).toBe(true)
+  })
+
   it('rejects when IndexedDB is unavailable', async () => {
     buildErrorIDB()
     const { useIconLibraryStore } = await import('../iconLibraryStore')
@@ -190,7 +199,7 @@ describe('iconLibraryStore.addIcon', () => {
     const store = useIconLibraryStore()
     await store.loadIcons()
     await expect(store.addIcon('<garbage>', 'bad')).rejects.toThrow()
-    expect(store.icons).toHaveLength(0)
+    expect(store.icons.some((e) => e.name === 'bad')).toBe(false)
   })
 
   it('rejects and does not add entry when SVG sanitization throws', async () => {
@@ -203,11 +212,12 @@ describe('iconLibraryStore.addIcon', () => {
     const store = useIconLibraryStore()
     await store.loadIcons()
     await expect(store.addIcon('not svg', 'bad')).rejects.toThrow('Invalid SVG: Invalid SVG')
-    expect(store.icons).toHaveLength(0)
+    expect(store.icons.some((e) => e.name === 'bad')).toBe(false)
   })
 
   it('rejects when IDB put operation fails', async () => {
-    buildFakeIDB([], new Set<FailOp>(['put']))
+    const initial: IconEntry[] = [{ id: 'a', rawSvg: '<svg/>', name: 'alpha', createdAt: 1000 }]
+    buildFakeIDB(initial, new Set<FailOp>(['put']))
     const { useIconLibraryStore } = await import('../iconLibraryStore')
     const store = useIconLibraryStore()
     await store.loadIcons()
@@ -297,7 +307,7 @@ describe('iconLibraryStore.updateIcon', () => {
     const store = useIconLibraryStore()
     await store.loadIcons()
     await expect(store.updateIcon('nonexistent', { name: 'x' })).rejects.toThrow()
-    expect(store.icons).toHaveLength(0)
+    expect(store.icons.some((e) => e.id === 'nonexistent')).toBe(false)
   })
 
   it('does not allow patching the id field', async () => {

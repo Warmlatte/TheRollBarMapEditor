@@ -1,7 +1,15 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { mount } from '@vue/test-utils'
+import { createPinia, setActivePinia } from 'pinia'
 import { buildSvgPoint, handlePointerDown } from '../pointerHandlers'
 import { pixelToHex, hexToPixel, HEX_SIZE } from '../../lib/hexMath'
 import type { ToolContext, ToolHandler } from '../toolHandlers/types'
+import type { Pinia } from 'pinia'
+
+vi.mock('../../storage/svgNormalize', () => ({
+  sanitizeSvgIcon: vi.fn((s: string) => s),
+  normalizeSvgIcon: vi.fn((s: string) => s),
+}))
 
 // ────────── helpers ──────────
 
@@ -139,5 +147,62 @@ describe('HexCanvas uses pointer capture to prevent lost events', () => {
     const e = { button: 0, pointerId: 1 } as unknown as PointerEvent
     handlePointerDown(e, svg, handler, () => ({} as ToolContext))
     expect(handler.onPointerDown).toHaveBeenCalledOnce()
+  })
+})
+
+describe('HexCanvas icon rendering follows the SVG library styling contract', () => {
+  let pinia: Pinia
+
+  beforeEach(() => {
+    pinia = createPinia()
+    setActivePinia(pinia)
+  })
+
+  it('renders placed icons by resolving svgId from the icon library with inherited color and original viewBox transform', async () => {
+    const { useMapStore } = await import('../../stores/mapStore')
+    const { useIconLibraryStore } = await import('../../stores/iconLibraryStore')
+    const { default: HexCanvas } = await import('../HexCanvas.vue')
+    const mapStore = useMapStore()
+    const libStore = useIconLibraryStore()
+    libStore.icons = [
+      {
+        id: 'mountain',
+        rawSvg: '<svg viewBox="0 0 100 100"><path d="M 8 85 L 50 22 L 92 85 Z"/></svg>',
+        name: 'mountain',
+        createdAt: 1000,
+      },
+    ]
+    mapStore.loadMapData({
+      name: 'icons',
+      bounds: { radius: 1 },
+      hexes: [],
+      icons: [
+        {
+          id: 'icon-1',
+          q: 0,
+          r: 0,
+          svgId: 'mountain',
+          size: 60,
+          rotation: 30,
+          color: '#775533',
+        },
+      ],
+      lines: [],
+      doodles: [],
+    })
+
+    const wrapper = mount(HexCanvas, {
+      global: { plugins: [pinia] },
+      attachTo: document.body,
+    })
+
+    const iconGroup = wrapper.find('[data-testid="placed-icon-icon-1"]')
+    expect(iconGroup.exists()).toBe(true)
+    expect(iconGroup.attributes('fill')).toBe('#775533')
+    expect(iconGroup.attributes('stroke')).toBe('#775533')
+    expect(iconGroup.attributes('transform')).toContain('scale(0.6)')
+    expect(iconGroup.attributes('transform')).toContain('translate(-50,-50)')
+    expect(iconGroup.html()).toContain('path')
+    wrapper.unmount()
   })
 })

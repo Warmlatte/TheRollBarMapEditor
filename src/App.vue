@@ -8,12 +8,16 @@ import { useMapStore } from './stores/mapStore'
 import { useAutoSaveStore } from './stores/autoSaveStore'
 import { useSessionStore } from './stores/sessionStore'
 import { useI18nStore } from './stores/i18nStore'
+import { useIconLibraryStore } from './stores/iconLibraryStore'
+import { useIconStore } from './stores/iconStore'
 import { loadWorkspace } from './storage/persist'
 import { loadHandle } from './storage/fileHandlePersistence'
 
 const brushStore = useBrushStore()
 const mapStore = useMapStore()
 const i18n = useI18nStore()
+const iconLibraryStore = useIconLibraryStore()
+const iconStore = useIconStore()
 const activeTool = computed(() => TOOLS.find(t => t.id === brushStore.tool))
 const activeHud = computed(() => activeTool.value?.hud)
 const activeToolName = computed(() => i18n.t(activeTool.value?.i18nKey ?? ''))
@@ -93,6 +97,17 @@ onMounted(async () => {
   window.addEventListener('beforeunload', handleBeforeUnload)
   window.addEventListener('keydown', handleKeyDown)
   await restoreWorkspace()
+  try {
+    await iconLibraryStore.loadIcons()
+    const selectedExists =
+      iconStore.selectedSvgId !== null &&
+      iconLibraryStore.icons.some((icon) => icon.id === iconStore.selectedSvgId)
+    if (!selectedExists && iconLibraryStore.icons.length > 0) {
+      iconStore.setSelectedSvgId(iconLibraryStore.icons[0].id)
+    }
+  } catch (error) {
+    console.error('[icon library init]', error)
+  }
 })
 
 onUnmounted(() => {

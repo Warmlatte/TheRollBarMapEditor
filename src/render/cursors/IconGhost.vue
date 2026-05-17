@@ -24,8 +24,11 @@ const displaySvg = computed(() =>
 <template>
   <g
     v-if="brushStore.tool === 'icon'"
-    :transform="`translate(${cursorX}, ${cursorY}) scale(${iconStore.size}) rotate(${iconStore.rotation})`"
-    opacity="0.5"
+    :transform="`translate(${cursorX}, ${cursorY}) rotate(${iconStore.rotation}) scale(${iconStore.size / 100}) translate(-50,-50)`"
+    :fill="iconStore.color"
+    :stroke="iconStore.color"
+    opacity="0.45"
+    pointer-events="none"
   >
     <g v-if="displaySvg" v-html="displaySvg" />
     <g v-else>
