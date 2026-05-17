@@ -86,7 +86,9 @@ onMounted(() => {
   if (!el) return
   const w = el.clientWidth
   const h = el.clientHeight
-  viewportStore.setPan(-w / 2, -h / 2)
+  const initialZoom = 0.5
+  viewportStore.setZoom(initialZoom)
+  viewportStore.setPan(-w / (2 * initialZoom), -h / (2 * initialZoom))
 })
 
 function onPointerDown(e: PointerEvent) {

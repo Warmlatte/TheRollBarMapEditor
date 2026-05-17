@@ -4,16 +4,11 @@ import type { MapData } from '../data/types'
 import type { Command } from '../commands/types'
 import { BatchCommand } from '../commands/batchCommand'
 import { useSessionStore } from './sessionStore'
-import { hexesInRadius } from '../lib/hexMath'
-
-const DEFAULT_RADIUS = 10
-const DEFAULT_HEX_COLOR = '#4a7a3a'
-
 function makeDefaultMapData(): MapData {
   return {
     name: 'New Map',
-    bounds: { radius: DEFAULT_RADIUS },
-    hexes: hexesInRadius(DEFAULT_RADIUS).map(({ q, r }) => ({ q, r, color: DEFAULT_HEX_COLOR })),
+    bounds: { radius: 10 },
+    hexes: [],
     icons: [],
     lines: [],
     doodles: [],

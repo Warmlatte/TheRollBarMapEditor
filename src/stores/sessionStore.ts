@@ -2,7 +2,6 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { MapData } from '../data/types'
 import type { Command } from '../commands/types'
-import { hexesInRadius } from '../lib/hexMath'
 import { useArchiveStore } from './archiveStore'
 import type { ArchiveEntry } from './archiveStore'
 import { useToastStore } from './toastStore'
@@ -20,14 +19,11 @@ export type Session = {
   isDirty: boolean
 }
 
-const DEFAULT_RADIUS = 10
-const DEFAULT_HEX_COLOR = '#4a7a3a'
-
 function makeDefaultMapData(): MapData {
   return {
     name: 'New Map',
-    bounds: { radius: DEFAULT_RADIUS },
-    hexes: hexesInRadius(DEFAULT_RADIUS).map(({ q, r }) => ({ q, r, color: DEFAULT_HEX_COLOR })),
+    bounds: { radius: 10 },
+    hexes: [],
     icons: [],
     lines: [],
     doodles: [],
