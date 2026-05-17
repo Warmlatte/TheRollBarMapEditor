@@ -1,8 +1,10 @@
 <template>
-  <div class="color-picker-grid">
+  <div class="picker-grid">
     <SvSquare />
-    <HuePicker />
+    <slot name="preview" />
+    <HuePicker class="hue-full" />
     <HexInput />
+    <span class="color-label" :style="{ color: brush.color }">{{ brush.color }}</span>
   </div>
 </template>
 
@@ -27,10 +29,25 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.color-picker-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 8px;
+.picker-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 8px;
+  row-gap: 6px;
+  align-items: center;
+  margin: 4px 0;
+}
+
+.hue-full {
+  grid-column: 1 / -1;
+}
+
+.color-label {
+  font-size: 11px;
+  font-family: Consolas, Menlo, monospace;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 </style>

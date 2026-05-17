@@ -52,19 +52,19 @@ function onCommit() {
 }
 
 .hex-input {
-  width: 80px;
-  padding: 4px 6px;
-  font-size: 12px;
-  font-family: monospace;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
-  background: rgba(0, 0, 0, 0.3);
-  color: white;
-  text-align: center;
+  width: 100%;
+  padding: 3px 4px;
+  font-size: 11px;
+  font-family: Consolas, Menlo, monospace;
+  text-transform: lowercase;
+  background: #1f1f1f;
+  border: 1px solid #555;
+  border-radius: 3px;
+  color: #ddd;
   outline: none;
 }
 
 .hex-input:focus {
-  border-color: rgba(255, 255, 255, 0.5);
+  border-color: #6a9a52;
 }
 </style>
