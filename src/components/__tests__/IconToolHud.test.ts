@@ -46,8 +46,21 @@ describe('IconToolHud — library loading', () => {
     libStore.icons = [ICON_A, ICON_B]
     const wrapper = await mountHud(pinia)
     await wrapper.vm.$nextTick()
-    expect(wrapper.text()).toContain('Alpha')
-    expect(wrapper.text()).toContain('Beta')
+    expect(wrapper.find('[data-testid="icon-select-id-a"]').attributes('title')).toBe('Alpha')
+    expect(wrapper.find('[data-testid="icon-select-id-b"]').attributes('title')).toBe('Beta')
+    wrapper.unmount()
+  })
+
+  it('renders the original-style large preview and four-column icon picker', async () => {
+    const libStore = useIconLibraryStore()
+    vi.spyOn(libStore, 'loadIcons').mockResolvedValue()
+    libStore.icons = [ICON_A, ICON_B]
+    const wrapper = await mountHud(pinia)
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('[data-testid="icon-large-preview"]').exists()).toBe(true)
+    expect(wrapper.find('.icon-picker').exists()).toBe(true)
+    expect(wrapper.findAll('.icon-cell').length).toBe(3)
     wrapper.unmount()
   })
 })
@@ -78,6 +91,19 @@ describe('IconToolHud — icon selection', () => {
     expect(btn.exists()).toBe(true)
     await btn.trigger('click')
     expect(iconStore.selectedSvgId).toBe('id-a')
+    wrapper.unmount()
+  })
+
+  it('selected icon uses the active cell styling from the source app', async () => {
+    const libStore = useIconLibraryStore()
+    const iconStore = useIconStore()
+    vi.spyOn(libStore, 'loadIcons').mockResolvedValue()
+    libStore.icons = [ICON_A]
+    iconStore.setSelectedSvgId('id-a')
+    const wrapper = await mountHud(pinia)
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('[data-testid="icon-select-id-a"]').classes()).toContain('active')
     wrapper.unmount()
   })
 })

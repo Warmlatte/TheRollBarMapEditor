@@ -162,4 +162,15 @@ describe('App workspace restore — no workspace', () => {
     expect(mapStore.mapData.bounds.radius).toBe(10)
     expect(mapStore.canUndo).toBe(false)
   })
+
+  it('renders source-style tab strip and shortcuts corner chrome', async () => {
+    vi.mocked(loadWorkspace).mockReturnValue(null)
+
+    const wrapper = mount(App)
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="tab-strip"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="shortcuts-corner"]').text()).toContain('Ctrl + Z')
+    wrapper.unmount()
+  })
 })

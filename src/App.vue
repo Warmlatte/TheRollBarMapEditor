@@ -55,6 +55,11 @@ function handleBeforeUnload(): void {
   autoSaveStore.flushAllNow()
 }
 
+function createNewTab(): void {
+  const session = sessionStore.makeSession()
+  sessionStore.setActive(session.id)
+}
+
 async function restoreWorkspace(): Promise<void> {
   const workspace = loadWorkspace()
   if (!workspace || workspace.tabs.length === 0) {
@@ -120,6 +125,20 @@ onUnmounted(() => {
   <div class="relative h-screen w-screen overflow-hidden">
     <HexCanvas class="absolute inset-0" />
 
+    <div data-testid="tab-strip" class="tab-strip">
+      <button
+        v-for="session in sessionStore.sessions"
+        :key="session.id"
+        class="tab-btn"
+        :class="{ active: session.id === sessionStore.activeId }"
+        @click="sessionStore.setActive(session.id)"
+      >
+        {{ session.name }}
+      </button>
+      <button class="tab-btn tab-add-btn" aria-label="new tab" @click="createNewTab">+</button>
+      <button class="tab-btn map-list-btn">📁 地圖</button>
+    </div>
+
     <div class="hud-panel absolute right-2 top-2">
       <div class="flex items-center gap-1.5">
         <span class="flex-1 text-xs font-semibold text-text-dim">{{ activeToolName }}</span>
@@ -133,6 +152,15 @@ onUnmounted(() => {
     <button class="settings-btn">⚙</button>
 
     <FloatingToolbar />
+
+    <div data-testid="shortcuts-corner" class="shortcuts-corner">
+      Ctrl + Z = 復原
+      Ctrl + Y = 重做
+      Shift + 拖曳 = 擦除
+      Shift + 右鍵 = 吸取
+      滾輪 = 縮放
+      中鍵 = 拖移
+    </div>
   </div>
 </template>
 

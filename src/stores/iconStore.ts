@@ -1,11 +1,12 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { DEFAULT_TOOL_COLOR } from './brushStore'
 
 export const useIconStore = defineStore('icon', () => {
   const selectedSvgId = ref<string | null>(null)
-  const size = ref(40)
+  const size = ref(65)
   const rotation = ref(0)
-  const color = ref('#000000')
+  const color = ref(DEFAULT_TOOL_COLOR)
 
   function setSelectedSvgId(id: string | null): void {
     selectedSvgId.value = id

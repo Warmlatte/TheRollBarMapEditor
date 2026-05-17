@@ -25,9 +25,9 @@ describe('iconStore', () => {
     expect(store.selectedSvgId).toBeNull()
   })
 
-  it('size defaults to 40', () => {
+  it('size defaults to 65 to match the source app preview scale', () => {
     const store = useIconStore()
-    expect(store.size).toBe(40)
+    expect(store.size).toBe(65)
   })
 
   it('setSize updates size', () => {
@@ -47,9 +47,9 @@ describe('iconStore', () => {
     expect(store.rotation).toBe(90)
   })
 
-  it('color defaults to #000000', () => {
+  it('color defaults to the source app green', () => {
     const store = useIconStore()
-    expect(store.color).toBe('#000000')
+    expect(store.color).toBe('#5b992e')
   })
 
   it('setColor updates color', () => {
