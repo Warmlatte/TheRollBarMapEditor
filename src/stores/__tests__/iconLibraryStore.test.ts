@@ -193,6 +193,19 @@ describe('iconLibraryStore.addIcon', () => {
     expect(store.icons).toHaveLength(0)
   })
 
+  it('rejects and does not add entry when SVG sanitization throws', async () => {
+    buildFakeIDB()
+    const { sanitizeSvgIcon } = await import('../../storage/svgNormalize')
+    vi.mocked(sanitizeSvgIcon).mockImplementationOnce(() => {
+      throw new Error('Invalid SVG')
+    })
+    const { useIconLibraryStore } = await import('../iconLibraryStore')
+    const store = useIconLibraryStore()
+    await store.loadIcons()
+    await expect(store.addIcon('not svg', 'bad')).rejects.toThrow('Invalid SVG: Invalid SVG')
+    expect(store.icons).toHaveLength(0)
+  })
+
   it('rejects when IDB put operation fails', async () => {
     buildFakeIDB([], new Set<FailOp>(['put']))
     const { useIconLibraryStore } = await import('../iconLibraryStore')

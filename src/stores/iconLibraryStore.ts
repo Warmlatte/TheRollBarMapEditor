@@ -69,7 +69,13 @@ export const useIconLibraryStore = defineStore('iconLibrary', () => {
   }
 
   async function addIcon(rawSvg: string, name: string): Promise<void> {
-    const sanitized = sanitizeSvgIcon(rawSvg)
+    let sanitized: string
+    try {
+      sanitized = sanitizeSvgIcon(rawSvg)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      throw new Error(`Invalid SVG: ${message}`)
+    }
     if (!sanitized) {
       throw new Error('Invalid SVG: sanitization produced empty output')
     }
