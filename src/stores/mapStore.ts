@@ -1,8 +1,9 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, toRaw } from 'vue'
 import type { MapData } from '../data/types'
 import type { Command } from '../commands/types'
 import { BatchCommand } from '../commands/batchCommand'
+import { useSessionStore } from './sessionStore'
 
 const DEFAULT_MAP_DATA: MapData = {
   name: 'New Map',
@@ -25,9 +26,18 @@ export const useMapStore = defineStore('map', () => {
   const canRedo = computed(() => redoStack.value.length > 0)
   const undoStackLength = computed(() => undoStack.value.length)
 
+  function syncToActiveSession(data: MapData): void {
+    const sessionStore = useSessionStore()
+    const active = sessionStore.activeSession
+    if (!active) return
+    active.mapData = data
+    sessionStore.markSessionDirty(active.id)
+  }
+
   function dispatch(cmd: Command): void {
     const { state: nextState, inverse } = cmd.apply(mapData.value)
     mapData.value = nextState
+    syncToActiveSession(nextState)
 
     if (strokeActive.value) {
       pendingInverses.value.push(inverse)
@@ -59,6 +69,7 @@ export const useMapStore = defineStore('map', () => {
     const { state: prevState, inverse: forwardCmd } = cmd.apply(mapData.value)
     mapData.value = prevState
     redoStack.value.push(forwardCmd)
+    syncToActiveSession(prevState)
   }
 
   function redo(): void {
@@ -68,6 +79,15 @@ export const useMapStore = defineStore('map', () => {
     const { state: nextState, inverse: backCmd } = cmd.apply(mapData.value)
     mapData.value = nextState
     undoStack.value.push(backCmd)
+    syncToActiveSession(nextState)
+  }
+
+  function loadMapData(data: MapData): void {
+    mapData.value = structuredClone(toRaw(data))
+    undoStack.value = []
+    redoStack.value = []
+    pendingInverses.value = []
+    strokeActive.value = false
   }
 
   return {
@@ -80,5 +100,6 @@ export const useMapStore = defineStore('map', () => {
     endStroke,
     undo,
     redo,
+    loadMapData,
   }
 })
