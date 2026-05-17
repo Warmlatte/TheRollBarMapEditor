@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, computed, toRaw } from 'vue'
+import { ref, computed } from 'vue'
 import type { MapData } from '../data/types'
 import type { Command } from '../commands/types'
 import { BatchCommand } from '../commands/batchCommand'
@@ -83,7 +83,11 @@ export const useMapStore = defineStore('map', () => {
   }
 
   function loadMapData(data: MapData): void {
-    mapData.value = structuredClone(toRaw(data))
+    // JSON round-trip strips reactive Proxy at all nesting levels before cloning.
+    // structuredClone(toRaw(data)) only unwraps the top-level Proxy; nested objects
+    // accessed through Vue's reactive proxy during dispatch remain as Proxies and
+    // cause DATA_CLONE_ERR (code 25) in happy-dom and some browsers.
+    mapData.value = JSON.parse(JSON.stringify(data)) as MapData
     undoStack.value = []
     redoStack.value = []
     pendingInverses.value = []
