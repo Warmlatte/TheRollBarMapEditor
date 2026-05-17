@@ -1,0 +1,75 @@
+import { describe, it, expect, beforeEach } from 'vitest'
+import { setActivePinia, createPinia } from 'pinia'
+import { useIconStore } from '../iconStore'
+
+describe('iconStore', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+  })
+
+  it('selectedSvgId defaults to null', () => {
+    const store = useIconStore()
+    expect(store.selectedSvgId).toBeNull()
+  })
+
+  it('setSelectedSvgId updates selectedSvgId', () => {
+    const store = useIconStore()
+    store.setSelectedSvgId('abc-123')
+    expect(store.selectedSvgId).toBe('abc-123')
+  })
+
+  it('setSelectedSvgId accepts null to clear selection', () => {
+    const store = useIconStore()
+    store.setSelectedSvgId('abc-123')
+    store.setSelectedSvgId(null)
+    expect(store.selectedSvgId).toBeNull()
+  })
+
+  it('size defaults to 40', () => {
+    const store = useIconStore()
+    expect(store.size).toBe(40)
+  })
+
+  it('setSize updates size', () => {
+    const store = useIconStore()
+    store.setSize(60)
+    expect(store.size).toBe(60)
+  })
+
+  it('rotation defaults to 0', () => {
+    const store = useIconStore()
+    expect(store.rotation).toBe(0)
+  })
+
+  it('setRotation updates rotation', () => {
+    const store = useIconStore()
+    store.setRotation(90)
+    expect(store.rotation).toBe(90)
+  })
+
+  it('color defaults to #000000', () => {
+    const store = useIconStore()
+    expect(store.color).toBe('#000000')
+  })
+
+  it('setColor updates color', () => {
+    const store = useIconStore()
+    store.setColor('#ff0000')
+    expect(store.color).toBe('#ff0000')
+  })
+
+  it('does not expose selectedSvg (old API)', () => {
+    const store = useIconStore()
+    expect((store as Record<string, unknown>)['selectedSvg']).toBeUndefined()
+  })
+
+  it('does not expose iconSize (old API)', () => {
+    const store = useIconStore()
+    expect((store as Record<string, unknown>)['iconSize']).toBeUndefined()
+  })
+
+  it('does not expose iconRotation (old API)', () => {
+    const store = useIconStore()
+    expect((store as Record<string, unknown>)['iconRotation']).toBeUndefined()
+  })
+})

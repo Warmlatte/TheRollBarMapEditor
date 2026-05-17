@@ -55,6 +55,15 @@ describe('PlaceIconCommand', () => {
     expect(restored.icons).toHaveLength(0)
     expect(restored).toEqual(state)
   })
+
+  it('inverse removes exactly the placed icon by id', () => {
+    const state = makeMapData()
+    const cmd = new PlaceIconCommand(testIcon)
+    const { state: next, inverse } = cmd.apply(state)
+    expect(next.icons).toContainEqual(testIcon)
+    const { state: afterInverse } = inverse.apply(next)
+    expect(afterInverse.icons.find((i) => i.id === testIcon.id)).toBeUndefined()
+  })
 })
 
 describe('RemoveIconCommand', () => {
@@ -86,5 +95,20 @@ describe('RemoveIconCommand', () => {
     const { state: next, inverse } = cmd.apply(state)
     const { state: restored } = inverse.apply(next)
     expect(restored.icons).toContainEqual(testIcon)
+  })
+
+  it('inverse restores all icon fields: svgId, coordinates, size, rotation, color', () => {
+    const state = makeMapData({ icons: [testIcon] })
+    const cmd = new RemoveIconCommand(testIcon.id)
+    const { state: next, inverse } = cmd.apply(state)
+    expect(next.icons).toHaveLength(0)
+    const { state: restored } = inverse.apply(next)
+    const icon = restored.icons.find((i) => i.id === testIcon.id)!
+    expect(icon.svgId).toBe(testIcon.svgId)
+    expect(icon.q).toBe(testIcon.q)
+    expect(icon.r).toBe(testIcon.r)
+    expect(icon.size).toBe(testIcon.size)
+    expect(icon.rotation).toBe(testIcon.rotation)
+    expect(icon.color).toBe(testIcon.color)
   })
 })

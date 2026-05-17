@@ -2,17 +2,26 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
 export const useIconStore = defineStore('icon', () => {
-  const selectedSvg = ref<string | null>(null)
-  const iconSize = ref(40)
-  const iconRotation = ref(0)
+  const selectedSvgId = ref<string | null>(null)
+  const size = ref(40)
+  const rotation = ref(0)
+  const color = ref('#000000')
+
+  function setSelectedSvgId(id: string | null): void {
+    selectedSvgId.value = id
+  }
 
   function setSize(s: number): void {
-    iconSize.value = s
+    size.value = s
   }
 
   function setRotation(r: number): void {
-    iconRotation.value = r
+    rotation.value = r
   }
 
-  return { selectedSvg, iconSize, iconRotation, setSize, setRotation }
+  function setColor(c: string): void {
+    color.value = c
+  }
+
+  return { selectedSvgId, size, rotation, color, setSelectedSvgId, setSize, setRotation, setColor }
 })
