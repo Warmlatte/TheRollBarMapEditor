@@ -38,7 +38,12 @@ function handleBeforeUnload(): void {
 
 async function restoreWorkspace(): Promise<void> {
   const workspace = loadWorkspace()
-  if (!workspace || workspace.tabs.length === 0) return
+  if (!workspace || workspace.tabs.length === 0) {
+    // No saved workspace — create a fresh session so autosave has a target
+    const session = sessionStore.makeSession()
+    sessionStore.setActive(session.id)
+    return
+  }
 
   // Replace any startup placeholder sessions without triggering closeSession's
   // last-session replacement behavior.
@@ -55,6 +60,12 @@ async function restoreWorkspace(): Promise<void> {
     sessionStore.setActive(workspace.activeTabId)
   } else if (sessionStore.sessions.length > 0) {
     sessionStore.setActive(sessionStore.sessions[0].id)
+  }
+
+  // Load active session's map data into mapStore so the canvas renders it
+  const activeSession = sessionStore.activeSession
+  if (activeSession) {
+    mapStore.loadMapData(activeSession.mapData)
   }
 
   // Restore file handles for each session (no requestPermission — deferred to save time)
