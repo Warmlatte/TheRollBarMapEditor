@@ -31,6 +31,15 @@ function roundHex(q: number, r: number): { q: number; r: number } {
   return { q: rq, r: rr }
 }
 
+export function hexCorners(cx: number, cy: number, size: number): string {
+  return Array.from({ length: 6 }, (_, i) => {
+    const angle = (Math.PI / 180) * (60 * i - 90)
+    const x = cx + size * Math.cos(angle)
+    const y = cy + size * Math.sin(angle)
+    return `${x},${y}`
+  }).join(' ')
+}
+
 export function hexDistance(
   a: { q: number; r: number },
   b: { q: number; r: number },
