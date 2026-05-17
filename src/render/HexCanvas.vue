@@ -125,9 +125,9 @@ function onPointerUp(e: PointerEvent) {
         v-for="hex in allHexPositions"
         :key="`${hex.q},${hex.r}`"
         :points="hexPolygonPoints(hex.q, hex.r)"
-        fill="none"
-        stroke="#7a7a7a"
-        stroke-width="0.5"
+        fill="rgba(255,255,255,0.02)"
+        stroke="#444"
+        stroke-width="1"
       />
     </g>
 
@@ -138,8 +138,8 @@ function onPointerUp(e: PointerEvent) {
         :key="`${hex.q},${hex.r}`"
         :points="hexPolygonPoints(hex.q, hex.r)"
         :fill="hex.color"
-        stroke="#000000"
-        stroke-width="0.5"
+        stroke="#222"
+        stroke-width="1"
       />
     </g>
 
