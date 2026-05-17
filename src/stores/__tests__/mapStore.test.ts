@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
+import { toRaw } from 'vue'
 import { useMapStore } from '../mapStore'
+import { useSessionStore } from '../sessionStore'
 import { PaintHexCommand } from '../../commands/hexCommands'
 import type { Command } from '../../commands/types'
 import type { MapData } from '../../data/types'
@@ -213,6 +215,118 @@ describe('viewport/UI state excluded from undo', () => {
     store.beginStroke()
     store.endStroke()
     expect(store.undoStackLength).toBe(0)
+  })
+})
+
+describe('mapStore.loadMapData', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+  })
+
+  it('sets mapData to a deep clone of the provided data', () => {
+    const store = useMapStore()
+    const data: MapData = {
+      name: 'Test Map',
+      bounds: { radius: 3 },
+      hexes: [{ q: 1, r: 1, color: '#ff0000' }],
+      icons: [],
+      lines: [],
+      doodles: [],
+    }
+    store.loadMapData(data)
+    expect(store.mapData).toEqual(data)
+    expect(store.mapData).not.toBe(data)
+  })
+
+  it('clears undo stack after loadMapData', () => {
+    const store = useMapStore()
+    store.dispatch(new PaintHexCommand({ q: 1, r: 1 }, '#ff0000'))
+    expect(store.canUndo).toBe(true)
+    store.loadMapData(store.mapData)
+    expect(store.canUndo).toBe(false)
+  })
+
+  it('clears redo stack after loadMapData', () => {
+    const store = useMapStore()
+    store.dispatch(new PaintHexCommand({ q: 1, r: 1 }, '#ff0000'))
+    store.undo()
+    expect(store.canRedo).toBe(true)
+    store.loadMapData(store.mapData)
+    expect(store.canRedo).toBe(false)
+  })
+
+  it('does not throw when called with a reactive proxy (no DATA_CLONE_ERR)', () => {
+    const store = useMapStore()
+    expect(() => store.loadMapData(store.mapData)).not.toThrow()
+  })
+})
+
+describe('mapStore dispatch/undo/redo sync to sessionStore', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+  })
+
+  it('dispatch syncs mapData to active session', () => {
+    const mapStore = useMapStore()
+    const sessionStore = useSessionStore()
+    const session = sessionStore.makeSession()
+    sessionStore.setActive(session.id)
+
+    mapStore.dispatch(new PaintHexCommand({ q: 1, r: 1 }, '#ff0000'))
+
+    expect(sessionStore.activeSession?.mapData).toEqual(mapStore.mapData)
+  })
+
+  it('dispatch stores a separate mapData object on the active session', () => {
+    const mapStore = useMapStore()
+    const sessionStore = useSessionStore()
+    const session = sessionStore.makeSession()
+    sessionStore.setActive(session.id)
+
+    mapStore.dispatch(new PaintHexCommand({ q: 1, r: 1 }, '#ff0000'))
+
+    expect(toRaw(sessionStore.activeSession?.mapData)).not.toBe(toRaw(mapStore.mapData))
+  })
+
+  it('dispatch marks session dirty', () => {
+    const mapStore = useMapStore()
+    const sessionStore = useSessionStore()
+    const session = sessionStore.makeSession()
+    sessionStore.setActive(session.id)
+
+    expect(session.isDirty).toBe(false)
+    mapStore.dispatch(new PaintHexCommand({ q: 1, r: 1 }, '#ff0000'))
+    expect(session.isDirty).toBe(true)
+  })
+
+  it('dispatch does not throw when no active session', () => {
+    const mapStore = useMapStore()
+    expect(() => mapStore.dispatch(new PaintHexCommand({ q: 1, r: 1 }, '#ff0000'))).not.toThrow()
+  })
+
+  it('undo syncs mapData to active session', () => {
+    const mapStore = useMapStore()
+    const sessionStore = useSessionStore()
+    const session = sessionStore.makeSession()
+    sessionStore.setActive(session.id)
+
+    mapStore.dispatch(new PaintHexCommand({ q: 1, r: 1 }, '#ff0000'))
+    mapStore.undo()
+
+    expect(sessionStore.activeSession?.mapData).toEqual(mapStore.mapData)
+  })
+
+  it('redo syncs mapData to active session', () => {
+    const mapStore = useMapStore()
+    const sessionStore = useSessionStore()
+    const session = sessionStore.makeSession()
+    sessionStore.setActive(session.id)
+
+    mapStore.dispatch(new PaintHexCommand({ q: 1, r: 1 }, '#ff0000'))
+    mapStore.undo()
+    mapStore.redo()
+
+    expect(sessionStore.activeSession?.mapData).toEqual(mapStore.mapData)
   })
 })
 

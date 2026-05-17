@@ -1,18 +1,47 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted } from 'vue'
+import { computed, onMounted, onUnmounted, watch } from 'vue'
 import FloatingToolbar from './components/FloatingToolbar.vue'
+import HexCanvas from './render/HexCanvas.vue'
 import { TOOLS } from './tools/registry'
 import { useBrushStore } from './stores/brushStore'
+import { useMapStore } from './stores/mapStore'
 import { useAutoSaveStore } from './stores/autoSaveStore'
 import { useSessionStore } from './stores/sessionStore'
 import { loadWorkspace } from './storage/persist'
 import { loadHandle } from './storage/fileHandlePersistence'
 
 const brushStore = useBrushStore()
+const mapStore = useMapStore()
 const activeHud = computed(() => TOOLS.find(t => t.id === brushStore.tool)?.hud)
 
 const autoSaveStore = useAutoSaveStore()
 const sessionStore = useSessionStore()
+
+function syncActiveSessionMapData(): void {
+  const activeSession = sessionStore.activeSession
+  if (!activeSession) return
+  mapStore.loadMapData(activeSession.mapData)
+}
+
+watch(
+  () => sessionStore.activeId,
+  () => syncActiveSessionMapData(),
+)
+
+function handleKeyDown(e: KeyboardEvent): void {
+  const mod = e.metaKey || e.ctrlKey
+  if (!mod) return
+  if (e.key === 'z' && !e.shiftKey) {
+    e.preventDefault()
+    mapStore.undo()
+  } else if (e.key === 'z' && e.shiftKey) {
+    e.preventDefault()
+    mapStore.redo()
+  } else if (e.key === 'y') {
+    e.preventDefault()
+    mapStore.redo()
+  }
+}
 
 function handleBeforeUnload(): void {
   autoSaveStore.flushAllNow()
@@ -20,7 +49,12 @@ function handleBeforeUnload(): void {
 
 async function restoreWorkspace(): Promise<void> {
   const workspace = loadWorkspace()
-  if (!workspace || workspace.tabs.length === 0) return
+  if (!workspace || workspace.tabs.length === 0) {
+    // No saved workspace — create a fresh session so autosave has a target
+    const session = sessionStore.makeSession()
+    sessionStore.setActive(session.id)
+    return
+  }
 
   // Replace any startup placeholder sessions without triggering closeSession's
   // last-session replacement behavior.
@@ -39,6 +73,9 @@ async function restoreWorkspace(): Promise<void> {
     sessionStore.setActive(sessionStore.sessions[0].id)
   }
 
+  // Load active session's map data into mapStore so the canvas renders it.
+  syncActiveSessionMapData()
+
   // Restore file handles for each session (no requestPermission — deferred to save time)
   for (const session of sessionStore.sessions) {
     const handle = await loadHandle(session.id)
@@ -50,16 +87,19 @@ async function restoreWorkspace(): Promise<void> {
 
 onMounted(async () => {
   window.addEventListener('beforeunload', handleBeforeUnload)
+  window.addEventListener('keydown', handleKeyDown)
   await restoreWorkspace()
 })
 
 onUnmounted(() => {
   window.removeEventListener('beforeunload', handleBeforeUnload)
+  window.removeEventListener('keydown', handleKeyDown)
 })
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-900 text-white">
+  <div class="min-h-screen bg-gray-900 text-white" style="position: relative; overflow: hidden;">
+    <HexCanvas style="position: absolute; inset: 0;" />
     <div class="hud-panel">
       <component :is="activeHud" v-if="activeHud" />
     </div>

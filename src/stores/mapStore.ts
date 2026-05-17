@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import type { MapData } from '../data/types'
 import type { Command } from '../commands/types'
 import { BatchCommand } from '../commands/batchCommand'
+import { useSessionStore } from './sessionStore'
 
 const DEFAULT_MAP_DATA: MapData = {
   name: 'New Map',
@@ -11,6 +12,10 @@ const DEFAULT_MAP_DATA: MapData = {
   icons: [],
   lines: [],
   doodles: [],
+}
+
+function cloneMapData(data: MapData): MapData {
+  return JSON.parse(JSON.stringify(data)) as MapData
 }
 
 export const useMapStore = defineStore('map', () => {
@@ -25,9 +30,18 @@ export const useMapStore = defineStore('map', () => {
   const canRedo = computed(() => redoStack.value.length > 0)
   const undoStackLength = computed(() => undoStack.value.length)
 
+  function syncToActiveSession(data: MapData): void {
+    const sessionStore = useSessionStore()
+    const active = sessionStore.activeSession
+    if (!active) return
+    active.mapData = cloneMapData(data)
+    sessionStore.markSessionDirty(active.id)
+  }
+
   function dispatch(cmd: Command): void {
     const { state: nextState, inverse } = cmd.apply(mapData.value)
     mapData.value = nextState
+    syncToActiveSession(nextState)
 
     if (strokeActive.value) {
       pendingInverses.value.push(inverse)
@@ -59,6 +73,7 @@ export const useMapStore = defineStore('map', () => {
     const { state: prevState, inverse: forwardCmd } = cmd.apply(mapData.value)
     mapData.value = prevState
     redoStack.value.push(forwardCmd)
+    syncToActiveSession(prevState)
   }
 
   function redo(): void {
@@ -68,6 +83,19 @@ export const useMapStore = defineStore('map', () => {
     const { state: nextState, inverse: backCmd } = cmd.apply(mapData.value)
     mapData.value = nextState
     undoStack.value.push(backCmd)
+    syncToActiveSession(nextState)
+  }
+
+  function loadMapData(data: MapData): void {
+    // JSON round-trip strips reactive Proxy at all nesting levels before cloning.
+    // structuredClone(toRaw(data)) only unwraps the top-level Proxy; nested objects
+    // accessed through Vue's reactive proxy during dispatch remain as Proxies and
+    // cause DATA_CLONE_ERR (code 25) in happy-dom and some browsers.
+    mapData.value = cloneMapData(data)
+    undoStack.value = []
+    redoStack.value = []
+    pendingInverses.value = []
+    strokeActive.value = false
   }
 
   return {
@@ -80,5 +108,6 @@ export const useMapStore = defineStore('map', () => {
     endStroke,
     undo,
     redo,
+    loadMapData,
   }
 })

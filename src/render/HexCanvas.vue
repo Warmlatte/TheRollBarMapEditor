@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, toRaw } from 'vue'
+import { ref, computed, toRaw, onMounted } from 'vue'
 import { useMapStore } from '../stores/mapStore'
 import { useBrushStore } from '../stores/brushStore'
 import { useViewportStore } from '../stores/viewportStore'
@@ -80,6 +80,14 @@ function buildContext(_e: PointerEvent): ToolContext {
     mapData: rawMap,
   }
 }
+
+onMounted(() => {
+  const el = svgEl.value
+  if (!el) return
+  const w = el.clientWidth
+  const h = el.clientHeight
+  viewportStore.setPan(-w / 2, -h / 2)
+})
 
 function onPointerDown(e: PointerEvent) {
   if (!svgEl.value) return
