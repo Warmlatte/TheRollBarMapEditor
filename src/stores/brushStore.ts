@@ -5,7 +5,7 @@ export type Tool = 'paint' | 'erase' | 'icon' | 'line' | 'doodle'
 
 export const useBrushStore = defineStore('brush', () => {
   const tool = ref<Tool>('paint')
-  const color = ref('#6366f1')
+  const color = ref('#4a7a3a')
 
   function setTool(t: Tool) {
     tool.value = t

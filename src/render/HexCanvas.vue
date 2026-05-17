@@ -124,7 +124,7 @@ function onPointerUp(e: PointerEvent) {
         :key="`${hex.q},${hex.r}`"
         :points="hexPolygonPoints(hex.q, hex.r)"
         fill="none"
-        stroke="#d1d5db"
+        stroke="#7a7a7a"
         stroke-width="0.5"
       />
     </g>

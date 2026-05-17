@@ -3,9 +3,9 @@ import { ref, computed } from 'vue'
 import { hsvToHex, hexToHsv } from '../lib/colorMath'
 
 export const useColorPickerStore = defineStore('colorPicker', () => {
-  const h = ref<number>(0)
-  const s = ref<number>(1)
-  const v = ref<number>(1)
+  const h = ref<number>(0.2917)
+  const s = ref<number>(0.5246)
+  const v = ref<number>(0.4784)
 
   const hex = computed(() => hsvToHex(h.value, s.value, v.value))
 

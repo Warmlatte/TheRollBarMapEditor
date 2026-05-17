@@ -21,7 +21,7 @@ export type Session = {
 
 const DEFAULT_MAP_DATA: MapData = {
   name: 'New Map',
-  bounds: { radius: 5 },
+  bounds: { radius: 10 },
   hexes: [],
   icons: [],
   lines: [],
