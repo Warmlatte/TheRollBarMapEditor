@@ -1,6 +1,6 @@
 <template>
-  <div class="load-hud">
-    <div class="tile-grid">
+  <div class="hud-panel absolute left-2 top-[50px]">
+    <div class="grid grid-cols-2 gap-2">
       <div
         v-for="entry in archiveStore.entries"
         :key="entry.id"
@@ -40,31 +40,6 @@ function openEntry(entry: ArchiveEntry): void {
 </script>
 
 <style scoped>
-.load-hud {
-  position: absolute;
-  top: 50px;
-  left: 8px;
-  width: 264px;
-  max-height: calc(100vh - 80px);
-  overflow-y: scroll;
-  overflow-x: hidden;
-  background: rgba(0, 0, 0, 0.65);
-  border-radius: 6px;
-  font-size: 13px;
-  color: #ddd;
-  backdrop-filter: blur(4px);
-  padding: 10px 12px;
-  z-index: 10;
-  scrollbar-width: thin;
-  scrollbar-color: #555 transparent;
-}
-
-.tile-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
 .tile {
   position: relative;
   background: #2a2a2a;

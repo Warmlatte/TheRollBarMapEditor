@@ -13,6 +13,22 @@ body { overflow: hidden; }
 @tailwind components;
 
 @layer components {
+  .hud-panel {
+    width: 264px;
+    max-height: calc(100vh - 80px);
+    overflow-y: scroll;
+    overflow-x: hidden;
+    background: rgba(0, 0, 0, 0.65);
+    border-radius: 6px;
+    font-size: 13px;
+    color: #ddd;
+    backdrop-filter: blur(4px);
+    z-index: 10;
+    padding: 10px 12px;
+    scrollbar-width: thin;
+    scrollbar-color: #555 transparent;
+  }
+
   .hud-btn {
     background: #333;
     border: 1px solid #555;
@@ -91,6 +107,32 @@ body { overflow: hidden; }
     color: #fff;
   }
   .target-btn:hover { border-color: #777; }
+
+  .tool-btn {
+    background: #333;
+    border: 1px solid #555;
+    color: #ddd;
+    border-radius: 4px;
+    padding: 6px 12px;
+    min-width: 60px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .tool-btn:hover { background: #444; }
+
+  .tool-btn.active {
+    background: #4a6e3a;
+    border-color: #6a9a52;
+    color: #fff;
+  }
+  .tool-btn.active:hover { background: #5a8045; }
+
+  .tool-btn.btn-danger.active {
+    background: #8a3a2e;
+    border-color: #c25a4a;
+    color: #fff;
+  }
+  .tool-btn.btn-danger.active:hover { background: #a14538; }
 }
 
 @tailwind utilities;

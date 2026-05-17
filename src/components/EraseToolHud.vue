@@ -1,5 +1,5 @@
 <template>
-  <div class="erase-tool-hud">
+  <div class="py-0.5">
     <div class="slider-row">
       <span class="slabel">半徑</span>
       <input
@@ -15,7 +15,7 @@
 
     <hr class="hud-divider" />
 
-    <div class="target-grid">
+    <div class="grid grid-cols-2 gap-1">
       <button
         v-for="key in targetKeys"
         :key="key"
@@ -40,14 +40,3 @@ const targetLabels: Record<string, string> = {
   doodle: '塗鴉',
 }
 </script>
-
-<style scoped>
-.erase-tool-hud {
-  padding: 2px 0;
-}
-.target-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4px;
-}
-</style>

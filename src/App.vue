@@ -102,12 +102,12 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div style="position: relative; width: 100vw; height: 100vh; overflow: hidden;">
-    <HexCanvas style="position: absolute; inset: 0;" />
+  <div class="relative h-screen w-screen overflow-hidden">
+    <HexCanvas class="absolute inset-0" />
 
-    <div class="hud-panel">
-      <div class="hud-header">
-        <span class="hud-tool-name">{{ activeToolName }}</span>
+    <div class="hud-panel absolute right-2 top-2">
+      <div class="flex items-center gap-1.5">
+        <span class="flex-1 text-xs font-semibold text-text-dim">{{ activeToolName }}</span>
         <button class="hud-btn" :disabled="!mapStore.canUndo" @click="mapStore.undo()">↩</button>
         <button class="hud-btn" :disabled="!mapStore.canRedo" @click="mapStore.redo()">↪</button>
       </div>
@@ -122,38 +122,6 @@ onUnmounted(() => {
 </template>
 
 <style>
-.hud-panel {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 264px;
-  max-height: calc(100vh - 80px);
-  overflow-y: scroll;
-  overflow-x: hidden;
-  background: rgba(0, 0, 0, 0.65);
-  border-radius: 6px;
-  font-size: 13px;
-  color: #ddd;
-  backdrop-filter: blur(4px);
-  z-index: 10;
-  padding: 10px 12px;
-  scrollbar-width: thin;
-  scrollbar-color: #555 transparent;
-}
-
-.hud-header {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.hud-tool-name {
-  flex: 1;
-  font-size: 12px;
-  font-weight: 600;
-  color: #ddd;
-}
-
 .settings-btn {
   position: absolute;
   bottom: 12px;

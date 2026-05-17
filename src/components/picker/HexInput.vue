@@ -1,7 +1,7 @@
 <template>
-  <div class="hex-input-wrapper">
+  <div class="flex items-center">
     <input
-      class="hex-input"
+      class="hex-input hud-input w-full font-mono lowercase outline-none"
       type="text"
       :value="localValue"
       maxlength="7"
@@ -44,27 +44,3 @@ function onCommit() {
   localValue.value = colorPicker.hex
 }
 </script>
-
-<style scoped>
-.hex-input-wrapper {
-  display: flex;
-  align-items: center;
-}
-
-.hex-input {
-  width: 100%;
-  padding: 3px 4px;
-  font-size: 11px;
-  font-family: Consolas, Menlo, monospace;
-  text-transform: lowercase;
-  background: #1f1f1f;
-  border: 1px solid #555;
-  border-radius: 3px;
-  color: #ddd;
-  outline: none;
-}
-
-.hex-input:focus {
-  border-color: #6a9a52;
-}
-</style>

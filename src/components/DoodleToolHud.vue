@@ -1,5 +1,5 @@
 <template>
-  <div class="doodle-tool-hud">
+  <div class="py-0.5">
     <div class="slider-row">
       <span class="slabel">筆寬</span>
       <input
@@ -45,9 +45,3 @@ import { useDoodleStore } from '../stores/doodleStore'
 
 const doodleStore = useDoodleStore()
 </script>
-
-<style scoped>
-.doodle-tool-hud {
-  padding: 2px 0;
-}
-</style>

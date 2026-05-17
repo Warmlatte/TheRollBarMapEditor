@@ -1,5 +1,5 @@
 <template>
-  <div class="icon-tool-hud">
+  <div class="py-0.5">
     <div class="slider-row">
       <span class="slabel">大小</span>
       <input
@@ -55,9 +55,3 @@ import { hexCorners } from '../lib/hexMath'
 const iconStore = useIconStore()
 const hexOutline = hexCorners(40, 40, 30)
 </script>
-
-<style scoped>
-.icon-tool-hud {
-  padding: 2px 0;
-}
-</style>

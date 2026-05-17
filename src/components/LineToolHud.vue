@@ -1,5 +1,5 @@
 <template>
-  <div class="line-tool-hud">
+  <div class="py-0.5">
     <div class="slider-row">
       <span class="slabel">線寬</span>
       <input
@@ -13,7 +13,7 @@
       <span class="value-mini">{{ lineStore.lineWidth }}</span>
     </div>
 
-    <div class="toggle-row">
+    <div class="slider-row">
       <label class="slabel">虛線</label>
       <input
         type="checkbox"
@@ -39,15 +39,3 @@ import { useLineStore } from '../stores/lineStore'
 
 const lineStore = useLineStore()
 </script>
-
-<style scoped>
-.line-tool-hud {
-  padding: 2px 0;
-}
-.toggle-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin: 4px 0;
-}
-</style>
