@@ -7,12 +7,16 @@ import { useBrushStore } from './stores/brushStore'
 import { useMapStore } from './stores/mapStore'
 import { useAutoSaveStore } from './stores/autoSaveStore'
 import { useSessionStore } from './stores/sessionStore'
+import { useI18nStore } from './stores/i18nStore'
 import { loadWorkspace } from './storage/persist'
 import { loadHandle } from './storage/fileHandlePersistence'
 
 const brushStore = useBrushStore()
 const mapStore = useMapStore()
-const activeHud = computed(() => TOOLS.find(t => t.id === brushStore.tool)?.hud)
+const i18n = useI18nStore()
+const activeTool = computed(() => TOOLS.find(t => t.id === brushStore.tool))
+const activeHud = computed(() => activeTool.value?.hud)
+const activeToolName = computed(() => i18n.t(activeTool.value?.i18nKey ?? ''))
 
 const autoSaveStore = useAutoSaveStore()
 const sessionStore = useSessionStore()
@@ -98,24 +102,73 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-900 text-white" style="position: relative; overflow: hidden;">
+  <div style="position: relative; width: 100vw; height: 100vh; overflow: hidden;">
     <HexCanvas style="position: absolute; inset: 0;" />
+
     <div class="hud-panel">
+      <div class="hud-header">
+        <span class="hud-tool-name">{{ activeToolName }}</span>
+        <button class="hud-btn" :disabled="!mapStore.canUndo" @click="mapStore.undo()">↩</button>
+        <button class="hud-btn" :disabled="!mapStore.canRedo" @click="mapStore.redo()">↪</button>
+      </div>
+      <hr class="hud-divider" />
       <component :is="activeHud" v-if="activeHud" />
     </div>
+
+    <button class="settings-btn">⚙</button>
+
     <FloatingToolbar />
   </div>
 </template>
 
 <style>
 .hud-panel {
-  position: fixed;
-  top: 16px;
-  left: 16px;
-  width: 220px;
-  background: rgba(30, 30, 40, 0.92);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 264px;
+  max-height: calc(100vh - 80px);
+  overflow-y: scroll;
+  overflow-x: hidden;
+  background: rgba(0, 0, 0, 0.65);
+  border-radius: 6px;
+  font-size: 13px;
+  color: #ddd;
+  backdrop-filter: blur(4px);
+  z-index: 10;
+  padding: 10px 12px;
+  scrollbar-width: thin;
+  scrollbar-color: #555 transparent;
+}
+
+.hud-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hud-tool-name {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 600;
+  color: #ddd;
+}
+
+.settings-btn {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.65);
+  border: 1px solid #555;
+  color: #ddd;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   z-index: 10;
 }
 </style>
