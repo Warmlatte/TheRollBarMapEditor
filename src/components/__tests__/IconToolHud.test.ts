@@ -222,10 +222,10 @@ describe('IconToolHud — icon selection', () => {
     await saveButton.trigger('click')
 
     expect(iconStore.savedIcons).toEqual([
-      { id: 'mountain-default', svgId: 'mountain', color: '#7a7a7a', size: 100, rotation: 0 },
-      { id: 'tree-default', svgId: 'tree', color: '#4a7a3a', size: 100, rotation: 0 },
-      { id: 'tower-default', svgId: 'tower', color: '#7a4a2a', size: 100, rotation: 0 },
-      { id: 'skull-default', svgId: 'skull', color: '#c33232', size: 100, rotation: 0 },
+      { id: 'mountain-default', svgId: 'mountain', color: '#7a7a7a', size: 65, rotation: 0 },
+      { id: 'tree-default', svgId: 'tree', color: '#4a7a3a', size: 65, rotation: 0 },
+      { id: 'tower-default', svgId: 'tower', color: '#7a4a2a', size: 65, rotation: 0 },
+      { id: 'skull-default', svgId: 'skull', color: '#c33232', size: 65, rotation: 0 },
     ])
     wrapper.unmount()
   })

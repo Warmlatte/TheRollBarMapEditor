@@ -77,10 +77,10 @@ describe('iconStore', () => {
   it('savedIcons defaults to built-in colored icon presets', () => {
     const store = useIconStore()
     expect(store.savedIcons).toEqual([
-      { id: 'mountain-default', svgId: 'mountain', color: '#7a7a7a', size: 100, rotation: 0 },
-      { id: 'tree-default', svgId: 'tree', color: '#4a7a3a', size: 100, rotation: 0 },
-      { id: 'tower-default', svgId: 'tower', color: '#7a4a2a', size: 100, rotation: 0 },
-      { id: 'skull-default', svgId: 'skull', color: '#c33232', size: 100, rotation: 0 },
+      { id: 'mountain-default', svgId: 'mountain', color: '#7a7a7a', size: 65, rotation: 0 },
+      { id: 'tree-default', svgId: 'tree', color: '#4a7a3a', size: 65, rotation: 0 },
+      { id: 'tower-default', svgId: 'tower', color: '#7a4a2a', size: 65, rotation: 0 },
+      { id: 'skull-default', svgId: 'skull', color: '#c33232', size: 65, rotation: 0 },
     ])
   })
 
@@ -106,7 +106,7 @@ describe('iconStore', () => {
     const store = useIconStore()
     store.setSelectedSvgId('mountain')
     store.setColor('#7a7a7a')
-    store.setSize(100)
+    store.setSize(65)
     store.setRotation(0)
     const initialSavedIcons = store.savedIcons
 
@@ -118,7 +118,7 @@ describe('iconStore', () => {
       store.savedIcons.filter((icon) =>
         icon.svgId === 'mountain' &&
         icon.color === '#7a7a7a' &&
-        icon.size === 100 &&
+        icon.size === 65 &&
         icon.rotation === 0),
     ).toHaveLength(1)
   })
@@ -147,10 +147,10 @@ describe('iconStore', () => {
     store.saveCurrentIcon()
 
     expect(store.savedIcons).toEqual([
-      { id: 'mountain-default', svgId: 'mountain', color: '#7a7a7a', size: 100, rotation: 0 },
-      { id: 'tree-default', svgId: 'tree', color: '#4a7a3a', size: 100, rotation: 0 },
-      { id: 'tower-default', svgId: 'tower', color: '#7a4a2a', size: 100, rotation: 0 },
-      { id: 'skull-default', svgId: 'skull', color: '#c33232', size: 100, rotation: 0 },
+      { id: 'mountain-default', svgId: 'mountain', color: '#7a7a7a', size: 65, rotation: 0 },
+      { id: 'tree-default', svgId: 'tree', color: '#4a7a3a', size: 65, rotation: 0 },
+      { id: 'tower-default', svgId: 'tower', color: '#7a4a2a', size: 65, rotation: 0 },
+      { id: 'skull-default', svgId: 'skull', color: '#c33232', size: 65, rotation: 0 },
     ])
   })
 
