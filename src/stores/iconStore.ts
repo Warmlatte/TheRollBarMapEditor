@@ -16,7 +16,7 @@ const DEFAULT_SAVED_ICON_PRESETS: SavedIconPreset[] = [
 
 export const useIconStore = defineStore('icon', () => {
   const selectedSvgId = ref<string | null>(null)
-  const size = ref(100)
+  const size = ref(65)
   const rotation = ref(0)
   const color = ref(DEFAULT_TOOL_COLOR)
   const savedIcons = ref<SavedIconPreset[]>([...DEFAULT_SAVED_ICON_PRESETS])
