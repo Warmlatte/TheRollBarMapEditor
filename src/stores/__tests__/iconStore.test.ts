@@ -25,9 +25,9 @@ describe('iconStore', () => {
     expect(store.selectedSvgId).toBeNull()
   })
 
-  it('size defaults to 100 to place icons at 1.00x', () => {
+  it('size defaults to 65', () => {
     const store = useIconStore()
-    expect(store.size).toBe(100)
+    expect(store.size).toBe(65)
   })
 
   it('setSize updates size', () => {
