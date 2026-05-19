@@ -6,8 +6,8 @@ export type Brush = { color: string }
 
 export type Icon = {
   id: string
-  q: number
-  r: number
+  x: number
+  y: number
   svgId: string
   size: number
   rotation: number

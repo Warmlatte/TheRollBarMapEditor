@@ -40,13 +40,13 @@ function validateHex(val: unknown, index: number): Hex {
 function validateIcon(val: unknown, index: number): Icon {
   assertObject(val, `icons[${index}]`)
   assertString(val.id, `icons[${index}].id`)
-  assertNumber(val.q, `icons[${index}].q`)
-  assertNumber(val.r, `icons[${index}].r`)
+  assertNumber(val.x, `icons[${index}].x`)
+  assertNumber(val.y, `icons[${index}].y`)
   assertString(val.svgId, `icons[${index}].svgId`)
   assertNumber(val.size, `icons[${index}].size`)
   assertNumber(val.rotation, `icons[${index}].rotation`)
   assertColor(val.color, `icons[${index}].color`)
-  return { id: val.id, q: val.q, r: val.r, svgId: val.svgId, size: val.size, rotation: val.rotation, color: val.color }
+  return { id: val.id, x: val.x, y: val.y, svgId: val.svgId, size: val.size, rotation: val.rotation, color: val.color }
 }
 
 function validateLine(val: unknown, index: number): Line {
