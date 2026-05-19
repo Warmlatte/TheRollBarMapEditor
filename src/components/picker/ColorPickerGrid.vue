@@ -1,7 +1,7 @@
 <template>
   <div class="my-1 grid grid-cols-2 items-center gap-x-2 gap-y-1.5">
-    <SvSquare />
     <slot name="preview" />
+    <SvSquare />
     <HuePicker class="col-span-2" />
     <HexInput />
     <span class="overflow-hidden text-ellipsis whitespace-nowrap text-right font-mono text-[11px]" :style="{ color: brush.color }">{{ brush.color }}</span>

@@ -229,6 +229,16 @@ body { overflow: hidden; }
     color: #fff;
   }
 
+  .saved-icons-section {
+    margin-top: 8px;
+  }
+  .saved-icons-title {
+    color: #aaa;
+    font-size: 11px;
+    line-height: 1.2;
+    margin-bottom: 4px;
+  }
+
   .slider-trailing-fixed {
     min-width: 44px;
     justify-content: flex-end;

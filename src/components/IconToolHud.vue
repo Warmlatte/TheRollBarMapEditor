@@ -121,6 +121,34 @@
         />
       </label>
     </div>
+
+    <button
+      data-testid="icon-save-current"
+      class="hud-btn w-full"
+      :disabled="!iconStore.selectedSvgId"
+      @click="iconStore.saveCurrentIcon()"
+    >
+      儲存圖示
+    </button>
+
+    <div data-testid="saved-icons-section" class="saved-icons-section">
+      <div class="saved-icons-title">已存圖示</div>
+      <div class="icon-picker" role="radiogroup" aria-label="saved icon picker">
+        <button
+          v-for="preset in savedIconEntries"
+          :key="`${preset.svgId}-${preset.color}`"
+          :data-testid="`saved-icon-${preset.svgId}-${preset.color.slice(1)}`"
+          class="icon-cell"
+          :title="preset.entry.name"
+          :style="{ color: preset.color }"
+          @click="handleSelectSavedIcon(preset)"
+        >
+          <svg viewBox="0 0 100 100" width="28" height="28" aria-hidden="true">
+            <g v-html="displaySvg(preset.entry.rawSvg)" />
+          </svg>
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -132,6 +160,7 @@ import { useIconStore } from '../stores/iconStore'
 import { useIconLibraryStore, getDisplaySvg, type IconEntry } from '../stores/iconLibraryStore'
 import { useI18nStore } from '../stores/i18nStore'
 import { useSnapStore } from '../stores/snapStore'
+import { useColorPickerStore } from '../stores/colorPickerStore'
 import { hexCorners } from '../lib/hexMath'
 
 const brushStore = useBrushStore()
@@ -139,6 +168,7 @@ const iconStore = useIconStore()
 const libStore = useIconLibraryStore()
 const snapStore = useSnapStore()
 const i18n = useI18nStore()
+const colorPicker = useColorPickerStore()
 const previewHexPoints = hexCorners(0, 0, 100)
 
 const selectedEntry = computed(() =>
@@ -149,6 +179,13 @@ const selectedEntry = computed(() =>
 
 const selectedDisplaySvg = computed(() =>
   selectedEntry.value ? getDisplaySvg(selectedEntry.value.rawSvg) : '',
+)
+
+const savedIconEntries = computed(() =>
+  iconStore.savedIcons.flatMap((preset) => {
+    const entry = libStore.icons.find((icon) => icon.id === preset.svgId)
+    return entry ? [{ ...preset, entry }] : []
+  }),
 )
 
 onMounted(() => {
@@ -174,6 +211,13 @@ function handleSelectIcon(entry: IconEntry): void {
   if (entry.defaultColor) {
     brushStore.setColor(entry.defaultColor)
   }
+}
+
+function handleSelectSavedIcon(preset: { svgId: string; color: string }): void {
+  iconStore.setSelectedSvgId(preset.svgId)
+  iconStore.setColor(preset.color)
+  brushStore.setColor(preset.color)
+  colorPicker.setHex(preset.color)
 }
 
 function handleAngleInput(event: Event): void {
