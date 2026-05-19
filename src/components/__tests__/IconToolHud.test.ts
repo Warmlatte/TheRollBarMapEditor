@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
+import { useBrushStore } from '../../stores/brushStore'
+import { useColorPickerStore } from '../../stores/colorPickerStore'
 import { useIconStore } from '../../stores/iconStore'
 import { useIconLibraryStore } from '../../stores/iconLibraryStore'
 import type { IconEntry } from '../../stores/iconLibraryStore'
@@ -13,6 +15,12 @@ vi.mock('../../storage/svgNormalize', () => ({
 
 const ICON_A: IconEntry = { id: 'id-a', rawSvg: '<svg/>', name: 'Alpha', createdAt: 1000 }
 const ICON_B: IconEntry = { id: 'id-b', rawSvg: '<svg/>', name: 'Beta', createdAt: 2000 }
+const ICON_COLORED: IconEntry = {
+  id: 'mountain',
+  rawSvg: '<svg><path d="M0 0h10v10z"/></svg>',
+  name: 'Mountain',
+  createdAt: 1,
+}
 
 async function mountHud(pinia: Pinia) {
   const { default: IconToolHud } = await import('../IconToolHud.vue')
@@ -63,6 +71,23 @@ describe('IconToolHud — library loading', () => {
     expect(wrapper.findAll('.icon-cell').length).toBe(3)
     wrapper.unmount()
   })
+
+  it('shows a save icon button and saved icons section below the default picker', async () => {
+    const libStore = useIconLibraryStore()
+    vi.spyOn(libStore, 'loadIcons').mockResolvedValue()
+    libStore.icons = [ICON_A]
+    const wrapper = await mountHud(pinia)
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('[data-testid="icon-save-current"]').text()).toBe('儲存圖示')
+    expect(wrapper.find('[data-testid="saved-icons-section"]').text()).toContain('已存圖示')
+    expect(
+      wrapper.find('.icon-picker').element.compareDocumentPosition(
+        wrapper.find('[data-testid="saved-icons-section"]').element,
+      ) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+    wrapper.unmount()
+  })
 })
 
 describe('IconToolHud — icon selection', () => {
@@ -104,6 +129,105 @@ describe('IconToolHud — icon selection', () => {
     await wrapper.vm.$nextTick()
 
     expect(wrapper.find('[data-testid="icon-select-id-a"]').classes()).toContain('active')
+    wrapper.unmount()
+  })
+
+  it('saving the current icon adds a colored entry to the saved icons section', async () => {
+    const libStore = useIconLibraryStore()
+    const iconStore = useIconStore()
+    const brushStore = useBrushStore()
+    const colorPickerStore = useColorPickerStore()
+    vi.spyOn(libStore, 'loadIcons').mockResolvedValue()
+    libStore.icons = [ICON_COLORED]
+    iconStore.setSelectedSvgId('mountain')
+    colorPickerStore.setHex('#336699')
+    brushStore.setColor('#336699')
+    const wrapper = await mountHud(pinia)
+    await wrapper.vm.$nextTick()
+
+    await wrapper.find('[data-testid="icon-save-current"]').trigger('click')
+    await wrapper.vm.$nextTick()
+
+    const saved = wrapper.find('[data-testid="saved-icon-mountain-336699"]')
+    expect(saved.exists()).toBe(true)
+    expect(saved.attributes('style')).toContain('color: #336699')
+    wrapper.unmount()
+  })
+
+  it('saving the same colored icon twice keeps a single saved preset button', async () => {
+    const libStore = useIconLibraryStore()
+    const iconStore = useIconStore()
+    const brushStore = useBrushStore()
+    const colorPickerStore = useColorPickerStore()
+    vi.spyOn(libStore, 'loadIcons').mockResolvedValue()
+    libStore.icons = [ICON_COLORED]
+    iconStore.setSelectedSvgId('mountain')
+    colorPickerStore.setHex('#336699')
+    brushStore.setColor('#336699')
+    const wrapper = await mountHud(pinia)
+    await wrapper.vm.$nextTick()
+
+    await wrapper.find('[data-testid="icon-save-current"]').trigger('click')
+    await wrapper.find('[data-testid="icon-save-current"]').trigger('click')
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.findAll('[data-testid="saved-icon-mountain-336699"]')).toHaveLength(1)
+    expect(iconStore.savedIcons).toEqual([{ svgId: 'mountain', color: '#336699' }])
+    wrapper.unmount()
+  })
+
+  it('disables saving and leaves saved icons unchanged when no icon is selected', async () => {
+    const libStore = useIconLibraryStore()
+    const iconStore = useIconStore()
+    vi.spyOn(libStore, 'loadIcons').mockResolvedValue()
+    libStore.icons = []
+    const wrapper = await mountHud(pinia)
+    await wrapper.vm.$nextTick()
+
+    const saveButton = wrapper.find('[data-testid="icon-save-current"]')
+    expect(saveButton.attributes('disabled')).toBeDefined()
+    await saveButton.trigger('click')
+
+    expect(iconStore.savedIcons).toEqual([])
+    wrapper.unmount()
+  })
+
+  it('clicking a saved icon restores its icon and color across stores', async () => {
+    const libStore = useIconLibraryStore()
+    const iconStore = useIconStore()
+    const brushStore = useBrushStore()
+    const colorPickerStore = useColorPickerStore()
+    vi.spyOn(libStore, 'loadIcons').mockResolvedValue()
+    libStore.icons = [ICON_COLORED]
+    iconStore.setSelectedSvgId('mountain')
+    iconStore.setColor('#336699')
+    iconStore.saveCurrentIcon()
+    iconStore.setSelectedSvgId(null)
+    iconStore.setColor('#5b992e')
+    brushStore.setColor('#5b992e')
+    colorPickerStore.setHex('#5b992e')
+    const wrapper = await mountHud(pinia)
+    await wrapper.vm.$nextTick()
+
+    await wrapper.find('[data-testid="saved-icon-mountain-336699"]').trigger('click')
+
+    expect(iconStore.selectedSvgId).toBe('mountain')
+    expect(iconStore.color).toBe('#336699')
+    expect(brushStore.color).toBe('#336699')
+    expect(colorPickerStore.hex).toBe('#336699')
+    wrapper.unmount()
+  })
+
+  it('does not render saved presets whose library icon is missing', async () => {
+    const libStore = useIconLibraryStore()
+    const iconStore = useIconStore()
+    vi.spyOn(libStore, 'loadIcons').mockResolvedValue()
+    libStore.icons = [ICON_A]
+    iconStore.savedIcons = [{ svgId: 'missing', color: '#336699' }]
+    const wrapper = await mountHud(pinia)
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('[data-testid="saved-icon-missing-336699"]').exists()).toBe(false)
     wrapper.unmount()
   })
 })

@@ -27,4 +27,18 @@ describe('ColorPickerGrid', () => {
     const wrapper = mount(ColorPickerGrid)
     expect(wrapper.find('.hex-input').exists()).toBe(true)
   })
+
+  it('renders preview slot before the SV picker so the color picker stays on the right', () => {
+    const wrapper = mount(ColorPickerGrid, {
+      slots: {
+        preview: '<div data-testid="preview-slot" />',
+      },
+    })
+    const preview = wrapper.find('[data-testid="preview-slot"]').element
+    const svSquare = wrapper.find('.sv-square').element
+
+    expect(
+      preview.compareDocumentPosition(svSquare) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+  })
 })
