@@ -60,10 +60,6 @@ function hexPolygonPoints(q: number, r: number): string {
   return points.join(' ')
 }
 
-function iconCenter(q: number, r: number) {
-  return hexToPixel(q, r)
-}
-
 function iconSvg(svgId: string): string {
   const entry = iconLibraryStore.icons.find((icon) => icon.id === svgId)
   return entry ? getDisplaySvg(entry.rawSvg) : ''
@@ -172,7 +168,7 @@ function onPointerUp(e: PointerEvent) {
         v-for="icon in mapData.icons"
         :key="icon.id"
         :data-testid="`placed-icon-${icon.id}`"
-        :transform="`translate(${iconCenter(icon.q, icon.r).x}, ${iconCenter(icon.q, icon.r).y}) rotate(${icon.rotation}) scale(${icon.size / 100}) translate(-50,-50)`"
+        :transform="`translate(${icon.x}, ${icon.y}) rotate(${icon.rotation}) scale(${icon.size / 100}) translate(-50,-50)`"
         :fill="icon.color"
         :stroke="icon.color"
         v-html="iconSvg(icon.svgId)"
