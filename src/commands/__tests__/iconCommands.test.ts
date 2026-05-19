@@ -16,8 +16,8 @@ function makeMapData(overrides: Partial<MapData> = {}): MapData {
 
 const testIcon: Icon = {
   id: 'icon-1',
-  q: 2,
-  r: 3,
+  x: 69.28,
+  y: 90,
   svgId: 'svg-1',
   size: 1,
   rotation: 0,
@@ -105,8 +105,8 @@ describe('RemoveIconCommand', () => {
     const { state: restored } = inverse.apply(next)
     const icon = restored.icons.find((i) => i.id === testIcon.id)!
     expect(icon.svgId).toBe(testIcon.svgId)
-    expect(icon.q).toBe(testIcon.q)
-    expect(icon.r).toBe(testIcon.r)
+    expect(icon.x).toBe(testIcon.x)
+    expect(icon.y).toBe(testIcon.y)
     expect(icon.size).toBe(testIcon.size)
     expect(icon.rotation).toBe(testIcon.rotation)
     expect(icon.color).toBe(testIcon.color)

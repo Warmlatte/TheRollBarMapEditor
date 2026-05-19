@@ -179,8 +179,8 @@ describe('HexCanvas icon rendering follows the SVG library styling contract', ()
       icons: [
         {
           id: 'icon-1',
-          q: 0,
-          r: 0,
+          x: 0,
+          y: 0,
           svgId: 'mountain',
           size: 60,
           rotation: 30,

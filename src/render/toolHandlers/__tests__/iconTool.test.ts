@@ -3,6 +3,7 @@ import { setActivePinia, createPinia } from 'pinia'
 import { PlaceIconCommand, RemoveIconCommand } from '../../../commands/iconCommands'
 import { useMapStore } from '../../../stores/mapStore'
 import { useIconStore } from '../../../stores/iconStore'
+import { useSnapStore } from '../../../stores/snapStore'
 import type { ToolContext } from '../types'
 import type { Icon, MapData } from '../../../data/types'
 
@@ -17,8 +18,8 @@ const BASE_MAP_DATA: MapData = {
 
 const EXISTING_ICON: Icon = {
   id: 'icon-existing',
-  q: 1,
-  r: 2,
+  x: 10,
+  y: 20,
   svgId: 'svg-old',
   size: 40,
   rotation: 0,
@@ -48,19 +49,22 @@ function fakeEvent(): PointerEvent {
 describe('iconHandler', () => {
   let mapStore: ReturnType<typeof useMapStore>
   let iconStore: ReturnType<typeof useIconStore>
+  let snapStore: ReturnType<typeof useSnapStore>
 
   beforeEach(() => {
     setActivePinia(createPinia())
     mapStore = useMapStore()
     iconStore = useIconStore()
+    snapStore = useSnapStore()
     iconStore.setSelectedSvgId('svg-abc')
     iconStore.setSize(40)
     iconStore.setRotation(0)
     iconStore.setColor('#000000')
+    snapStore.setMode('free')
   })
 
-  describe('onPointerDown — places icon', () => {
-    it('dispatches PlaceIconCommand when selectedSvgId is set and hex is empty', async () => {
+  describe('onPointerDown — places icon (free mode)', () => {
+    it('dispatches PlaceIconCommand when selectedSvgId is set and position is in bounds', async () => {
       const { iconHandler } = await import('../iconTool')
       const dispatchSpy = vi.spyOn(mapStore, 'dispatch')
       const ctx = makeCtx()
@@ -69,30 +73,63 @@ describe('iconHandler', () => {
       expect(dispatchSpy.mock.calls[0][0]).toBeInstanceOf(PlaceIconCommand)
     })
 
-    it('placed icon has correct svgId, coordinates, size, rotation, color', async () => {
+    it('places icon at cursor pixel coordinates in free mode', async () => {
       const { iconHandler } = await import('../iconTool')
+      snapStore.setMode('free')
       iconStore.setSelectedSvgId('svg-abc')
       iconStore.setSize(60)
       iconStore.setRotation(45)
       iconStore.setColor('#ff0000')
-      const ctx = makeCtx()
+      const ctx = makeCtx({ svgPoint: vi.fn().mockReturnValue({ x: 10, y: 20 }) })
       iconHandler.onPointerDown(ctx, fakeEvent())
-      const { state: next } = new PlaceIconCommand({
-        id: 'new-icon-id',
-        q: 1, r: 2,
-        svgId: 'svg-abc',
-        size: 60,
-        rotation: 45,
-        color: '#ff0000',
-      }).apply(BASE_MAP_DATA)
       const icon = mapStore.mapData.icons[0]
       expect(icon?.svgId).toBe('svg-abc')
-      expect(icon?.q).toBe(1)
-      expect(icon?.r).toBe(2)
+      expect(icon?.x).toBe(10)
+      expect(icon?.y).toBe(20)
       expect(icon?.size).toBe(60)
       expect(icon?.rotation).toBe(45)
       expect(icon?.color).toBe('#ff0000')
-      void next
+    })
+  })
+
+  describe('onPointerDown — node snap places icon at snapped position', () => {
+    it('snaps to hex center when cursor is at center in node mode', async () => {
+      const { iconHandler } = await import('../iconTool')
+      snapStore.setMode('node')
+      // cursor at (0,0) snaps to hex center (0,0) of hex(q=0,r=0)
+      const ctx = makeCtx({
+        svgPoint: vi.fn().mockReturnValue({ x: 0, y: 0 }),
+        pixelToHex: vi.fn().mockReturnValue({ q: 0, r: 0 }),
+      })
+      iconHandler.onPointerDown(ctx, fakeEvent())
+      const icon = mapStore.mapData.icons[0]
+      expect(icon?.x).toBeCloseTo(0, 5)
+      expect(icon?.y).toBeCloseTo(0, 5)
+    })
+  })
+
+  describe('onPointerDown — boundary guard', () => {
+    it('does not dispatch when snap position is outside map boundary', async () => {
+      const { iconHandler } = await import('../iconTool')
+      const dispatchSpy = vi.spyOn(mapStore, 'dispatch')
+      const ctx = makeCtx({
+        svgPoint: vi.fn().mockReturnValue({ x: 0, y: 0 }),
+        pixelToHex: vi.fn().mockReturnValue({ q: 10, r: 10 }),
+      })
+      iconHandler.onPointerDown(ctx, fakeEvent())
+      expect(dispatchSpy).not.toHaveBeenCalled()
+    })
+
+    it('dispatches when snap position is on the boundary (hexDistance === radius)', async () => {
+      const { iconHandler } = await import('../iconTool')
+      const dispatchSpy = vi.spyOn(mapStore, 'dispatch')
+      // hexDistance({q:3,r:2}) = (3+5+2)/2 = 5 === radius 5
+      const ctx = makeCtx({
+        pixelToHex: vi.fn().mockReturnValue({ q: 3, r: 2 }),
+      })
+      iconHandler.onPointerDown(ctx, fakeEvent())
+      expect(dispatchSpy).toHaveBeenCalledTimes(1)
+      expect(dispatchSpy.mock.calls[0][0]).toBeInstanceOf(PlaceIconCommand)
     })
   })
 
@@ -117,7 +154,7 @@ describe('iconHandler', () => {
   })
 
   describe('onPointerDown — no-op cases', () => {
-    it('does not dispatch when no selectedSvgId and hex is empty', async () => {
+    it('does not dispatch when no selectedSvgId and position is empty', async () => {
       const { iconHandler } = await import('../iconTool')
       iconStore.setSelectedSvgId(null)
       const dispatchSpy = vi.spyOn(mapStore, 'dispatch')
