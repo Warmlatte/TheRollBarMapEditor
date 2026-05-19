@@ -135,19 +135,32 @@
     <div data-testid="saved-icons-section" class="saved-icons-section">
       <div class="saved-icons-title">已存圖示</div>
       <div class="icon-picker" role="radiogroup" aria-label="saved icon picker">
-        <button
+        <div
           v-for="preset in savedIconEntries"
-          :key="`${preset.svgId}-${preset.color}`"
-          :data-testid="`saved-icon-${preset.svgId}-${preset.color.slice(1)}`"
-          class="icon-cell"
-          :title="preset.entry.name"
-          :style="{ color: preset.color }"
-          @click="handleSelectSavedIcon(preset)"
+          :key="preset.id"
+          class="icon-cell-wrap"
         >
-          <svg viewBox="0 0 100 100" width="28" height="28" aria-hidden="true">
-            <g v-html="displaySvg(preset.entry.rawSvg)" />
-          </svg>
-        </button>
+          <button
+            :data-testid="`saved-icon-${preset.svgId}-${preset.color.slice(1)}`"
+            class="icon-cell"
+            :title="preset.entry.name"
+            :style="{ color: preset.color }"
+            @click="handleSelectSavedIcon(preset)"
+          >
+            <svg viewBox="0 0 100 100" width="28" height="28" aria-hidden="true">
+              <g v-html="displaySvg(preset.entry.rawSvg)" />
+            </svg>
+          </button>
+          <button
+            :data-testid="`saved-icon-remove-${preset.svgId}-${preset.color.slice(1)}-${preset.size}-${preset.rotation}`"
+            class="icon-cell-x"
+            :aria-label="i18n.t('icon.delete')"
+            :title="i18n.t('icon.delete')"
+            @click="iconStore.removeSavedIcon(preset.id)"
+          >
+            ×
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -215,9 +228,11 @@ function handleSelectIcon(entry: IconEntry): void {
   }
 }
 
-function handleSelectSavedIcon(preset: { svgId: string; color: string }): void {
+function handleSelectSavedIcon(preset: { svgId: string; color: string; size: number; rotation: number }): void {
   iconStore.setSelectedSvgId(preset.svgId)
   iconStore.setColor(preset.color)
+  iconStore.setSize(preset.size)
+  iconStore.setRotation(preset.rotation)
   brushStore.setColor(preset.color)
   colorPicker.setHex(preset.color)
 }

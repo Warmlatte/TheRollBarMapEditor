@@ -36,6 +36,14 @@ describe('iconStore', () => {
     expect(store.size).toBe(60)
   })
 
+  it('setSize clamps size to the source app slider bounds', () => {
+    const store = useIconStore()
+    store.setSize(5)
+    expect(store.size).toBe(10)
+    store.setSize(350)
+    expect(store.size).toBe(300)
+  })
+
   it('rotation defaults to 0', () => {
     const store = useIconStore()
     expect(store.rotation).toBe(0)
@@ -45,6 +53,14 @@ describe('iconStore', () => {
     const store = useIconStore()
     store.setRotation(90)
     expect(store.rotation).toBe(90)
+  })
+
+  it('setRotation normalizes rotation to 0-359 degrees', () => {
+    const store = useIconStore()
+    store.setRotation(450)
+    expect(store.rotation).toBe(90)
+    store.setRotation(-45)
+    expect(store.rotation).toBe(315)
   })
 
   it('color defaults to the source app green', () => {
@@ -61,34 +77,50 @@ describe('iconStore', () => {
   it('savedIcons defaults to built-in colored icon presets', () => {
     const store = useIconStore()
     expect(store.savedIcons).toEqual([
-      { svgId: 'mountain', color: '#7a7a7a' },
-      { svgId: 'tree', color: '#4a7a3a' },
-      { svgId: 'tower', color: '#7a4a2a' },
-      { svgId: 'skull', color: '#c33232' },
+      { id: 'mountain-default', svgId: 'mountain', color: '#7a7a7a', size: 100, rotation: 0 },
+      { id: 'tree-default', svgId: 'tree', color: '#4a7a3a', size: 100, rotation: 0 },
+      { id: 'tower-default', svgId: 'tower', color: '#7a4a2a', size: 100, rotation: 0 },
+      { id: 'skull-default', svgId: 'skull', color: '#c33232', size: 100, rotation: 0 },
     ])
   })
 
-  it('saveCurrentIcon stores the selected icon with the current color', () => {
+  it('saveCurrentIcon stores the selected icon with the current visual state', () => {
     const store = useIconStore()
     store.setSelectedSvgId('mountain')
     store.setColor('#336699')
+    store.setSize(125)
+    store.setRotation(45)
 
     store.saveCurrentIcon()
 
-    expect(store.savedIcons).toContainEqual({ svgId: 'mountain', color: '#336699' })
+    expect(store.savedIcons).toContainEqual({
+      id: 'mountain-336699-125-45',
+      svgId: 'mountain',
+      color: '#336699',
+      size: 125,
+      rotation: 45,
+    })
   })
 
-  it('saveCurrentIcon ignores duplicate selected icon and color pairs', () => {
+  it('saveCurrentIcon ignores duplicate selected icon visual states', () => {
     const store = useIconStore()
     store.setSelectedSvgId('mountain')
     store.setColor('#7a7a7a')
+    store.setSize(100)
+    store.setRotation(0)
     const initialSavedIcons = store.savedIcons
 
     store.saveCurrentIcon()
     store.saveCurrentIcon()
 
     expect(store.savedIcons).toBe(initialSavedIcons)
-    expect(store.savedIcons.filter((icon) => icon.svgId === 'mountain' && icon.color === '#7a7a7a')).toHaveLength(1)
+    expect(
+      store.savedIcons.filter((icon) =>
+        icon.svgId === 'mountain' &&
+        icon.color === '#7a7a7a' &&
+        icon.size === 100 &&
+        icon.rotation === 0),
+    ).toHaveLength(1)
   })
 
   it('saveCurrentIcon appends with immutable array replacement', () => {
@@ -100,7 +132,13 @@ describe('iconStore', () => {
     store.saveCurrentIcon()
 
     expect(store.savedIcons).not.toBe(initialSavedIcons)
-    expect(store.savedIcons).toContainEqual({ svgId: 'mountain', color: '#336699' })
+    expect(store.savedIcons).toContainEqual({
+      id: 'mountain-336699-65-0',
+      svgId: 'mountain',
+      color: '#336699',
+      size: 65,
+      rotation: 0,
+    })
   })
 
   it('saveCurrentIcon does nothing when no icon is selected', () => {
@@ -109,11 +147,21 @@ describe('iconStore', () => {
     store.saveCurrentIcon()
 
     expect(store.savedIcons).toEqual([
-      { svgId: 'mountain', color: '#7a7a7a' },
-      { svgId: 'tree', color: '#4a7a3a' },
-      { svgId: 'tower', color: '#7a4a2a' },
-      { svgId: 'skull', color: '#c33232' },
+      { id: 'mountain-default', svgId: 'mountain', color: '#7a7a7a', size: 100, rotation: 0 },
+      { id: 'tree-default', svgId: 'tree', color: '#4a7a3a', size: 100, rotation: 0 },
+      { id: 'tower-default', svgId: 'tower', color: '#7a4a2a', size: 100, rotation: 0 },
+      { id: 'skull-default', svgId: 'skull', color: '#c33232', size: 100, rotation: 0 },
     ])
+  })
+
+  it('removeSavedIcon removes a preset by id with immutable array replacement', () => {
+    const store = useIconStore()
+    const initialSavedIcons = store.savedIcons
+
+    store.removeSavedIcon('tree-default')
+
+    expect(store.savedIcons).not.toBe(initialSavedIcons)
+    expect(store.savedIcons.some((icon) => icon.id === 'tree-default')).toBe(false)
   })
 
   it('does not expose selectedSvg (old API)', () => {

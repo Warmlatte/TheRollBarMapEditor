@@ -222,15 +222,15 @@ describe('IconToolHud — icon selection', () => {
     await saveButton.trigger('click')
 
     expect(iconStore.savedIcons).toEqual([
-      { svgId: 'mountain', color: '#7a7a7a' },
-      { svgId: 'tree', color: '#4a7a3a' },
-      { svgId: 'tower', color: '#7a4a2a' },
-      { svgId: 'skull', color: '#c33232' },
+      { id: 'mountain-default', svgId: 'mountain', color: '#7a7a7a', size: 100, rotation: 0 },
+      { id: 'tree-default', svgId: 'tree', color: '#4a7a3a', size: 100, rotation: 0 },
+      { id: 'tower-default', svgId: 'tower', color: '#7a4a2a', size: 100, rotation: 0 },
+      { id: 'skull-default', svgId: 'skull', color: '#c33232', size: 100, rotation: 0 },
     ])
     wrapper.unmount()
   })
 
-  it('clicking a saved icon restores its icon and color across stores', async () => {
+  it('clicking a saved icon restores its icon, color, size and rotation across stores', async () => {
     const libStore = useIconLibraryStore()
     const iconStore = useIconStore()
     const brushStore = useBrushStore()
@@ -239,9 +239,13 @@ describe('IconToolHud — icon selection', () => {
     libStore.icons = [ICON_COLORED]
     iconStore.setSelectedSvgId('mountain')
     iconStore.setColor('#336699')
+    iconStore.setSize(125)
+    iconStore.setRotation(45)
     iconStore.saveCurrentIcon()
     iconStore.setSelectedSvgId(null)
     iconStore.setColor('#5b992e')
+    iconStore.setSize(65)
+    iconStore.setRotation(0)
     brushStore.setColor('#5b992e')
     colorPickerStore.setHex('#5b992e')
     const wrapper = await mountHud(pinia)
@@ -251,8 +255,27 @@ describe('IconToolHud — icon selection', () => {
 
     expect(iconStore.selectedSvgId).toBe('mountain')
     expect(iconStore.color).toBe('#336699')
+    expect(iconStore.size).toBe(125)
+    expect(iconStore.rotation).toBe(45)
     expect(brushStore.color).toBe('#336699')
     expect(colorPickerStore.hex).toBe('#336699')
+    wrapper.unmount()
+  })
+
+  it('clicking a saved icon remove button deletes the preset', async () => {
+    const libStore = useIconLibraryStore()
+    const iconStore = useIconStore()
+    vi.spyOn(libStore, 'loadIcons').mockResolvedValue()
+    libStore.icons = [ICON_COLORED]
+    iconStore.setSelectedSvgId('mountain')
+    iconStore.setColor('#336699')
+    iconStore.saveCurrentIcon()
+    const wrapper = await mountHud(pinia)
+    await wrapper.vm.$nextTick()
+
+    await wrapper.find('[data-testid="saved-icon-remove-mountain-336699-65-0"]').trigger('click')
+
+    expect(iconStore.savedIcons.some((icon) => icon.id === 'mountain-336699-65-0')).toBe(false)
     wrapper.unmount()
   })
 
@@ -261,7 +284,7 @@ describe('IconToolHud — icon selection', () => {
     const iconStore = useIconStore()
     vi.spyOn(libStore, 'loadIcons').mockResolvedValue()
     libStore.icons = [ICON_A]
-    iconStore.savedIcons = [{ svgId: 'missing', color: '#336699' }]
+    iconStore.savedIcons = [{ id: 'missing-336699-65-0', svgId: 'missing', color: '#336699', size: 65, rotation: 0 }]
     const wrapper = await mountHud(pinia)
     await wrapper.vm.$nextTick()
 
