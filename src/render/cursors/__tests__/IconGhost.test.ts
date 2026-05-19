@@ -15,7 +15,7 @@ async function mountGhost(pinia: Pinia, cursorX = 100, cursorY = 200) {
   const { default: IconGhost } = await import('../IconGhost.vue')
   return mount(IconGhost, {
     global: { plugins: [pinia] },
-    props: { cursorX, cursorY },
+    props: { cursorX, cursorY, shiftHeld: false },
   })
 }
 
@@ -147,12 +147,12 @@ describe('IconGhost — displays safe SVG when icon selected', () => {
     wrapper.unmount()
   })
 
-  it('inherits icon color through fill and stroke like placed SVG icons', async () => {
+  it('inherits brush color through fill and stroke (brushStore.currentColor)', async () => {
     const brushStore = useBrushStore()
     const iconStore = useIconStore()
     const libStore = useIconLibraryStore()
     brushStore.tool = 'icon'
-    iconStore.setColor('#336699')
+    brushStore.setColor('#336699')
     iconStore.setSelectedSvgId('icon-1')
     libStore.icons = [{ id: 'icon-1', rawSvg: '<svg/>', name: 'Test', createdAt: 1000 }]
     const wrapper = await mountGhost(pinia)

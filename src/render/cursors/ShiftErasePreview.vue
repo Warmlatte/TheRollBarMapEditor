@@ -1,44 +1,25 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
 import { useBrushStore } from '../../stores/brushStore'
-import { useEraseStore } from '../../stores/eraseStore'
-import { HEX_SIZE } from '../../lib/hexMath'
 
-defineProps<{ cursorX: number; cursorY: number }>()
+defineProps<{
+  cursorX: number
+  cursorY: number
+  shiftHeld: boolean
+  anyDragging: boolean
+}>()
 
 const brushStore = useBrushStore()
-const eraseStore = useEraseStore()
-
-const shiftPressed = ref(false)
-
-function onKeyDown(e: KeyboardEvent) {
-  if (e.key === 'Shift') shiftPressed.value = true
-}
-function onKeyUp(e: KeyboardEvent) {
-  if (e.key === 'Shift') shiftPressed.value = false
-}
-
-onMounted(() => {
-  window.addEventListener('keydown', onKeyDown)
-  window.addEventListener('keyup', onKeyUp)
-})
-
-onUnmounted(() => {
-  window.removeEventListener('keydown', onKeyDown)
-  window.removeEventListener('keyup', onKeyUp)
-})
 </script>
 
 <template>
-  <g v-if="brushStore.tool === 'erase' && shiftPressed">
-    <circle
-      :cx="cursorX"
-      :cy="cursorY"
-      :r="eraseStore.eraseRadius * 2 * HEX_SIZE"
-      fill="rgba(239,68,68,0.08)"
-      stroke="#ef4444"
-      stroke-width="1"
-      stroke-dasharray="6 3"
-    />
-  </g>
+  <circle
+    v-if="shiftHeld && anyDragging && brushStore.tool !== 'erase'"
+    :cx="cursorX"
+    :cy="cursorY"
+    r="5"
+    fill="rgba(255,60,60,0.18)"
+    stroke="#ff5050"
+    stroke-width="1.5"
+    pointer-events="none"
+  />
 </template>

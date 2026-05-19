@@ -46,5 +46,8 @@ export const useLineStore = defineStore('line', () => {
     savePref(lineWidth.value, dashed.value)
   }
 
-  return { lineWidth, dashed, pendingAnchor, previewEnd, setWidth, setDashed }
+  const dashLength = ref(8)
+  const dashGap = ref(4)
+
+  return { lineWidth, dashed, dashLength, dashGap, pendingAnchor, previewEnd, setWidth, setDashed }
 })
