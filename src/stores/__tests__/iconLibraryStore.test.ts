@@ -342,6 +342,53 @@ describe('iconLibraryStore.updateIcon', () => {
   })
 })
 
+describe('iconLibraryStore — default seed colors', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    vi.clearAllMocks()
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('seeds mountain icon with defaultColor #7a7a7a', async () => {
+    buildFakeIDB()
+    const { useIconLibraryStore } = await import('../iconLibraryStore')
+    const store = useIconLibraryStore()
+    await store.loadIcons()
+    const mountain = store.icons.find((e) => e.id === 'mountain')!
+    expect(mountain.defaultColor).toBe('#7a7a7a')
+  })
+
+  it('seeds tree icon with defaultColor #4a7a3a', async () => {
+    buildFakeIDB()
+    const { useIconLibraryStore } = await import('../iconLibraryStore')
+    const store = useIconLibraryStore()
+    await store.loadIcons()
+    const tree = store.icons.find((e) => e.id === 'tree')!
+    expect(tree.defaultColor).toBe('#4a7a3a')
+  })
+
+  it('seeds tower icon with defaultColor #7a4a2a', async () => {
+    buildFakeIDB()
+    const { useIconLibraryStore } = await import('../iconLibraryStore')
+    const store = useIconLibraryStore()
+    await store.loadIcons()
+    const tower = store.icons.find((e) => e.id === 'tower')!
+    expect(tower.defaultColor).toBe('#7a4a2a')
+  })
+
+  it('seeds skull icon with defaultColor #c33232', async () => {
+    buildFakeIDB()
+    const { useIconLibraryStore } = await import('../iconLibraryStore')
+    const store = useIconLibraryStore()
+    await store.loadIcons()
+    const skull = store.icons.find((e) => e.id === 'skull')!
+    expect(skull.defaultColor).toBe('#c33232')
+  })
+})
+
 describe('getDisplaySvg', () => {
   beforeEach(() => {
     setActivePinia(createPinia())

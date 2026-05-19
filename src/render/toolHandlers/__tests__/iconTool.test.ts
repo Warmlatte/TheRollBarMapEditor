@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-import { PlaceIconCommand, RemoveIconCommand } from '../../../commands/iconCommands'
+import { PlaceIconCommand } from '../../../commands/iconCommands'
 import { useMapStore } from '../../../stores/mapStore'
 import { useIconStore } from '../../../stores/iconStore'
 import { useSnapStore } from '../../../stores/snapStore'
@@ -90,6 +90,15 @@ describe('iconHandler', () => {
       expect(icon?.rotation).toBe(45)
       expect(icon?.color).toBe('#ff0000')
     })
+
+    it('dispatches PlaceIconCommand even when an icon already exists at cursor position', async () => {
+      const { iconHandler } = await import('../iconTool')
+      const dispatchSpy = vi.spyOn(mapStore, 'dispatch')
+      const ctx = makeCtx({ findIconAt: vi.fn().mockReturnValue(EXISTING_ICON) })
+      iconHandler.onPointerDown(ctx, fakeEvent())
+      expect(dispatchSpy).toHaveBeenCalledTimes(1)
+      expect(dispatchSpy.mock.calls[0][0]).toBeInstanceOf(PlaceIconCommand)
+    })
   })
 
   describe('onPointerDown — node snap places icon at snapped position', () => {
@@ -130,26 +139,6 @@ describe('iconHandler', () => {
       iconHandler.onPointerDown(ctx, fakeEvent())
       expect(dispatchSpy).toHaveBeenCalledTimes(1)
       expect(dispatchSpy.mock.calls[0][0]).toBeInstanceOf(PlaceIconCommand)
-    })
-  })
-
-  describe('onPointerDown — removes icon', () => {
-    it('dispatches RemoveIconCommand when an icon exists at the pointer position', async () => {
-      const { iconHandler } = await import('../iconTool')
-      const dispatchSpy = vi.spyOn(mapStore, 'dispatch')
-      const ctx = makeCtx({ findIconAt: vi.fn().mockReturnValue(EXISTING_ICON) })
-      iconHandler.onPointerDown(ctx, fakeEvent())
-      expect(dispatchSpy).toHaveBeenCalledTimes(1)
-      expect(dispatchSpy.mock.calls[0][0]).toBeInstanceOf(RemoveIconCommand)
-    })
-
-    it('removes the icon returned by findIconAt from mapStore state', async () => {
-      const { iconHandler } = await import('../iconTool')
-      mapStore.dispatch(new PlaceIconCommand(EXISTING_ICON))
-      expect(mapStore.mapData.icons).toHaveLength(1)
-      const ctx = makeCtx({ findIconAt: vi.fn().mockReturnValue(EXISTING_ICON) })
-      iconHandler.onPointerDown(ctx, fakeEvent())
-      expect(mapStore.mapData.icons.find((i) => i.id === EXISTING_ICON.id)).toBeUndefined()
     })
   })
 

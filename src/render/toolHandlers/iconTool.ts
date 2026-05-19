@@ -1,7 +1,7 @@
 import { useMapStore } from '../../stores/mapStore'
 import { useIconStore } from '../../stores/iconStore'
 import { useSnapStore } from '../../stores/snapStore'
-import { PlaceIconCommand, RemoveIconCommand } from '../../commands/iconCommands'
+import { PlaceIconCommand } from '../../commands/iconCommands'
 import { snapPoint } from '../../lib/snap'
 import { hexDistance, HEX_SIZE } from '../../lib/hexMath'
 import type { ToolHandler } from './types'
@@ -13,12 +13,6 @@ export const iconHandler: ToolHandler = {
     const snapStore = useSnapStore()
 
     const { x: rawX, y: rawY } = ctx.svgPoint(e)
-    const existingIcon = ctx.findIconAt(rawX, rawY)
-
-    if (existingIcon) {
-      mapStore.dispatch(new RemoveIconCommand(existingIcon.id))
-      return
-    }
 
     if (!iconStore.selectedSvgId) return
 
