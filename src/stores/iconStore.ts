@@ -7,12 +7,19 @@ export type SavedIconPreset = {
   color: string
 }
 
+const DEFAULT_SAVED_ICON_PRESETS: SavedIconPreset[] = [
+  { svgId: 'mountain', color: '#7a7a7a' },
+  { svgId: 'tree', color: '#4a7a3a' },
+  { svgId: 'tower', color: '#7a4a2a' },
+  { svgId: 'skull', color: '#c33232' },
+]
+
 export const useIconStore = defineStore('icon', () => {
   const selectedSvgId = ref<string | null>(null)
   const size = ref(100)
   const rotation = ref(0)
   const color = ref(DEFAULT_TOOL_COLOR)
-  const savedIcons = ref<SavedIconPreset[]>([])
+  const savedIcons = ref<SavedIconPreset[]>([...DEFAULT_SAVED_ICON_PRESETS])
 
   function setSelectedSvgId(id: string | null): void {
     selectedSvgId.value = id

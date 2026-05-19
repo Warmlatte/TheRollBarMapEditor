@@ -93,6 +93,7 @@
           class="icon-cell"
           :class="{ active: iconStore.selectedSvgId === entry.id }"
           :title="entry.name"
+          :style="{ color: defaultIconColor }"
           @click="handleSelectIcon(entry)"
         >
           <svg viewBox="0 0 100 100" width="28" height="28" aria-hidden="true">
@@ -170,6 +171,7 @@ const snapStore = useSnapStore()
 const i18n = useI18nStore()
 const colorPicker = useColorPickerStore()
 const previewHexPoints = hexCorners(0, 0, 100)
+const defaultIconColor = '#7a7a7a'
 
 const selectedEntry = computed(() =>
   iconStore.selectedSvgId
@@ -209,7 +211,7 @@ function displaySvg(rawSvg: string): string {
 function handleSelectIcon(entry: IconEntry): void {
   iconStore.setSelectedSvgId(entry.id)
   if (entry.defaultColor) {
-    brushStore.setColor(entry.defaultColor)
+    brushStore.setColor(defaultIconColor)
   }
 }
 
