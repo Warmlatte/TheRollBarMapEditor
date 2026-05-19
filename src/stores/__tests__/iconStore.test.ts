@@ -58,9 +58,14 @@ describe('iconStore', () => {
     expect(store.color).toBe('#ff0000')
   })
 
-  it('savedIcons defaults to empty', () => {
+  it('savedIcons defaults to built-in colored icon presets', () => {
     const store = useIconStore()
-    expect(store.savedIcons).toEqual([])
+    expect(store.savedIcons).toEqual([
+      { svgId: 'mountain', color: '#7a7a7a' },
+      { svgId: 'tree', color: '#4a7a3a' },
+      { svgId: 'tower', color: '#7a4a2a' },
+      { svgId: 'skull', color: '#c33232' },
+    ])
   })
 
   it('saveCurrentIcon stores the selected icon with the current color', () => {
@@ -70,18 +75,20 @@ describe('iconStore', () => {
 
     store.saveCurrentIcon()
 
-    expect(store.savedIcons).toEqual([{ svgId: 'mountain', color: '#336699' }])
+    expect(store.savedIcons).toContainEqual({ svgId: 'mountain', color: '#336699' })
   })
 
   it('saveCurrentIcon ignores duplicate selected icon and color pairs', () => {
     const store = useIconStore()
     store.setSelectedSvgId('mountain')
-    store.setColor('#336699')
+    store.setColor('#7a7a7a')
+    const initialSavedIcons = store.savedIcons
 
     store.saveCurrentIcon()
     store.saveCurrentIcon()
 
-    expect(store.savedIcons).toEqual([{ svgId: 'mountain', color: '#336699' }])
+    expect(store.savedIcons).toBe(initialSavedIcons)
+    expect(store.savedIcons.filter((icon) => icon.svgId === 'mountain' && icon.color === '#7a7a7a')).toHaveLength(1)
   })
 
   it('saveCurrentIcon appends with immutable array replacement', () => {
@@ -93,7 +100,7 @@ describe('iconStore', () => {
     store.saveCurrentIcon()
 
     expect(store.savedIcons).not.toBe(initialSavedIcons)
-    expect(store.savedIcons).toEqual([{ svgId: 'mountain', color: '#336699' }])
+    expect(store.savedIcons).toContainEqual({ svgId: 'mountain', color: '#336699' })
   })
 
   it('saveCurrentIcon does nothing when no icon is selected', () => {
@@ -101,7 +108,12 @@ describe('iconStore', () => {
 
     store.saveCurrentIcon()
 
-    expect(store.savedIcons).toEqual([])
+    expect(store.savedIcons).toEqual([
+      { svgId: 'mountain', color: '#7a7a7a' },
+      { svgId: 'tree', color: '#4a7a3a' },
+      { svgId: 'tower', color: '#7a4a2a' },
+      { svgId: 'skull', color: '#c33232' },
+    ])
   })
 
   it('does not expose selectedSvg (old API)', () => {

@@ -21,6 +21,12 @@ const ICON_COLORED: IconEntry = {
   name: 'Mountain',
   createdAt: 1,
 }
+const DEFAULT_ICON_ENTRIES: IconEntry[] = [
+  { id: 'mountain', rawSvg: '<svg><path d="M0 0h10v10z"/></svg>', name: 'Mountain', createdAt: 1 },
+  { id: 'tree', rawSvg: '<svg><path d="M0 0h10v10z"/></svg>', name: 'Tree', createdAt: 2 },
+  { id: 'tower', rawSvg: '<svg><path d="M0 0h10v10z"/></svg>', name: 'Tower', createdAt: 3 },
+  { id: 'skull', rawSvg: '<svg><path d="M0 0h10v10z"/></svg>', name: 'Skull', createdAt: 4 },
+]
 
 async function mountHud(pinia: Pinia) {
   const { default: IconToolHud } = await import('../IconToolHud.vue')
@@ -132,6 +138,33 @@ describe('IconToolHud — icon selection', () => {
     wrapper.unmount()
   })
 
+  it('renders every default library icon in gray', async () => {
+    const libStore = useIconLibraryStore()
+    vi.spyOn(libStore, 'loadIcons').mockResolvedValue()
+    libStore.icons = DEFAULT_ICON_ENTRIES
+    const wrapper = await mountHud(pinia)
+    await wrapper.vm.$nextTick()
+
+    for (const entry of DEFAULT_ICON_ENTRIES) {
+      expect(wrapper.find(`[data-testid="icon-select-${entry.id}"]`).attributes('style')).toContain('color: #7a7a7a')
+    }
+    wrapper.unmount()
+  })
+
+  it('renders built-in saved icons with preset colors', async () => {
+    const libStore = useIconLibraryStore()
+    vi.spyOn(libStore, 'loadIcons').mockResolvedValue()
+    libStore.icons = DEFAULT_ICON_ENTRIES
+    const wrapper = await mountHud(pinia)
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('[data-testid="saved-icon-mountain-7a7a7a"]').attributes('style')).toContain('color: #7a7a7a')
+    expect(wrapper.find('[data-testid="saved-icon-tree-4a7a3a"]').attributes('style')).toContain('color: #4a7a3a')
+    expect(wrapper.find('[data-testid="saved-icon-tower-7a4a2a"]').attributes('style')).toContain('color: #7a4a2a')
+    expect(wrapper.find('[data-testid="saved-icon-skull-c33232"]').attributes('style')).toContain('color: #c33232')
+    wrapper.unmount()
+  })
+
   it('saving the current icon adds a colored entry to the saved icons section', async () => {
     const libStore = useIconLibraryStore()
     const iconStore = useIconStore()
@@ -172,7 +205,7 @@ describe('IconToolHud — icon selection', () => {
     await wrapper.vm.$nextTick()
 
     expect(wrapper.findAll('[data-testid="saved-icon-mountain-336699"]')).toHaveLength(1)
-    expect(iconStore.savedIcons).toEqual([{ svgId: 'mountain', color: '#336699' }])
+    expect(iconStore.savedIcons.filter((icon) => icon.svgId === 'mountain' && icon.color === '#336699')).toHaveLength(1)
     wrapper.unmount()
   })
 
@@ -188,7 +221,12 @@ describe('IconToolHud — icon selection', () => {
     expect(saveButton.attributes('disabled')).toBeDefined()
     await saveButton.trigger('click')
 
-    expect(iconStore.savedIcons).toEqual([])
+    expect(iconStore.savedIcons).toEqual([
+      { svgId: 'mountain', color: '#7a7a7a' },
+      { svgId: 'tree', color: '#4a7a3a' },
+      { svgId: 'tower', color: '#7a4a2a' },
+      { svgId: 'skull', color: '#c33232' },
+    ])
     wrapper.unmount()
   })
 
