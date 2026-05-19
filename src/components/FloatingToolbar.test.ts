@@ -61,4 +61,15 @@ describe('FloatingToolbar', () => {
     await wrapper.findAll('button')[paintIndex].trigger('click')
     expect(store.tool).toBe('paint')
   })
+
+  it('active 工具按鈕有 aria-pressed="true"，其餘為 false', async () => {
+    const store = useBrushStore()
+    store.setTool('line')
+    const wrapper = mount(FloatingToolbar)
+    const buttons = wrapper.findAll('button')
+    for (let i = 0; i < TOOLS.length; i++) {
+      const expected = TOOLS[i].id === 'line' ? 'true' : 'false'
+      expect(buttons[i].attributes('aria-pressed')).toBe(expected)
+    }
+  })
 })

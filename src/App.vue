@@ -8,12 +8,16 @@ import { useMapStore } from './stores/mapStore'
 import { useAutoSaveStore } from './stores/autoSaveStore'
 import { useSessionStore } from './stores/sessionStore'
 import { useI18nStore } from './stores/i18nStore'
+import { useIconLibraryStore } from './stores/iconLibraryStore'
+import { useIconStore } from './stores/iconStore'
 import { loadWorkspace } from './storage/persist'
 import { loadHandle } from './storage/fileHandlePersistence'
 
 const brushStore = useBrushStore()
 const mapStore = useMapStore()
 const i18n = useI18nStore()
+const iconLibraryStore = useIconLibraryStore()
+const iconStore = useIconStore()
 const activeTool = computed(() => TOOLS.find(t => t.id === brushStore.tool))
 const activeHud = computed(() => activeTool.value?.hud)
 const activeToolName = computed(() => i18n.t(activeTool.value?.i18nKey ?? ''))
@@ -49,6 +53,11 @@ function handleKeyDown(e: KeyboardEvent): void {
 
 function handleBeforeUnload(): void {
   autoSaveStore.flushAllNow()
+}
+
+function createNewTab(): void {
+  const session = sessionStore.makeSession()
+  sessionStore.setActive(session.id)
 }
 
 async function restoreWorkspace(): Promise<void> {
@@ -93,6 +102,17 @@ onMounted(async () => {
   window.addEventListener('beforeunload', handleBeforeUnload)
   window.addEventListener('keydown', handleKeyDown)
   await restoreWorkspace()
+  try {
+    await iconLibraryStore.loadIcons()
+    const selectedExists =
+      iconStore.selectedSvgId !== null &&
+      iconLibraryStore.icons.some((icon) => icon.id === iconStore.selectedSvgId)
+    if (!selectedExists && iconLibraryStore.icons.length > 0) {
+      iconStore.setSelectedSvgId(iconLibraryStore.icons[0].id)
+    }
+  } catch (error) {
+    console.error('[icon library init]', error)
+  }
 })
 
 onUnmounted(() => {
@@ -104,6 +124,20 @@ onUnmounted(() => {
 <template>
   <div class="relative h-screen w-screen overflow-hidden">
     <HexCanvas class="absolute inset-0" />
+
+    <div data-testid="tab-strip" class="tab-strip">
+      <button
+        v-for="session in sessionStore.sessions"
+        :key="session.id"
+        class="tab-btn"
+        :class="{ active: session.id === sessionStore.activeId }"
+        @click="sessionStore.setActive(session.id)"
+      >
+        {{ session.name }}
+      </button>
+      <button class="tab-btn tab-add-btn" aria-label="new tab" @click="createNewTab">+</button>
+      <button class="tab-btn map-list-btn">📁 地圖</button>
+    </div>
 
     <div class="hud-panel absolute right-2 top-2">
       <div class="flex items-center gap-1.5">
@@ -118,6 +152,15 @@ onUnmounted(() => {
     <button class="settings-btn">⚙</button>
 
     <FloatingToolbar />
+
+    <div data-testid="shortcuts-corner" class="shortcuts-corner">
+      Ctrl + Z = 復原
+      Ctrl + Y = 重做
+      Shift + 拖曳 = 擦除
+      Shift + 右鍵 = 吸取
+      滾輪 = 縮放
+      中鍵 = 拖移
+    </div>
   </div>
 </template>
 

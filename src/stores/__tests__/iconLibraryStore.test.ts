@@ -9,13 +9,19 @@ vi.mock('../../storage/svgNormalize', () => ({
   normalizeSvgIcon: vi.fn((s: string) => s),
 }))
 
-function buildFakeIDB(initialData: IconEntry[] = []) {
+type FailOp = 'put' | 'delete' | 'getAll'
+
+function buildFakeIDB(initialData: IconEntry[] = [], failOps: Set<FailOp> = new Set()) {
   const dataStore = new Map<string, IconEntry>(initialData.map((e) => [e.id, { ...e }]))
 
   const fakeObjectStore = {
     getAll() {
       const req: { onsuccess?: (e: { target: { result: IconEntry[] } }) => void; onerror?: () => void } = {}
-      queueMicrotask(() => req.onsuccess?.({ target: { result: Array.from(dataStore.values()) } }))
+      if (failOps.has('getAll')) {
+        queueMicrotask(() => req.onerror?.())
+      } else {
+        queueMicrotask(() => req.onsuccess?.({ target: { result: Array.from(dataStore.values()) } }))
+      }
       return req
     },
     get(id: string) {
@@ -24,15 +30,23 @@ function buildFakeIDB(initialData: IconEntry[] = []) {
       return req
     },
     put(entry: IconEntry) {
-      dataStore.set(entry.id, { ...entry })
       const req: { onsuccess?: () => void; onerror?: () => void } = {}
-      queueMicrotask(() => req.onsuccess?.())
+      if (failOps.has('put')) {
+        queueMicrotask(() => req.onerror?.())
+      } else {
+        dataStore.set(entry.id, { ...entry })
+        queueMicrotask(() => req.onsuccess?.())
+      }
       return req
     },
     delete(id: string) {
-      dataStore.delete(id)
       const req: { onsuccess?: () => void; onerror?: () => void } = {}
-      queueMicrotask(() => req.onsuccess?.())
+      if (failOps.has('delete')) {
+        queueMicrotask(() => req.onerror?.())
+      } else {
+        dataStore.delete(id)
+        queueMicrotask(() => req.onsuccess?.())
+      }
       return req
     },
   }
@@ -94,11 +108,20 @@ describe('iconLibraryStore.loadIcons', () => {
     expect(store.icons.map((e) => e.name)).toContain('alpha')
   })
 
-  it('degrades gracefully when IndexedDB is unavailable', async () => {
+  it('seeds the default SVG icons when IndexedDB is empty', async () => {
+    buildFakeIDB()
+    const { useIconLibraryStore } = await import('../iconLibraryStore')
+    const store = useIconLibraryStore()
+    await store.loadIcons()
+    expect(store.icons.map((e) => e.id)).toEqual(['mountain', 'tree', 'tower', 'skull'])
+    expect(store.icons.every((e) => e.rawSvg.startsWith('<svg'))).toBe(true)
+  })
+
+  it('rejects when IndexedDB is unavailable', async () => {
     buildErrorIDB()
     const { useIconLibraryStore } = await import('../iconLibraryStore')
     const store = useIconLibraryStore()
-    await expect(store.loadIcons()).resolves.not.toThrow()
+    await expect(store.loadIcons()).rejects.toThrow()
     expect(store.icons).toEqual([])
   })
 })
@@ -123,16 +146,16 @@ describe('iconLibraryStore.addIcon', () => {
     expect(store.icons.some((e) => e.name === 'sword')).toBe(true)
   })
 
-  it('stores sanitized rawSvg', async () => {
+  it('stores original rawSvg without sanitizing before persist', async () => {
     buildFakeIDB()
     const { useIconLibraryStore } = await import('../iconLibraryStore')
     const store = useIconLibraryStore()
-    const malicious = '<svg><script>alert(1)</script></svg>'
+    const original = '<svg><script>alert(1)</script></svg>'
     await store.loadIcons()
-    await store.addIcon(malicious, 'bad')
+    await store.addIcon(original, 'bad')
     await store.loadIcons()
     const entry = store.icons.find((e) => e.name === 'bad')!
-    expect(entry.rawSvg).toBe('<svg></svg>')
+    expect(entry.rawSvg).toBe(original)
   })
 
   it('sanitizeSvgIcon called with the rawSvg removes <script> from result', async () => {
@@ -161,11 +184,44 @@ describe('iconLibraryStore.addIcon', () => {
     expect(entry.createdAt).toBeGreaterThan(0)
   })
 
-  it('does not throw when IndexedDB is unavailable', async () => {
+  it('rejects when IndexedDB is unavailable', async () => {
     buildErrorIDB()
     const { useIconLibraryStore } = await import('../iconLibraryStore')
     const store = useIconLibraryStore()
-    await expect(store.addIcon('<svg/>', 'test')).resolves.not.toThrow()
+    await expect(store.addIcon('<svg/>', 'test')).rejects.toThrow()
+  })
+
+  it('rejects and does not add entry when SVG sanitization produces empty output', async () => {
+    buildFakeIDB()
+    const { sanitizeSvgIcon } = await import('../../storage/svgNormalize')
+    vi.mocked(sanitizeSvgIcon).mockReturnValueOnce('')
+    const { useIconLibraryStore } = await import('../iconLibraryStore')
+    const store = useIconLibraryStore()
+    await store.loadIcons()
+    await expect(store.addIcon('<garbage>', 'bad')).rejects.toThrow()
+    expect(store.icons.some((e) => e.name === 'bad')).toBe(false)
+  })
+
+  it('rejects and does not add entry when SVG sanitization throws', async () => {
+    buildFakeIDB()
+    const { sanitizeSvgIcon } = await import('../../storage/svgNormalize')
+    vi.mocked(sanitizeSvgIcon).mockImplementationOnce(() => {
+      throw new Error('Invalid SVG')
+    })
+    const { useIconLibraryStore } = await import('../iconLibraryStore')
+    const store = useIconLibraryStore()
+    await store.loadIcons()
+    await expect(store.addIcon('not svg', 'bad')).rejects.toThrow('Invalid SVG: Invalid SVG')
+    expect(store.icons.some((e) => e.name === 'bad')).toBe(false)
+  })
+
+  it('rejects when IDB put operation fails', async () => {
+    const initial: IconEntry[] = [{ id: 'a', rawSvg: '<svg/>', name: 'alpha', createdAt: 1000 }]
+    buildFakeIDB(initial, new Set<FailOp>(['put']))
+    const { useIconLibraryStore } = await import('../iconLibraryStore')
+    const store = useIconLibraryStore()
+    await store.loadIcons()
+    await expect(store.addIcon('<svg/>', 'test')).rejects.toThrow()
   })
 })
 
@@ -204,11 +260,19 @@ describe('iconLibraryStore.deleteIcon', () => {
     expect(store.icons.find((e) => e.id === icon.id)).toBeUndefined()
   })
 
-  it('does not throw when IndexedDB is unavailable', async () => {
+  it('rejects when IndexedDB is unavailable', async () => {
     buildErrorIDB()
     const { useIconLibraryStore } = await import('../iconLibraryStore')
     const store = useIconLibraryStore()
-    await expect(store.deleteIcon('any-id')).resolves.not.toThrow()
+    await expect(store.deleteIcon('any-id')).rejects.toThrow()
+  })
+
+  it('rejects when IDB delete operation fails', async () => {
+    buildFakeIDB([], new Set<FailOp>(['delete']))
+    const { useIconLibraryStore } = await import('../iconLibraryStore')
+    const store = useIconLibraryStore()
+    await store.loadIcons()
+    await expect(store.deleteIcon('any-id')).rejects.toThrow()
   })
 })
 
@@ -237,19 +301,111 @@ describe('iconLibraryStore.updateIcon', () => {
     expect(after.createdAt).toBe(before.createdAt)
   })
 
-  it('unknown id updateIcon is a no-op without throwing', async () => {
+  it('rejects on unknown id', async () => {
     buildFakeIDB()
     const { useIconLibraryStore } = await import('../iconLibraryStore')
     const store = useIconLibraryStore()
     await store.loadIcons()
-    await expect(store.updateIcon('nonexistent', { name: 'x' })).resolves.not.toThrow()
-    expect(store.icons).toHaveLength(0)
+    await expect(store.updateIcon('nonexistent', { name: 'x' })).rejects.toThrow()
+    expect(store.icons.some((e) => e.id === 'nonexistent')).toBe(false)
   })
 
-  it('does not throw when IndexedDB is unavailable', async () => {
+  it('does not allow patching the id field', async () => {
+    buildFakeIDB()
+    const { useIconLibraryStore } = await import('../iconLibraryStore')
+    const store = useIconLibraryStore()
+    await store.loadIcons()
+    await store.addIcon('<svg/>', 'sword')
+    await store.loadIcons()
+    const before = store.icons.find((e) => e.name === 'sword')!
+    await store.updateIcon(before.id, { id: 'hacked-id' } as unknown as Partial<Omit<IconEntry, 'id'>>)
+    const after = store.icons.find((e) => e.name === 'sword')!
+    expect(after.id).toBe(before.id)
+  })
+
+  it('rejects when IndexedDB is unavailable', async () => {
     buildErrorIDB()
     const { useIconLibraryStore } = await import('../iconLibraryStore')
     const store = useIconLibraryStore()
-    await expect(store.updateIcon('any-id', { name: 'x' })).resolves.not.toThrow()
+    await expect(store.updateIcon('any-id', { name: 'x' })).rejects.toThrow()
+  })
+
+  it('rejects when IDB put operation fails during update', async () => {
+    buildFakeIDB([], new Set<FailOp>(['put']))
+    const { useIconLibraryStore } = await import('../iconLibraryStore')
+    const store = useIconLibraryStore()
+    const initial: IconEntry[] = [{ id: 'a', rawSvg: '<svg/>', name: 'alpha', createdAt: 1000 }]
+    buildFakeIDB(initial, new Set<FailOp>(['put']))
+    const store2 = useIconLibraryStore()
+    await store2.loadIcons()
+    await expect(store2.updateIcon('a', { name: 'beta' })).rejects.toThrow()
+  })
+})
+
+describe('iconLibraryStore — default seed colors', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    vi.clearAllMocks()
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('seeds mountain icon with defaultColor #7a7a7a', async () => {
+    buildFakeIDB()
+    const { useIconLibraryStore } = await import('../iconLibraryStore')
+    const store = useIconLibraryStore()
+    await store.loadIcons()
+    const mountain = store.icons.find((e) => e.id === 'mountain')!
+    expect(mountain.defaultColor).toBe('#7a7a7a')
+  })
+
+  it('seeds tree icon with defaultColor #4a7a3a', async () => {
+    buildFakeIDB()
+    const { useIconLibraryStore } = await import('../iconLibraryStore')
+    const store = useIconLibraryStore()
+    await store.loadIcons()
+    const tree = store.icons.find((e) => e.id === 'tree')!
+    expect(tree.defaultColor).toBe('#4a7a3a')
+  })
+
+  it('seeds tower icon with defaultColor #7a4a2a', async () => {
+    buildFakeIDB()
+    const { useIconLibraryStore } = await import('../iconLibraryStore')
+    const store = useIconLibraryStore()
+    await store.loadIcons()
+    const tower = store.icons.find((e) => e.id === 'tower')!
+    expect(tower.defaultColor).toBe('#7a4a2a')
+  })
+
+  it('seeds skull icon with defaultColor #c33232', async () => {
+    buildFakeIDB()
+    const { useIconLibraryStore } = await import('../iconLibraryStore')
+    const store = useIconLibraryStore()
+    await store.loadIcons()
+    const skull = store.icons.find((e) => e.id === 'skull')!
+    expect(skull.defaultColor).toBe('#c33232')
+  })
+})
+
+describe('getDisplaySvg', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    vi.clearAllMocks()
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('applies sanitizeSvgIcon then normalizeSvgIcon and does not return script tags', async () => {
+    const { getDisplaySvg } = await import('../iconLibraryStore')
+    const { sanitizeSvgIcon, normalizeSvgIcon } = await import('../../storage/svgNormalize')
+    const raw = '<svg><script>alert(1)</script></svg>'
+    const result = getDisplaySvg(raw)
+    expect(sanitizeSvgIcon).toHaveBeenCalledWith(raw)
+    expect(normalizeSvgIcon).toHaveBeenCalled()
+    expect(result).not.toContain('<script>')
   })
 })

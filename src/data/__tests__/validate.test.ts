@@ -73,6 +73,26 @@ describe('validateMapFile — spec color examples', () => {
   })
 })
 
+describe('validateMapFile — Icon x/y coordinates (pixel coords, breaking change)', () => {
+  it('rejects icon with old q/r fields', () => {
+    const data = {
+      ...minimalValid,
+      icons: [{ id: 'i1', q: 1, r: 2, svgId: 's', size: 40, rotation: 0, color: '#000000' }],
+    }
+    expect(() => validateMapFile(data)).toThrow()
+  })
+
+  it('accepts icon with new x/y pixel coordinate fields', () => {
+    const data = {
+      ...minimalValid,
+      icons: [{ id: 'i1', x: 10.5, y: 20.0, svgId: 's', size: 40, rotation: 0, color: '#000000' }],
+    }
+    expect(() => validateMapFile(data)).not.toThrow()
+    const result = validateMapFile(data)
+    expect(result.icons[0]).toEqual({ id: 'i1', x: 10.5, y: 20.0, svgId: 's', size: 40, rotation: 0, color: '#000000' })
+  })
+})
+
 describe('validateMapFile — structuredClone compatibility', () => {
   it('produces independent copy via structuredClone', () => {
     const original = {

@@ -1,11 +1,14 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { hsvToHex, hexToHsv } from '../lib/colorMath'
+import { DEFAULT_TOOL_COLOR } from './brushStore'
+
+const DEFAULT_HSV = hexToHsv(DEFAULT_TOOL_COLOR)
 
 export const useColorPickerStore = defineStore('colorPicker', () => {
-  const h = ref<number>(0.2917)
-  const s = ref<number>(0.5246)
-  const v = ref<number>(0.4784)
+  const h = ref<number>(DEFAULT_HSV.h)
+  const s = ref<number>(DEFAULT_HSV.s)
+  const v = ref<number>(DEFAULT_HSV.v)
 
   const hex = computed(() => hsvToHex(h.value, s.value, v.value))
 
