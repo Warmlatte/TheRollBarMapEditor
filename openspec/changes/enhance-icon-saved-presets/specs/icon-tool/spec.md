@@ -11,7 +11,15 @@ The Icon Tool SHALL initialize `iconStore.size` to `100` so newly placed icons u
 
 ### Requirement: Icon tool saves colored icon presets
 
-The Icon Tool SHALL allow users to save the currently selected icon and current color as a session-scoped preset. A saved icon preset MUST contain `svgId` and `color`. Saving MUST use immutable array replacement and MUST NOT append duplicate presets with the same `svgId` and `color`.
+The Icon Tool SHALL initialize `iconStore.savedIcons` with four built-in colored presets and SHALL allow users to save the currently selected icon and current color as a session-scoped preset. A saved icon preset MUST contain `svgId` and `color`. Saving MUST use immutable array replacement and MUST NOT append duplicate presets with the same `svgId` and `color`.
+
+#### Scenario: Default saved icon presets are available
+
+- **WHEN** a new icon store instance is created
+- **THEN** `iconStore.savedIcons` SHALL contain `{ svgId: "mountain", color: "#7a7a7a" }`
+- **THEN** `iconStore.savedIcons` SHALL contain `{ svgId: "tree", color: "#4a7a3a" }`
+- **THEN** `iconStore.savedIcons` SHALL contain `{ svgId: "tower", color: "#7a4a2a" }`
+- **THEN** `iconStore.savedIcons` SHALL contain `{ svgId: "skull", color: "#c33232" }`
 
 #### Scenario: Save current icon and color
 

@@ -14,3 +14,9 @@
 - [x] 3.1 跑 `npm run test:run -- src/stores/__tests__/iconStore.test.ts src/components/picker/__tests__/ColorPickerGrid.test.ts src/components/__tests__/IconToolHud.test.ts`，驗證本 change 的 store、layout、HUD 行為測試全綠。
 - [x] 3.2 跑 `npm run test:run` 與 `npm run typecheck`，驗證整體測試與 TypeScript 檢查通過。
 - [x] 3.3 跑 `spectra status --change enhance-icon-saved-presets --json`，確認 proposal、design、specs、tasks artifacts 完整且可進入 apply。
+
+## 4. 預設已存圖示修正
+
+- [x] 4.1 依「Store default and user saved icon presets in iconStore session state」決策更新「Icon tool saves colored icon presets」：`iconStore.savedIcons` 預設包含 `mountain/#7a7a7a`、`tree/#4a7a3a`、`tower/#7a4a2a`、`skull/#c33232`，且 `saveCurrentIcon()` 仍以不可變陣列追加非重複 preset；以 `src/stores/__tests__/iconStore.test.ts` 驗證。
+- [x] 4.2 依「Keep default icon picker gray and add a separate colored saved picker」決策更新「IconToolHud saved icon preset controls」：預設 icon picker 全部以 `#7a7a7a` 顯示，已存圖示區塊初始顯示四個內建彩色 preset；以 `src/components/__tests__/IconToolHud.test.ts` 驗證。
+- [x] 4.3 跑 `npm run test:run -- src/stores/__tests__/iconStore.test.ts src/components/__tests__/IconToolHud.test.ts`、`npm run test:run` 與 `npm run typecheck`，確認修正後相關與全量驗證通過。

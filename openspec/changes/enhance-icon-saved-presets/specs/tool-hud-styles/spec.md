@@ -23,6 +23,11 @@
 
 `IconToolHud` SHALL keep the existing library icon picker as the uncolored default icon selector. Below that picker, it SHALL render a 「儲存圖示」 button and a 「已存圖示」 section for colored saved icon presets.
 
+#### Scenario: Default icon picker uses gray icons
+
+- **WHEN** IconToolHud renders the default icon picker
+- **THEN** every icon button in that picker SHALL render its icon color as `#7a7a7a`
+
 #### Scenario: Save controls appear below default icon picker
 
 - **WHEN** IconToolHud is rendered
@@ -33,6 +38,14 @@
 
 - **WHEN** a saved preset `{ svgId: "mountain", color: "#336699" }` is displayed in the 「已存圖示」 section
 - **THEN** the rendered saved icon button SHALL use `#336699` as its icon color
+
+#### Scenario: Built-in saved icon presets appear with their colors
+
+- **WHEN** IconToolHud is rendered with the built-in icon library entries
+- **THEN** the 「已存圖示」 section SHALL include `mountain` rendered with `#7a7a7a`
+- **THEN** the 「已存圖示」 section SHALL include `tree` rendered with `#4a7a3a`
+- **THEN** the 「已存圖示」 section SHALL include `tower` rendered with `#7a4a2a`
+- **THEN** the 「已存圖示」 section SHALL include `skull` rendered with `#c33232`
 
 #### Scenario: Save button disabled without selected icon
 

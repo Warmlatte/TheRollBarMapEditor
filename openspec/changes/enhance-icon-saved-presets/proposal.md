@@ -6,9 +6,9 @@
 
 - ColorPickerGrid 的第一列改為左側工具預覽、右側 SV color picker，套用到所有使用該共用元件的工具 HUD。
 - Icon tool 的預設大小改為 100，讓初始顯示與放置比例為 1.00x。
-- Icon tool 保留目前的無色預設 icon 選擇列。
+- Icon tool 保留目前的預設 icon 選擇列，且預設 icon 在選擇列中統一以 `#7a7a7a` 顯示。
 - Icon tool 新增「儲存圖示」按鈕，將目前選中的 icon 與目前色號存成彩色 preset。
-- Icon tool 新增「已存圖示」區塊，顯示已儲存的彩色 icon preset；點選 preset 會恢復 icon 與色號。
+- Icon tool 新增「已存圖示」區塊，初始顯示內建彩色 preset：`mountain/#7a7a7a`、`tree/#4a7a3a`、`tower/#7a4a2a`、`skull/#c33232`；使用者儲存的 preset 也顯示於此，點選 preset 會恢復 icon 與色號。
 
 ## Non-Goals
 
