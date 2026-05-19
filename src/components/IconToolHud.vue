@@ -93,7 +93,7 @@
           class="icon-cell"
           :class="{ active: iconStore.selectedSvgId === entry.id }"
           :title="entry.name"
-          @click="iconStore.setSelectedSvgId(entry.id)"
+          @click="handleSelectIcon(entry)"
         >
           <svg viewBox="0 0 100 100" width="28" height="28" aria-hidden="true">
             <g v-html="displaySvg(entry.rawSvg)" />
@@ -129,7 +129,7 @@ import { computed, onMounted, watch } from 'vue'
 import ColorPickerGrid from './picker/ColorPickerGrid.vue'
 import { useBrushStore } from '../stores/brushStore'
 import { useIconStore } from '../stores/iconStore'
-import { useIconLibraryStore, getDisplaySvg } from '../stores/iconLibraryStore'
+import { useIconLibraryStore, getDisplaySvg, type IconEntry } from '../stores/iconLibraryStore'
 import { useI18nStore } from '../stores/i18nStore'
 import { useSnapStore } from '../stores/snapStore'
 import { hexCorners } from '../lib/hexMath'
@@ -167,6 +167,13 @@ watch(
 
 function displaySvg(rawSvg: string): string {
   return getDisplaySvg(rawSvg)
+}
+
+function handleSelectIcon(entry: IconEntry): void {
+  iconStore.setSelectedSvgId(entry.id)
+  if (entry.defaultColor) {
+    brushStore.setColor(entry.defaultColor)
+  }
 }
 
 function handleAngleInput(event: Event): void {

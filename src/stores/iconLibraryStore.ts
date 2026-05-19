@@ -8,16 +8,25 @@ export type IconEntry = {
   rawSvg: string
   name: string
   createdAt: number
+  defaultColor?: string
+}
+
+const DEFAULT_ICON_COLORS: Record<string, string> = {
+  mountain: '#7a7a7a',
+  tree: '#4a7a3a',
+  tower: '#7a4a2a',
+  skull: '#c33232',
 }
 
 const DB_NAME = 'hexmap'
 const STORE_NAME = 'icons'
 const DB_VERSION = 1
-const DEFAULT_SEEDS: ReadonlyArray<{ id: string; name: string; rawSvg: string }> =
+const DEFAULT_SEEDS: ReadonlyArray<{ id: string; name: string; rawSvg: string; defaultColor?: string }> =
   Object.entries(ICON_PATHS).map(([id, path]) => ({
     id,
     name: id,
     rawSvg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">${path}</svg>`,
+    defaultColor: DEFAULT_ICON_COLORS[id],
   }))
 
 function openDB(): Promise<IDBDatabase> {
@@ -91,6 +100,7 @@ export const useIconLibraryStore = defineStore('iconLibrary', () => {
         rawSvg: seed.rawSvg,
         name: seed.name,
         createdAt: index + 1,
+        defaultColor: seed.defaultColor,
       }))
       for (const entry of seeded) {
         await idbPut(db, entry)
