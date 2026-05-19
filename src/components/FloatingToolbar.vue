@@ -18,6 +18,7 @@ function selectTool(id: string) {
       v-for="tool in TOOLS"
       :key="tool.id"
       :title="i18n.t(tool.i18nKey)"
+      :aria-pressed="brushStore.tool === tool.id"
       :class="[
         'tool-btn',
         tool.variant === 'danger' ? 'btn-danger' : '',
