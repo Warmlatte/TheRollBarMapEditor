@@ -12,6 +12,7 @@ import { useIconLibraryStore } from './stores/iconLibraryStore'
 import { useIconStore } from './stores/iconStore'
 import { loadWorkspace } from './storage/persist'
 import { loadHandle } from './storage/fileHandlePersistence'
+import ToastContainer from './components/ToastContainer.vue'
 
 const brushStore = useBrushStore()
 const mapStore = useMapStore()
@@ -152,6 +153,8 @@ onUnmounted(() => {
     <button class="settings-btn">⚙</button>
 
     <FloatingToolbar />
+
+    <ToastContainer />
 
     <div data-testid="shortcuts-corner" class="shortcuts-corner">
       Ctrl + Z = 復原
