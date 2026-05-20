@@ -21,25 +21,33 @@
     <div
       v-if="brushStore.savedCells.length > 0"
       data-testid="saved-cells-section"
-      class="mt-1 flex flex-wrap gap-1"
+      class="saved-icons-section"
     >
-      <div
-        v-for="cell in brushStore.savedCells"
-        :key="cell.id"
-        class="relative cursor-pointer"
-        data-testid="saved-cell-thumb"
-        @click="brushStore.applySavedCell(cell.id)"
-      >
-        <svg :viewBox="`0 0 ${thumbSize} ${thumbSize}`" :width="thumbSize" :height="thumbSize">
-          <polygon :points="thumbPoints" :fill="cell.color" />
-        </svg>
-        <button
-          class="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-zinc-700 text-[8px] leading-none text-zinc-200 hover:bg-red-600"
-          data-testid="saved-cell-remove"
-          @click.stop="brushStore.removeSavedCell(cell.id)"
+      <div class="saved-icons-title">已存色塊</div>
+      <div class="icon-picker" role="radiogroup" aria-label="saved cell picker">
+        <div
+          v-for="cell in brushStore.savedCells"
+          :key="cell.id"
+          class="icon-cell-wrap"
         >
-          ×
-        </button>
+          <button
+            class="icon-cell"
+            :class="{ active: brushStore.color === cell.color }"
+            data-testid="saved-cell-thumb"
+            @click="brushStore.applySavedCell(cell.id)"
+          >
+            <svg viewBox="0 0 40 40" width="22" height="22" aria-hidden="true">
+              <polygon :points="thumbPoints" :fill="cell.color" />
+            </svg>
+          </button>
+          <button
+            class="icon-cell-x"
+            data-testid="saved-cell-remove"
+            @click.stop="brushStore.removeSavedCell(cell.id)"
+          >
+            ×
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -52,7 +60,5 @@ import { hexCorners } from '../lib/hexMath'
 
 const brushStore = useBrushStore()
 const hexPoints = hexCorners(20, 20, 16)
-
-const thumbSize = 28
-const thumbPoints = hexCorners(thumbSize / 2, thumbSize / 2, thumbSize / 2 - 2)
+const thumbPoints = hexCorners(20, 20, 17)
 </script>
