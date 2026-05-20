@@ -82,4 +82,17 @@ describe('loadWorkspace', () => {
     const result = loadWorkspace()
     expect(result).toBeNull()
   })
+
+  it('returns null when data is valid JSON but missing tabs array (stale schema)', () => {
+    localStorage.setItem(WORKSPACE_KEY, JSON.stringify({ sessions: [{ id: 'x' }], activeId: 'x' }))
+    const result = loadWorkspace()
+    expect(result).toBeNull()
+  })
+
+  it('recovers from .bak when primary key has valid JSON but missing tabs', () => {
+    localStorage.setItem(WORKSPACE_KEY, JSON.stringify({ sessions: [] }))
+    localStorage.setItem(WORKSPACE_BAK_KEY, JSON.stringify(SAMPLE_WORKSPACE))
+    const result = loadWorkspace()
+    expect(result).toMatchObject(SAMPLE_WORKSPACE)
+  })
 })

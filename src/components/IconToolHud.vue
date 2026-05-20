@@ -172,6 +172,7 @@ import ColorPickerGrid from './picker/ColorPickerGrid.vue'
 import { useBrushStore } from '../stores/brushStore'
 import { useIconStore } from '../stores/iconStore'
 import { useIconLibraryStore, getDisplaySvg, type IconEntry } from '../stores/iconLibraryStore'
+import { useToastStore } from '../stores/toastStore'
 import { useI18nStore } from '../stores/i18nStore'
 import { useSnapStore } from '../stores/snapStore'
 import { useColorPickerStore } from '../stores/colorPickerStore'
@@ -180,6 +181,7 @@ import { hexCorners } from '../lib/hexMath'
 const brushStore = useBrushStore()
 const iconStore = useIconStore()
 const libStore = useIconLibraryStore()
+const toastStore = useToastStore()
 const snapStore = useSnapStore()
 const i18n = useI18nStore()
 const colorPicker = useColorPickerStore()
@@ -245,9 +247,14 @@ function handleAngleInput(event: Event): void {
 }
 
 async function handleDelete(id: string): Promise<void> {
-  await libStore.deleteIcon(id)
-  if (iconStore.selectedSvgId === id) {
-    iconStore.setSelectedSvgId(libStore.icons.find((entry) => entry.id !== id)?.id ?? null)
+  try {
+    await libStore.deleteIcon(id)
+    if (iconStore.selectedSvgId === id) {
+      iconStore.setSelectedSvgId(libStore.icons.find((entry) => entry.id !== id)?.id ?? null)
+    }
+    toastStore.pushToast('圖示已刪除', 'info')
+  } catch {
+    toastStore.pushToast('刪除失敗，請重試', 'error')
   }
 }
 
@@ -261,11 +268,23 @@ function handleUpload(event: Event): void {
   reader.onload = async (e) => {
     const content = (e.target as FileReader).result as string
     const name = file.name.replace(/\.svg$/i, '')
-    await libStore.addIcon(content, name)
-    const uploaded = libStore.icons.find((entry) => entry.name === name)
-    if (uploaded) iconStore.setSelectedSvgId(uploaded.id)
+    try {
+      await libStore.addIcon(content, name)
+      const uploaded = libStore.icons.find((entry) => entry.name === name)
+      if (uploaded) iconStore.setSelectedSvgId(uploaded.id)
+      toastStore.pushToast(`圖示「${name}」已新增`, 'success')
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : ''
+      if (msg.includes('database not initialized')) {
+        toastStore.pushToast('圖示庫暫時無法使用，請重新整理頁面', 'error')
+      } else {
+        toastStore.pushToast('無效的 SVG 檔案，請確認檔案格式正確', 'error')
+      }
+    }
   }
-  reader.onerror = () => {}
+  reader.onerror = () => {
+    toastStore.pushToast('檔案讀取失敗', 'error')
+  }
   reader.readAsText(file)
 }
 </script>

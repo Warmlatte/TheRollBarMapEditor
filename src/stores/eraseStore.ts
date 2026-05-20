@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { HEX_SIZE } from '../lib/hexMath'
 
 const PREF_KEY = 'hexmap.erase.v1'
 
@@ -38,5 +39,7 @@ export const useEraseStore = defineStore('erase', () => {
     targets.value = { ...targets.value, [key]: !targets.value[key] }
   }
 
-  return { eraseRadius, targets, setRadius, toggleTarget }
+  const radius = computed(() => eraseRadius.value * HEX_SIZE)
+
+  return { eraseRadius, radius, targets, setRadius, toggleTarget }
 })

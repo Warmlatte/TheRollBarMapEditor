@@ -166,16 +166,16 @@ describe('iconStore', () => {
 
   it('does not expose selectedSvg (old API)', () => {
     const store = useIconStore()
-    expect((store as Record<string, unknown>)['selectedSvg']).toBeUndefined()
+    expect((store as unknown as Record<string, unknown>)['selectedSvg']).toBeUndefined()
   })
 
   it('does not expose iconSize (old API)', () => {
     const store = useIconStore()
-    expect((store as Record<string, unknown>)['iconSize']).toBeUndefined()
+    expect((store as unknown as Record<string, unknown>)['iconSize']).toBeUndefined()
   })
 
   it('does not expose iconRotation (old API)', () => {
     const store = useIconStore()
-    expect((store as Record<string, unknown>)['iconRotation']).toBeUndefined()
+    expect((store as unknown as Record<string, unknown>)['iconRotation']).toBeUndefined()
   })
 })

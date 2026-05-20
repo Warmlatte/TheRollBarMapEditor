@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, toRaw, onMounted } from 'vue'
+import { ref, computed, toRaw, onMounted, onUnmounted } from 'vue'
 import { useMapStore } from '../stores/mapStore'
 import { useBrushStore } from '../stores/brushStore'
 import { useViewportStore } from '../stores/viewportStore'
@@ -24,6 +24,8 @@ const iconLibraryStore = useIconLibraryStore()
 const svgEl = ref<SVGSVGElement | null>(null)
 const cursorX = ref(0)
 const cursorY = ref(0)
+const shiftHeld = ref(false)
+const anyDragging = ref(false)
 
 const mapData = computed(() => mapStore.mapData)
 
@@ -84,6 +86,14 @@ function buildContext(_e: PointerEvent): ToolContext {
   }
 }
 
+function onKeyDown(e: KeyboardEvent) {
+  if (e.key === 'Shift') shiftHeld.value = true
+}
+
+function onKeyUp(e: KeyboardEvent) {
+  if (e.key === 'Shift') shiftHeld.value = false
+}
+
 onMounted(() => {
   const el = svgEl.value
   if (!el) return
@@ -92,10 +102,18 @@ onMounted(() => {
   const initialZoom = 0.5
   viewportStore.setZoom(initialZoom)
   viewportStore.setPan(-w / (2 * initialZoom), -h / (2 * initialZoom))
+  window.addEventListener('keydown', onKeyDown)
+  window.addEventListener('keyup', onKeyUp)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', onKeyDown)
+  window.removeEventListener('keyup', onKeyUp)
 })
 
 function onPointerDown(e: PointerEvent) {
   if (!svgEl.value) return
+  anyDragging.value = true
   handlePointerDown(e, svgEl.value, getHandler(brushStore.tool), buildContext)
 }
 
@@ -109,6 +127,7 @@ function onPointerMove(e: PointerEvent) {
 }
 
 function onPointerUp(e: PointerEvent) {
+  anyDragging.value = false
   handlePointerUp(e, getHandler(brushStore.tool), buildContext)
 }
 </script>
@@ -192,12 +211,12 @@ function onPointerUp(e: PointerEvent) {
 
     <!-- layer 6: tool cursors (each self-determines visibility) -->
     <g id="layer-cursors">
-      <PaintCursor :cursor-x="cursorX" :cursor-y="cursorY" />
+      <PaintCursor :cursor-x="cursorX" :cursor-y="cursorY" :shift-held="shiftHeld" />
       <EraseCursor :cursor-x="cursorX" :cursor-y="cursorY" />
-      <DoodleCursor :cursor-x="cursorX" :cursor-y="cursorY" />
-      <IconGhost :cursor-x="cursorX" :cursor-y="cursorY" />
-      <LineCursorAndPreview :cursor-x="cursorX" :cursor-y="cursorY" />
-      <ShiftErasePreview :cursor-x="cursorX" :cursor-y="cursorY" />
+      <DoodleCursor :cursor-x="cursorX" :cursor-y="cursorY" :shift-held="shiftHeld" />
+      <IconGhost :cursor-x="cursorX" :cursor-y="cursorY" :shift-held="shiftHeld" />
+      <LineCursorAndPreview :cursor-x="cursorX" :cursor-y="cursorY" :shift-held="shiftHeld" />
+      <ShiftErasePreview :cursor-x="cursorX" :cursor-y="cursorY" :shift-held="shiftHeld" :any-dragging="anyDragging" />
     </g>
   </svg>
 </template>

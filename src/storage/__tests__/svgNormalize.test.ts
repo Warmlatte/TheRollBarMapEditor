@@ -122,8 +122,9 @@ describe('sanitizeSvgIcon detects and removes full-area background elements', ()
   })
 
   it('removes the first shape when getBBox shows it covers the viewBox', () => {
-    const originalGetBBox = SVGElement.prototype.getBBox
-    SVGElement.prototype.getBBox = vi.fn(() => ({
+    const proto = SVGElement.prototype as unknown as SVGGraphicsElement
+    const originalGetBBox = proto.getBBox
+    proto.getBBox = vi.fn(() => ({
       x: 0,
       y: 0,
       width: 100,
@@ -137,7 +138,7 @@ describe('sanitizeSvgIcon detects and removes full-area background elements', ()
       expect(result).not.toContain('M0 0H100V100H0z')
       expect(result).toContain('<circle')
     } finally {
-      SVGElement.prototype.getBBox = originalGetBBox
+      proto.getBBox = originalGetBBox
     }
   })
 })

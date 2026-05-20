@@ -150,6 +150,49 @@ describe('HexCanvas uses pointer capture to prevent lost events', () => {
   })
 })
 
+describe('HexCanvas shift key and drag state tracking', () => {
+  let pinia: Pinia
+
+  beforeEach(() => {
+    pinia = createPinia()
+    setActivePinia(pinia)
+  })
+
+  it('PaintCursor circle (r=6) is visible when tool is paint and shift is not held', async () => {
+    const { useBrushStore } = await import('../../stores/brushStore')
+    const { default: HexCanvas } = await import('../HexCanvas.vue')
+    const brushStore = useBrushStore()
+    brushStore.tool = 'paint'
+    const wrapper = mount(HexCanvas, {
+      global: { plugins: [pinia] },
+      attachTo: document.body,
+    })
+    const circle = wrapper.find('#layer-cursors circle[r="6"]')
+    expect(circle.exists()).toBe(true)
+    wrapper.unmount()
+  })
+
+  it('PaintCursor circle is hidden when shift key is held', async () => {
+    const { useBrushStore } = await import('../../stores/brushStore')
+    const { default: HexCanvas } = await import('../HexCanvas.vue')
+    const brushStore = useBrushStore()
+    brushStore.tool = 'paint'
+    const wrapper = mount(HexCanvas, {
+      global: { plugins: [pinia] },
+      attachTo: document.body,
+    })
+    // First verify circle is visible without shift
+    expect(wrapper.find('#layer-cursors circle[r="6"]').exists()).toBe(true)
+    // Dispatch shift key to window (HexCanvas registers on window)
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Shift' }))
+    await wrapper.vm.$nextTick()
+    expect(wrapper.find('#layer-cursors circle[r="6"]').exists()).toBe(false)
+    // Cleanup: release shift
+    window.dispatchEvent(new KeyboardEvent('keyup', { key: 'Shift' }))
+    wrapper.unmount()
+  })
+})
+
 describe('HexCanvas icon rendering follows the SVG library styling contract', () => {
   let pinia: Pinia
 

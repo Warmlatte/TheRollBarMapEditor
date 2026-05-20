@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 
 // Mock BroadcastChannel before importing fileLock
 const mockPostMessage = vi.fn()
@@ -31,7 +31,7 @@ vi.stubGlobal('BroadcastChannel', MockBroadcastChannel)
 // Import after mock is set up
 const { createFileLock } = await import('../fileLock')
 
-function sendRemoteMessage(data: unknown, tabId?: string) {
+function sendRemoteMessage(data: unknown) {
   if (messageHandler) {
     messageHandler({ data } as MessageEvent)
   }

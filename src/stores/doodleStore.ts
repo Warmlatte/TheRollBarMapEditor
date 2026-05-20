@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { useSessionStore } from './sessionStore'
 
 const PREF_KEY = 'hexmap.doodle.v1'
@@ -45,5 +45,8 @@ export const useDoodleStore = defineStore('doodle', () => {
     savePref(doodleWidth.value, doodleOpacity.value)
   }
 
-  return { doodleWidth, doodleOpacity, pendingStroke, setWidth, setOpacity }
+  const width = computed(() => doodleWidth.value)
+  const opacity = computed(() => doodleOpacity.value)
+
+  return { doodleWidth, doodleOpacity, width, opacity, pendingStroke, setWidth, setOpacity }
 })

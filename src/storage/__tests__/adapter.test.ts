@@ -217,7 +217,6 @@ describe('WebFallbackAdapter.openMap', () => {
 
   it('returns null when user cancels (no file selected)', async () => {
     setupInputMock(null)
-    const adapter = new WebFallbackAdapter()
     // Simulate cancel: click fires but no change event
     // Override to simulate no selection
     let changeHandler: ((e: Event) => void) | null = null
@@ -238,7 +237,8 @@ describe('WebFallbackAdapter.openMap', () => {
     const resultPromise = adapter2.openMap()
     // Trigger the change event with empty files
     const emptyEvent = { target: { files: [] } } as unknown as Event
-    if (changeHandler) changeHandler(emptyEvent)
+    const handler = changeHandler as ((e: Event) => void) | null
+    if (handler) handler(emptyEvent)
     const result = await resultPromise
     expect(result).toBeNull()
   })

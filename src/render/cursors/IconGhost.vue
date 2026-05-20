@@ -7,7 +7,7 @@ import { useIconLibraryStore, getDisplaySvg } from '../../stores/iconLibraryStor
 import { snapPoint } from '../../lib/snap'
 import { HEX_SIZE } from '../../lib/hexMath'
 
-const props = defineProps<{ cursorX: number; cursorY: number }>()
+const props = defineProps<{ cursorX: number; cursorY: number; shiftHeld: boolean }>()
 
 const brushStore = useBrushStore()
 const iconStore = useIconStore()
@@ -31,10 +31,10 @@ const displaySvg = computed(() =>
 
 <template>
   <g
-    v-if="brushStore.tool === 'icon'"
+    v-if="brushStore.tool === 'icon' && !shiftHeld"
     :transform="`translate(${snapPos.x}, ${snapPos.y}) rotate(${iconStore.rotation}) scale(${iconStore.size / 100}) translate(-50,-50)`"
-    :fill="iconStore.color"
-    :stroke="iconStore.color"
+    :fill="brushStore.currentColor"
+    :stroke="brushStore.currentColor"
     opacity="0.45"
     pointer-events="none"
   >
@@ -45,7 +45,7 @@ const displaySvg = computed(() =>
     </g>
   </g>
   <circle
-    v-if="brushStore.tool === 'icon' && snapStore.snapMode === 'node'"
+    v-if="brushStore.tool === 'icon' && !shiftHeld && snapStore.snapMode === 'node'"
     :cx="snapPos.x"
     :cy="snapPos.y"
     r="4"

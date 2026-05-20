@@ -333,12 +333,11 @@ describe('iconLibraryStore.updateIcon', () => {
   it('rejects when IDB put operation fails during update', async () => {
     buildFakeIDB([], new Set<FailOp>(['put']))
     const { useIconLibraryStore } = await import('../iconLibraryStore')
-    const store = useIconLibraryStore()
     const initial: IconEntry[] = [{ id: 'a', rawSvg: '<svg/>', name: 'alpha', createdAt: 1000 }]
     buildFakeIDB(initial, new Set<FailOp>(['put']))
-    const store2 = useIconLibraryStore()
-    await store2.loadIcons()
-    await expect(store2.updateIcon('a', { name: 'beta' })).rejects.toThrow()
+    const store = useIconLibraryStore()
+    await store.loadIcons()
+    await expect(store.updateIcon('a', { name: 'beta' })).rejects.toThrow()
   })
 })
 
@@ -407,5 +406,16 @@ describe('getDisplaySvg', () => {
     expect(sanitizeSvgIcon).toHaveBeenCalledWith(raw)
     expect(normalizeSvgIcon).toHaveBeenCalled()
     expect(result).not.toContain('<script>')
+  })
+
+  it('returns empty string when rawSvg is undefined (corrupted IndexedDB entry)', async () => {
+    const { getDisplaySvg } = await import('../iconLibraryStore')
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    expect(getDisplaySvg(undefined as any)).toBe('')
+  })
+
+  it('returns empty string when rawSvg is empty string', async () => {
+    const { getDisplaySvg } = await import('../iconLibraryStore')
+    expect(getDisplaySvg('')).toBe('')
   })
 })

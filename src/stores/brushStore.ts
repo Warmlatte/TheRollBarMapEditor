@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 
 export type Tool = 'paint' | 'erase' | 'icon' | 'line' | 'doodle'
 export const DEFAULT_TOOL_COLOR = '#5b992e'
@@ -24,5 +24,7 @@ export const useBrushStore = defineStore('brush', () => {
     }
   }
 
-  return { tool, color, savedCells, setTool, setColor, saveCurrentCell }
+  const currentColor = computed(() => color.value)
+
+  return { tool, color, currentColor, savedCells, setTool, setColor, saveCurrentCell }
 })

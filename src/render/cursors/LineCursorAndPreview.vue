@@ -1,23 +1,30 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useBrushStore } from '../../stores/brushStore'
 import { useLineStore } from '../../stores/lineStore'
 
-defineProps<{ cursorX: number; cursorY: number }>()
+const props = defineProps<{ cursorX: number; cursorY: number; shiftHeld: boolean }>()
 
 const brushStore = useBrushStore()
 const lineStore = useLineStore()
+
+const cursorR = computed(() => Math.max(lineStore.lineWidth / 2 + 1, 4))
+const anchorR = computed(() => Math.max(lineStore.lineWidth / 2 + 1, 3))
+const dashArray = computed(() =>
+  lineStore.dashed ? `${lineStore.dashLength} ${lineStore.dashGap}` : undefined,
+)
 </script>
 
 <template>
-  <g v-if="brushStore.tool === 'line'">
+  <g v-if="brushStore.tool === 'line' && !shiftHeld">
     <circle
       v-if="lineStore.pendingAnchor"
       :cx="lineStore.pendingAnchor.x"
       :cy="lineStore.pendingAnchor.y"
-      r="4"
-      fill="#6366f1"
-      stroke="white"
-      stroke-width="1.5"
+      :r="anchorR"
+      :fill="brushStore.currentColor"
+      stroke="#fff"
+      stroke-width="1"
     />
     <line
       v-if="lineStore.pendingAnchor && lineStore.previewEnd"
@@ -25,16 +32,21 @@ const lineStore = useLineStore()
       :y1="lineStore.pendingAnchor.y"
       :x2="lineStore.previewEnd.x"
       :y2="lineStore.previewEnd.y"
-      stroke="#6366f1"
+      :stroke="brushStore.currentColor"
       :stroke-width="lineStore.lineWidth"
-      stroke-dasharray="6 3"
+      :stroke-dasharray="dashArray"
       stroke-linecap="round"
-      opacity="0.7"
+      opacity="0.5"
     />
-    <g :transform="`translate(${cursorX}, ${cursorY})`">
-      <circle r="4" fill="none" stroke="#6366f1" stroke-width="1.5" />
-      <line x1="-8" y1="0" x2="8" y2="0" stroke="#6366f1" stroke-width="1" />
-      <line x1="0" y1="-8" x2="0" y2="8" stroke="#6366f1" stroke-width="1" />
-    </g>
+    <circle
+      :cx="props.cursorX"
+      :cy="props.cursorY"
+      :r="cursorR"
+      :fill="brushStore.currentColor"
+      stroke="#fff"
+      stroke-width="1"
+      opacity="0.85"
+      pointer-events="none"
+    />
   </g>
 </template>

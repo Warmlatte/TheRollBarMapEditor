@@ -4,6 +4,7 @@ import { setActivePinia, createPinia } from 'pinia'
 import App from './App.vue'
 import { useSessionStore } from './stores/sessionStore'
 import { useMapStore } from './stores/mapStore'
+import { useIconLibraryStore } from './stores/iconLibraryStore'
 import { loadWorkspace } from './storage/persist'
 import type { MapData } from './data/types'
 
@@ -171,6 +172,47 @@ describe('App workspace restore — no workspace', () => {
 
     expect(wrapper.find('[data-testid="tab-strip"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="shortcuts-corner"]').text()).toContain('Ctrl + Z')
+    wrapper.unmount()
+  })
+
+  it('renders toast-container in the root', async () => {
+    vi.mocked(loadWorkspace).mockReturnValue(null)
+
+    const wrapper = mount(App)
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="toast-container"]').exists()).toBe(true)
+    wrapper.unmount()
+  })
+})
+
+describe('App icon library init', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    vi.clearAllMocks()
+    stubIndexedDB()
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+    vi.unstubAllGlobals()
+  })
+
+  it('3.1 shows error toast and no console.error when icon library fails to load', async () => {
+    vi.mocked(loadWorkspace).mockReturnValue(null)
+
+    const iconLibraryStore = useIconLibraryStore()
+    vi.spyOn(iconLibraryStore, 'loadIcons').mockRejectedValue(new Error('IndexedDB error'))
+
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    const wrapper = mount(App)
+    await flushPromises()
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('[data-testid^="toast-item"].toast-error').exists()).toBe(true)
+    expect(consoleSpy).not.toHaveBeenCalled()
+
     wrapper.unmount()
   })
 })
