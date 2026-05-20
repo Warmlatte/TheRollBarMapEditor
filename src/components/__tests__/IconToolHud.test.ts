@@ -1,11 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { useBrushStore } from '../../stores/brushStore'
 import { useColorPickerStore } from '../../stores/colorPickerStore'
 import { useIconStore } from '../../stores/iconStore'
 import { useIconLibraryStore } from '../../stores/iconLibraryStore'
 import type { IconEntry } from '../../stores/iconLibraryStore'
+import { useToastStore } from '../../stores/toastStore'
 import type { Pinia } from 'pinia'
 
 vi.mock('../../storage/svgNormalize', () => ({
@@ -325,6 +326,42 @@ describe('IconToolHud — icon deletion', () => {
     wrapper.unmount()
   })
 
+  it('2.1 shows info toast with "圖示已刪除" when delete succeeds', async () => {
+    const libStore = useIconLibraryStore()
+    const toastStore = useToastStore()
+    vi.spyOn(libStore, 'loadIcons').mockResolvedValue()
+    vi.spyOn(libStore, 'deleteIcon').mockResolvedValue()
+    const pushSpy = vi.spyOn(toastStore, 'pushToast')
+    libStore.icons = [ICON_A]
+
+    const wrapper = await mountHud(pinia)
+    await wrapper.vm.$nextTick()
+
+    await wrapper.find('[data-testid="icon-delete-id-a"]').trigger('click')
+    await flushPromises()
+
+    expect(pushSpy).toHaveBeenCalledWith('圖示已刪除', 'info')
+    wrapper.unmount()
+  })
+
+  it('2.2 shows error toast when delete fails', async () => {
+    const libStore = useIconLibraryStore()
+    const toastStore = useToastStore()
+    vi.spyOn(libStore, 'loadIcons').mockResolvedValue()
+    vi.spyOn(libStore, 'deleteIcon').mockRejectedValue(new Error('db not initialized'))
+    const pushSpy = vi.spyOn(toastStore, 'pushToast')
+    libStore.icons = [ICON_A]
+
+    const wrapper = await mountHud(pinia)
+    await wrapper.vm.$nextTick()
+
+    await wrapper.find('[data-testid="icon-delete-id-a"]').trigger('click')
+    await flushPromises()
+
+    expect(pushSpy).toHaveBeenCalledWith(expect.any(String), 'error')
+    wrapper.unmount()
+  })
+
   it('deleting non-selected icon does not clear selectedSvgId', async () => {
     const libStore = useIconLibraryStore()
     const iconStore = useIconStore()
@@ -394,6 +431,87 @@ describe('IconToolHud — SVG upload', () => {
     await input.trigger('change')
 
     expect(addSpy).not.toHaveBeenCalled()
+    wrapper.unmount()
+  })
+
+  it('1.1 shows error toast when addIcon throws validation error', async () => {
+    const libStore = useIconLibraryStore()
+    const toastStore = useToastStore()
+    vi.spyOn(libStore, 'loadIcons').mockResolvedValue()
+    vi.spyOn(libStore, 'addIcon').mockRejectedValue(new Error('Invalid SVG: sanitization produced empty output'))
+    const pushSpy = vi.spyOn(toastStore, 'pushToast')
+
+    const svgContent = '<svg><rect/></svg>'
+    const mockFile = new File([svgContent], 'bad-icon.svg', { type: 'image/svg+xml' })
+
+    vi.stubGlobal('FileReader', vi.fn(() => ({
+      readAsText: vi.fn(function (this: { onload?: (e: { target: { result: string } }) => void }) {
+        this.onload?.({ target: { result: svgContent } })
+      }),
+      onload: null,
+      onerror: null,
+    })))
+
+    const wrapper = await mountHud(pinia)
+    const input = wrapper.find('[data-testid="icon-upload"]')
+    Object.defineProperty(input.element, 'files', { value: [mockFile], configurable: true })
+    await input.trigger('change')
+    await flushPromises()
+
+    expect(pushSpy).toHaveBeenCalledWith(expect.any(String), 'error')
+    wrapper.unmount()
+  })
+
+  it('1.2 shows success toast containing icon name when upload succeeds', async () => {
+    const libStore = useIconLibraryStore()
+    const toastStore = useToastStore()
+    vi.spyOn(libStore, 'loadIcons').mockResolvedValue()
+    vi.spyOn(libStore, 'addIcon').mockResolvedValue()
+    const pushSpy = vi.spyOn(toastStore, 'pushToast')
+
+    const svgContent = '<svg><rect/></svg>'
+    const mockFile = new File([svgContent], 'dragon.svg', { type: 'image/svg+xml' })
+
+    vi.stubGlobal('FileReader', vi.fn(() => ({
+      readAsText: vi.fn(function (this: { onload?: (e: { target: { result: string } }) => void }) {
+        this.onload?.({ target: { result: svgContent } })
+      }),
+      onload: null,
+      onerror: null,
+    })))
+
+    const wrapper = await mountHud(pinia)
+    const input = wrapper.find('[data-testid="icon-upload"]')
+    Object.defineProperty(input.element, 'files', { value: [mockFile], configurable: true })
+    await input.trigger('change')
+    await flushPromises()
+
+    expect(pushSpy).toHaveBeenCalledWith(expect.stringContaining('dragon'), 'success')
+    wrapper.unmount()
+  })
+
+  it('1.3 shows error toast when FileReader fails', async () => {
+    const libStore = useIconLibraryStore()
+    const toastStore = useToastStore()
+    vi.spyOn(libStore, 'loadIcons').mockResolvedValue()
+    const pushSpy = vi.spyOn(toastStore, 'pushToast')
+
+    const mockFile = new File(['<svg/>'], 'fail.svg', { type: 'image/svg+xml' })
+    vi.stubGlobal('FileReader', vi.fn(() => ({
+      readAsText: vi.fn(function (this: { onerror?: () => void }) {
+        this.onerror?.()
+      }),
+      onload: null,
+      onerror: null,
+    })))
+
+    const wrapper = await mountHud(pinia)
+    const input = wrapper.find('[data-testid="icon-upload"]')
+    Object.defineProperty(input.element, 'files', { value: [mockFile], configurable: true })
+    await input.trigger('change')
+    await flushPromises()
+
+    expect(pushSpy).toHaveBeenCalledWith(expect.any(String), 'error')
     wrapper.unmount()
   })
 
