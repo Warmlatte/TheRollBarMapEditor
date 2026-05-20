@@ -186,7 +186,7 @@ const snapStore = useSnapStore()
 const i18n = useI18nStore()
 const colorPicker = useColorPickerStore()
 const previewHexPoints = hexCorners(0, 0, 100)
-const defaultIconColor = '#7a7a7a'
+const defaultIconColor = '#D0D0D0'
 
 const selectedEntry = computed(() =>
   iconStore.selectedSvgId
