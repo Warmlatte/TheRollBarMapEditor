@@ -105,6 +105,7 @@ onMounted(async () => {
   window.addEventListener('beforeunload', handleBeforeUnload)
   window.addEventListener('keydown', handleKeyDown)
   await restoreWorkspace()
+  brushStore.loadSavedCells()
   try {
     await iconLibraryStore.loadIcons()
     const selectedExists =
