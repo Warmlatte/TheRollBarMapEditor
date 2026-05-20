@@ -10,6 +10,7 @@ import { useSessionStore } from './stores/sessionStore'
 import { useI18nStore } from './stores/i18nStore'
 import { useIconLibraryStore } from './stores/iconLibraryStore'
 import { useIconStore } from './stores/iconStore'
+import { useToastStore } from './stores/toastStore'
 import { loadWorkspace } from './storage/persist'
 import { loadHandle } from './storage/fileHandlePersistence'
 import ToastContainer from './components/ToastContainer.vue'
@@ -23,6 +24,7 @@ const activeTool = computed(() => TOOLS.find(t => t.id === brushStore.tool))
 const activeHud = computed(() => activeTool.value?.hud)
 const activeToolName = computed(() => i18n.t(activeTool.value?.i18nKey ?? ''))
 
+const toastStore = useToastStore()
 const autoSaveStore = useAutoSaveStore()
 const sessionStore = useSessionStore()
 
@@ -111,8 +113,8 @@ onMounted(async () => {
     if (!selectedExists && iconLibraryStore.icons.length > 0) {
       iconStore.setSelectedSvgId(iconLibraryStore.icons[0].id)
     }
-  } catch (error) {
-    console.error('[icon library init]', error)
+  } catch {
+    toastStore.pushToast('圖示庫載入失敗，請重新整理頁面', 'error', 0)
   }
 })
 
