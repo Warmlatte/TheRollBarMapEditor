@@ -4,17 +4,7 @@ import { toRaw } from 'vue'
 import { useMapStore } from '../mapStore'
 import { useSessionStore } from '../sessionStore'
 import { PaintHexCommand } from '../../commands/hexCommands'
-import type { Command } from '../../commands/types'
 import type { MapData } from '../../data/types'
-
-function makeCmd(apply: (state: MapData) => MapData): Command {
-  const cmd: Command = {
-    apply(state: MapData) {
-      return { state: apply(state), inverse: cmd }
-    },
-  }
-  return cmd
-}
 
 describe('mapStore skeleton', () => {
   beforeEach(() => {

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { SetMapBoundsCommand } from '../boundsCommands'
-import type { MapData, Bounds } from '../../data/types'
+import type { MapData } from '../../data/types'
 
 function makeMapData(overrides: Partial<MapData> = {}): MapData {
   return {

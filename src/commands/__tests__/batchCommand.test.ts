@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { BatchCommand } from '../batchCommand'
 import type { Command } from '../types'
 import type { MapData } from '../../data/types'

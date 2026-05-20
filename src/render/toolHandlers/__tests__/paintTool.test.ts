@@ -19,7 +19,7 @@ const BASE_MAP_DATA: MapData = {
 function createMockContext(pixelToHexMock?: ReturnType<typeof vi.fn>): ToolContext {
   return {
     svgPoint: vi.fn().mockReturnValue({ x: 0, y: 0 }),
-    pixelToHex: pixelToHexMock ?? vi.fn().mockReturnValue({ q: 0, r: 0 }),
+    pixelToHex: (pixelToHexMock ?? vi.fn().mockReturnValue({ q: 0, r: 0 })) as (x: number, y: number) => { q: number; r: number },
     hexToPixel: vi.fn().mockReturnValue({ x: 0, y: 0 }),
     findHexAt: vi.fn().mockReturnValue(undefined),
     findHexesInRadius: vi.fn().mockReturnValue([]),

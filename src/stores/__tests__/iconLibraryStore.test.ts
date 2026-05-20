@@ -333,12 +333,11 @@ describe('iconLibraryStore.updateIcon', () => {
   it('rejects when IDB put operation fails during update', async () => {
     buildFakeIDB([], new Set<FailOp>(['put']))
     const { useIconLibraryStore } = await import('../iconLibraryStore')
-    const store = useIconLibraryStore()
     const initial: IconEntry[] = [{ id: 'a', rawSvg: '<svg/>', name: 'alpha', createdAt: 1000 }]
     buildFakeIDB(initial, new Set<FailOp>(['put']))
-    const store2 = useIconLibraryStore()
-    await store2.loadIcons()
-    await expect(store2.updateIcon('a', { name: 'beta' })).rejects.toThrow()
+    const store = useIconLibraryStore()
+    await store.loadIcons()
+    await expect(store.updateIcon('a', { name: 'beta' })).rejects.toThrow()
   })
 })
 

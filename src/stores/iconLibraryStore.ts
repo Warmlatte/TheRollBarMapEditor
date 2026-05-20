@@ -48,7 +48,7 @@ function idbGetAll(db: IDBDatabase): Promise<IconEntry[]> {
     const tx = db.transaction(STORE_NAME, 'readonly')
     const req = tx.objectStore(STORE_NAME).getAll()
     req.onsuccess = (event) =>
-      resolve((event as { target: { result: IconEntry[] } }).target.result)
+      resolve((event.target as IDBRequest<IconEntry[]>).result)
     req.onerror = () => reject(req.error ?? new Error('IndexedDB getAll failed'))
   })
 }

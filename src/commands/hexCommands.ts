@@ -1,5 +1,5 @@
 import type { Command } from './types'
-import type { MapData, Hex } from '../data/types'
+import type { MapData } from '../data/types'
 
 type HexCoord = { q: number; r: number }
 

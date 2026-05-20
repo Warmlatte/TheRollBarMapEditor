@@ -55,7 +55,7 @@ function idbGetAll(db: IDBDatabase): Promise<ArchiveEntry[]> {
     const tx = db.transaction(STORE_NAME, 'readonly')
     const req = tx.objectStore(STORE_NAME).getAll()
     req.onsuccess = (event) =>
-      resolve((event as { target: { result: ArchiveEntry[] } }).target.result)
+      resolve((event.target as IDBRequest<ArchiveEntry[]>).result)
     req.onerror = () => reject(req.error)
   })
 }
