@@ -173,4 +173,14 @@ describe('App workspace restore — no workspace', () => {
     expect(wrapper.find('[data-testid="shortcuts-corner"]').text()).toContain('Ctrl + Z')
     wrapper.unmount()
   })
+
+  it('renders toast-container in the root', async () => {
+    vi.mocked(loadWorkspace).mockReturnValue(null)
+
+    const wrapper = mount(App)
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="toast-container"]').exists()).toBe(true)
+    wrapper.unmount()
+  })
 })
