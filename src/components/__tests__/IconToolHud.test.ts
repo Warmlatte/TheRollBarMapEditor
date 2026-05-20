@@ -147,7 +147,7 @@ describe('IconToolHud — icon selection', () => {
     await wrapper.vm.$nextTick()
 
     for (const entry of DEFAULT_ICON_ENTRIES) {
-      expect(wrapper.find(`[data-testid="icon-select-${entry.id}"]`).attributes('style')).toContain('color: #7a7a7a')
+      expect(wrapper.find(`[data-testid="icon-select-${entry.id}"]`).attributes('style')).toContain('color: #D0D0D0')
     }
     wrapper.unmount()
   })
