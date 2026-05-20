@@ -108,9 +108,9 @@ export const useSessionStore = defineStore('session', () => {
     // Locked by another tab
     if (fileLock.isLockedByOtherTab(fileId)) {
       const toastStore = useToastStore()
-      toastStore.push(
+      toastStore.pushToast(
         `此檔案已在另一個視窗開啟：${fileId}`,
-        'warn',
+        'warning',
       )
       return null
     }
