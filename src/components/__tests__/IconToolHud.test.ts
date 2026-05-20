@@ -540,4 +540,83 @@ describe('IconToolHud — SVG upload', () => {
     expect(iconStore.selectedSvgId).toBe('existing-id')
     wrapper.unmount()
   })
+
+  it('resets input value after successful upload so the same file can be re-selected', async () => {
+    const libStore = useIconLibraryStore()
+    vi.spyOn(libStore, 'loadIcons').mockResolvedValue()
+    vi.spyOn(libStore, 'addIcon').mockResolvedValue()
+    const svgContent = '<svg><rect/></svg>'
+    const mockFile = new File([svgContent], 'icon.svg', { type: 'image/svg+xml' })
+
+    vi.stubGlobal('FileReader', vi.fn(() => ({
+      readAsText: vi.fn(function (this: { onload?: (e: { target: { result: string } }) => void }) {
+        this.onload?.({ target: { result: svgContent } })
+      }),
+      onload: null,
+      onerror: null,
+    })))
+
+    const wrapper = await mountHud(pinia)
+    const input = wrapper.find('[data-testid="icon-upload"]')
+    const valueSetter = vi.fn()
+    Object.defineProperty(input.element, 'files', { value: [mockFile], configurable: true })
+    Object.defineProperty(input.element, 'value', { get: () => '', set: valueSetter, configurable: true })
+    await input.trigger('change')
+    await flushPromises()
+
+    expect(valueSetter).toHaveBeenCalledWith('')
+    wrapper.unmount()
+  })
+
+  it('resets input value even when addIcon throws so re-upload is still possible', async () => {
+    const libStore = useIconLibraryStore()
+    vi.spyOn(libStore, 'loadIcons').mockResolvedValue()
+    vi.spyOn(libStore, 'addIcon').mockRejectedValue(new Error('Invalid SVG'))
+    const svgContent = '<svg><rect/></svg>'
+    const mockFile = new File([svgContent], 'icon.svg', { type: 'image/svg+xml' })
+
+    vi.stubGlobal('FileReader', vi.fn(() => ({
+      readAsText: vi.fn(function (this: { onload?: (e: { target: { result: string } }) => void }) {
+        this.onload?.({ target: { result: svgContent } })
+      }),
+      onload: null,
+      onerror: null,
+    })))
+
+    const wrapper = await mountHud(pinia)
+    const input = wrapper.find('[data-testid="icon-upload"]')
+    const valueSetter = vi.fn()
+    Object.defineProperty(input.element, 'files', { value: [mockFile], configurable: true })
+    Object.defineProperty(input.element, 'value', { get: () => '', set: valueSetter, configurable: true })
+    await input.trigger('change')
+    await flushPromises()
+
+    expect(valueSetter).toHaveBeenCalledWith('')
+    wrapper.unmount()
+  })
+
+  it('resets input value on FileReader error so re-upload is still possible', async () => {
+    const libStore = useIconLibraryStore()
+    vi.spyOn(libStore, 'loadIcons').mockResolvedValue()
+    const mockFile = new File(['<svg/>'], 'icon.svg', { type: 'image/svg+xml' })
+
+    vi.stubGlobal('FileReader', vi.fn(() => ({
+      readAsText: vi.fn(function (this: { onerror?: () => void }) {
+        this.onerror?.()
+      }),
+      onload: null,
+      onerror: null,
+    })))
+
+    const wrapper = await mountHud(pinia)
+    const input = wrapper.find('[data-testid="icon-upload"]')
+    const valueSetter = vi.fn()
+    Object.defineProperty(input.element, 'files', { value: [mockFile], configurable: true })
+    Object.defineProperty(input.element, 'value', { get: () => '', set: valueSetter, configurable: true })
+    await input.trigger('change')
+    await flushPromises()
+
+    expect(valueSetter).toHaveBeenCalledWith('')
+    wrapper.unmount()
+  })
 })

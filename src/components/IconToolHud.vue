@@ -264,6 +264,8 @@ function handleUpload(event: Event): void {
   if (!file) return
   if (!file.name.endsWith('.svg') && file.type !== 'image/svg+xml') return
 
+  input.value = ''
+
   const reader = new FileReader()
   reader.onload = async (e) => {
     const content = (e.target as FileReader).result as string
