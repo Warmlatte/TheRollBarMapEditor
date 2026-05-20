@@ -407,4 +407,15 @@ describe('getDisplaySvg', () => {
     expect(normalizeSvgIcon).toHaveBeenCalled()
     expect(result).not.toContain('<script>')
   })
+
+  it('returns empty string when rawSvg is undefined (corrupted IndexedDB entry)', async () => {
+    const { getDisplaySvg } = await import('../iconLibraryStore')
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    expect(getDisplaySvg(undefined as any)).toBe('')
+  })
+
+  it('returns empty string when rawSvg is empty string', async () => {
+    const { getDisplaySvg } = await import('../iconLibraryStore')
+    expect(getDisplaySvg('')).toBe('')
+  })
 })

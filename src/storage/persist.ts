@@ -20,11 +20,16 @@ export function saveWorkspace(data: WorkspaceData): void {
   localStorage.setItem(WORKSPACE_KEY, json)
 }
 
+function isValidWorkspace(obj: unknown): obj is WorkspaceData {
+  return typeof obj === 'object' && obj !== null && Array.isArray((obj as Record<string, unknown>).tabs)
+}
+
 export function loadWorkspace(): WorkspaceData | null {
   const tryParse = (raw: string | null): WorkspaceData | null => {
     if (raw === null) return null
     try {
-      return JSON.parse(raw) as WorkspaceData
+      const parsed: unknown = JSON.parse(raw)
+      return isValidWorkspace(parsed) ? parsed : null
     } catch {
       return null
     }

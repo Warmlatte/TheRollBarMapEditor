@@ -72,6 +72,7 @@ function idbDelete(db: IDBDatabase, id: string): Promise<void> {
 }
 
 export function getDisplaySvg(rawSvg: string): string {
+  if (!rawSvg) return ''
   return normalizeSvgIcon(sanitizeSvgIcon(rawSvg))
 }
 
