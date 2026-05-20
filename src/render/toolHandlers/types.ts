@@ -17,4 +17,7 @@ export interface ToolHandler {
   onPointerDown(ctx: ToolContext, e: PointerEvent): void
   onPointerMove(ctx: ToolContext, e: PointerEvent): void
   onPointerUp(ctx: ToolContext, e: PointerEvent): void
+  onPointerCancel(ctx: ToolContext): void
+  isDragging(): boolean
+  onEyedrop?(ctx: ToolContext, e: MouseEvent): void
 }

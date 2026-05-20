@@ -11,6 +11,11 @@ export class PaintHexCommand implements Command {
 
   apply(state: MapData): { state: MapData; inverse: Command } {
     const existing = state.hexes.find(h => h.q === this.coord.q && h.r === this.coord.r)
+
+    if (existing && existing.color === this.newColor) {
+      return { state, inverse: this }
+    }
+
     const oldColor = existing?.color ?? null
 
     const hexes = existing

@@ -44,6 +44,8 @@ function makeHandler(): ToolHandler & { calls: string[] } {
     onPointerDown: vi.fn(() => { calls.push('down') }),
     onPointerMove: vi.fn(() => { calls.push('move') }),
     onPointerUp: vi.fn(() => { calls.push('up') }),
+    onPointerCancel: vi.fn(),
+    isDragging: vi.fn(() => false),
   }
 }
 

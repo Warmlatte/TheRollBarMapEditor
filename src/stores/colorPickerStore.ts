@@ -12,6 +12,9 @@ export const useColorPickerStore = defineStore('colorPicker', () => {
 
   const hex = computed(() => hsvToHex(h.value, s.value, v.value))
 
+  const hexInput = ref<string>(DEFAULT_TOOL_COLOR)
+  let _suppressNextSync = false
+
   function setHsv(newH: number, newS: number, newV: number): void {
     h.value = newH
     s.value = newS
@@ -24,5 +27,26 @@ export const useColorPickerStore = defineStore('colorPicker', () => {
     setHsv(newH, newS, newV)
   }
 
-  return { h, s, v, hex, setHsv, setHex }
+  function applyHex(hex: string): void {
+    const { h: newH, s: newS, v: newV } = hexToHsv(hex)
+    h.value = newH
+    s.value = newS
+    v.value = newV
+    hexInput.value = hex
+    _suppressNextSync = true
+  }
+
+  function consumeSuppressFlag(): boolean {
+    if (_suppressNextSync) {
+      _suppressNextSync = false
+      return true
+    }
+    return false
+  }
+
+  function setHexInput(value: string): void {
+    hexInput.value = value
+  }
+
+  return { h, s, v, hex, hexInput, setHsv, setHex, applyHex, consumeSuppressFlag, setHexInput }
 })

@@ -26,18 +26,24 @@ export const lineHandler: ToolHandler = {
   onPointerDown: noop,
   onPointerMove: noop,
   onPointerUp: noop,
+  onPointerCancel: noop,
+  isDragging: () => false,
 }
 
 export const doodleHandler: ToolHandler = {
   onPointerDown: noop,
   onPointerMove: noop,
   onPointerUp: noop,
+  onPointerCancel: noop,
+  isDragging: () => false,
 }
 
 export const eraseHandler: ToolHandler = {
   onPointerDown: noop,
   onPointerMove: noop,
   onPointerUp: noop,
+  onPointerCancel: noop,
+  isDragging: () => false,
 }
 
 export const TOOLS: ToolDef[] = [

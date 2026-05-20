@@ -1,8 +1,9 @@
 import { useMapStore } from '../../stores/mapStore'
 import { useBrushStore } from '../../stores/brushStore'
+import { useColorPickerStore } from '../../stores/colorPickerStore'
 import { PaintHexCommand } from '../../commands/hexCommands'
 import { hexDistance } from '../../lib/hexMath'
-import type { ToolHandler } from './types'
+import type { ToolHandler, ToolContext } from './types'
 
 const strokePainted = new Set<string>()
 let isStrokeActive = false
@@ -49,4 +50,31 @@ export const paintHandler: ToolHandler = {
     isStrokeActive = false
     strokePainted.clear()
   },
+
+  onPointerCancel(_ctx) {
+    if (isStrokeActive) {
+      const mapStore = useMapStore()
+      mapStore.endStroke()
+      isStrokeActive = false
+      strokePainted.clear()
+    }
+  },
+
+  isDragging() {
+    return isStrokeActive
+  },
+
+  onEyedrop(ctx: ToolContext, e: MouseEvent) {
+    const { x, y } = ctx.svgPoint(e as PointerEvent)
+    const { q, r } = ctx.pixelToHex(x, y)
+    const painted = ctx.mapData.hexes.find(h => h.q === q && h.r === r)
+    if (!painted) return
+    useColorPickerStore().applyHex(painted.color)
+    useBrushStore().setColor(painted.color)
+  },
+}
+
+export function _resetPaintToolForTest(): void {
+  isStrokeActive = false
+  strokePainted.clear()
 }

@@ -320,6 +320,62 @@ describe('mapStore dispatch/undo/redo sync to sessionStore', () => {
   })
 })
 
+describe('mapStore undo stack capacity', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+  })
+
+  it('dispatch 超過 100 次後 undoStack.length === 100 且最舊項目被移除', () => {
+    const store = useMapStore()
+    // dispatch 101 commands, each painting a unique hex
+    for (let i = 0; i <= 100; i++) {
+      store.dispatch(new PaintHexCommand({ q: i, r: 0 }, '#ff0000'))
+    }
+    expect(store.undoStackLength).toBe(100)
+    // After 101 dispatches, undo 100 times should not restore the very first paint
+    // (oldest entry was removed). The first hex painted is {q:0,r:0}.
+    // After undoing 100 times, q:0,r:0 should still be painted (its inverse was dropped).
+    for (let i = 0; i < 100; i++) {
+      store.undo()
+    }
+    // q:0,r:0 was the first dispatch - its inverse is the oldest and was dropped
+    const firstHex = store.mapData.hexes.find(h => h.q === 0 && h.r === 0)
+    expect(firstHex).toBeDefined()
+  })
+
+  it('undoStack capacity applies to endStroke BatchCommand as well', () => {
+    const store = useMapStore()
+    // Fill up to capacity with direct dispatches
+    for (let i = 0; i < 100; i++) {
+      store.dispatch(new PaintHexCommand({ q: i, r: 0 }, '#ff0000'))
+    }
+    expect(store.undoStackLength).toBe(100)
+    // One more stroke dispatch should trim oldest
+    store.beginStroke()
+    store.dispatch(new PaintHexCommand({ q: 200, r: 0 }, '#00ff00'))
+    store.endStroke()
+    expect(store.undoStackLength).toBe(100)
+  })
+})
+
+describe('mapStore clears redo stack during stroke', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+  })
+
+  it('undo 後開始新 stroke，第一次 dispatch，canRedo === false', () => {
+    const store = useMapStore()
+    store.dispatch(new PaintHexCommand({ q: 1, r: 1 }, '#ff0000'))
+    store.undo()
+    expect(store.canRedo).toBe(true)
+    // Start a stroke and dispatch - redo should be cleared
+    store.beginStroke()
+    store.dispatch(new PaintHexCommand({ q: 2, r: 2 }, '#00ff00'))
+    expect(store.canRedo).toBe(false)
+    store.endStroke()
+  })
+})
+
 describe('new tab starts with empty undo stack', () => {
   beforeEach(() => {
     setActivePinia(createPinia())

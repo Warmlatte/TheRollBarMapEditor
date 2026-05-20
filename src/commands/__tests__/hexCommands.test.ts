@@ -57,6 +57,24 @@ describe('PaintHexCommand', () => {
   })
 })
 
+describe('PaintHexCommand same-color no-op', () => {
+  it('同色重塗 apply 回傳的 state 為原 state（=== 相等）且 inverse === 命令自身', () => {
+    const state = makeMapData({ hexes: [{ q: 1, r: 2, color: '#ff0000' }] })
+    const cmd = new PaintHexCommand({ q: 1, r: 2 }, '#ff0000')
+    const { state: next, inverse } = cmd.apply(state)
+    expect(next).toBe(state)
+    expect(inverse).toBe(cmd)
+  })
+
+  it('不同色重塗仍產生新 state reference', () => {
+    const state = makeMapData({ hexes: [{ q: 1, r: 2, color: '#ff0000' }] })
+    const cmd = new PaintHexCommand({ q: 1, r: 2 }, '#0000ff')
+    const { state: next, inverse } = cmd.apply(state)
+    expect(next).not.toBe(state)
+    expect(inverse).not.toBe(cmd)
+  })
+})
+
 describe('EraseHexCommand', () => {
   it('apply returns a new MapData reference', () => {
     const state = makeMapData({ hexes: [{ q: 1, r: 1, color: '#ff0000' }] })

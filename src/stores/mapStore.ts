@@ -4,6 +4,9 @@ import type { MapData } from '../data/types'
 import type { Command } from '../commands/types'
 import { BatchCommand } from '../commands/batchCommand'
 import { useSessionStore } from './sessionStore'
+import { useAutoSaveStore } from './autoSaveStore'
+
+const UNDO_CAPACITY = 100
 function makeDefaultMapData(): MapData {
   return {
     name: 'New Map',
@@ -43,13 +46,17 @@ export const useMapStore = defineStore('map', () => {
     const { state: nextState, inverse } = cmd.apply(mapData.value)
     mapData.value = nextState
     syncToActiveSession(nextState)
+    redoStack.value = []
 
     if (strokeActive.value) {
       pendingInverses.value.push(inverse)
     } else {
       undoStack.value.push(inverse)
-      redoStack.value = []
+      if (undoStack.value.length > UNDO_CAPACITY) {
+        undoStack.value.shift()
+      }
     }
+    useAutoSaveStore().scheduleAutoSave(useSessionStore().activeSession?.id ?? 'default')
   }
 
   function beginStroke(): void {
@@ -62,7 +69,9 @@ export const useMapStore = defineStore('map', () => {
     if (pendingInverses.value.length > 0) {
       const batch = new BatchCommand([...pendingInverses.value].reverse())
       undoStack.value.push(batch)
-      redoStack.value = []
+      if (undoStack.value.length > UNDO_CAPACITY) {
+        undoStack.value.shift()
+      }
     }
     pendingInverses.value = []
   }
@@ -75,6 +84,7 @@ export const useMapStore = defineStore('map', () => {
     mapData.value = prevState
     redoStack.value.push(forwardCmd)
     syncToActiveSession(prevState)
+    useAutoSaveStore().scheduleAutoSave(useSessionStore().activeSession?.id ?? 'default')
   }
 
   function redo(): void {
@@ -85,6 +95,7 @@ export const useMapStore = defineStore('map', () => {
     mapData.value = nextState
     undoStack.value.push(backCmd)
     syncToActiveSession(nextState)
+    useAutoSaveStore().scheduleAutoSave(useSessionStore().activeSession?.id ?? 'default')
   }
 
   function loadMapData(data: MapData): void {
