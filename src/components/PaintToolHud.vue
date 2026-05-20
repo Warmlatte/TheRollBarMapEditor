@@ -13,7 +13,7 @@
     <button
       class="hud-btn w-full"
       data-testid="save-cell-btn"
-      @click="brushStore.saveCurrentCell()"
+      @click="handleSaveCell"
     >
       儲存色塊
     </button>
@@ -36,14 +36,14 @@
             data-testid="saved-cell-thumb"
             @click="brushStore.applySavedCell(cell.id)"
           >
-            <svg viewBox="0 0 40 40" width="22" height="22" aria-hidden="true">
+            <svg viewBox="0 0 40 40" width="36" height="36" aria-hidden="true">
               <polygon :points="thumbPoints" :fill="cell.color" />
             </svg>
           </button>
           <button
             class="icon-cell-x"
             data-testid="saved-cell-remove"
-            @click.stop="brushStore.removeSavedCell(cell.id)"
+            @click.stop="handleRemoveCell(cell.id)"
           >
             ×
           </button>
@@ -56,9 +56,26 @@
 <script setup lang="ts">
 import ColorPickerGrid from './picker/ColorPickerGrid.vue'
 import { useBrushStore } from '../stores/brushStore'
+import { useToastStore } from '../stores/toastStore'
 import { hexCorners } from '../lib/hexMath'
 
 const brushStore = useBrushStore()
+const toastStore = useToastStore()
 const hexPoints = hexCorners(20, 20, 16)
 const thumbPoints = hexCorners(20, 20, 17)
+
+function handleSaveCell(): void {
+  const alreadyExists = brushStore.savedCells.some((c) => c.color === brushStore.color)
+  brushStore.saveCurrentCell()
+  if (alreadyExists) {
+    toastStore.pushToast('此顏色已在色塊清單中', 'info')
+  } else {
+    toastStore.pushToast('色塊已儲存', 'success')
+  }
+}
+
+function handleRemoveCell(id: string): void {
+  brushStore.removeSavedCell(id)
+  toastStore.pushToast('色塊已移除', 'info')
+}
 </script>
