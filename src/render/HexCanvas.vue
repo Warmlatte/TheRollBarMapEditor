@@ -113,7 +113,7 @@ onUnmounted(() => {
 
 function onPointerDown(e: PointerEvent) {
   if (!svgEl.value) return
-  anyDragging.value = true
+  if (e.button === 0) anyDragging.value = true
   handlePointerDown(e, svgEl.value, getHandler(brushStore.tool), buildContext)
 }
 
@@ -130,6 +130,10 @@ function onPointerUp(e: PointerEvent) {
   anyDragging.value = false
   handlePointerUp(e, getHandler(brushStore.tool), buildContext)
 }
+
+function onPointerCancel() {
+  anyDragging.value = false
+}
 </script>
 
 <template>
@@ -140,6 +144,8 @@ function onPointerUp(e: PointerEvent) {
     @pointerdown="onPointerDown"
     @pointermove="onPointerMove"
     @pointerup="onPointerUp"
+    @pointercancel="onPointerCancel"
+    @lostpointercapture="onPointerCancel"
   >
     <!-- layer 1: grid outlines -->
     <g id="layer-grid">
