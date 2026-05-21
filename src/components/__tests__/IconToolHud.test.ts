@@ -396,7 +396,7 @@ describe('IconToolHud — SVG upload', () => {
   it('uploading a .svg file calls addIcon with content and filename without extension', async () => {
     const libStore = useIconLibraryStore()
     vi.spyOn(libStore, 'loadIcons').mockResolvedValue()
-    const addSpy = vi.spyOn(libStore, 'addIcon').mockResolvedValue()
+    const addSpy = vi.spyOn(libStore, 'addIcon').mockResolvedValue({ id: 'my-icon-id', rawSvg: '<svg><rect/></svg>', name: 'my-icon', createdAt: 0 })
     const svgContent = '<svg><rect/></svg>'
     const mockFile = new File([svgContent], 'my-icon.svg', { type: 'image/svg+xml' })
 
@@ -416,6 +416,60 @@ describe('IconToolHud — SVG upload', () => {
     await wrapper.vm.$nextTick()
 
     expect(addSpy).toHaveBeenCalledWith(svgContent, 'my-icon')
+    wrapper.unmount()
+  })
+
+  it('non-SVG file shows error toast and does not call FileReader.readAsText', async () => {
+    const libStore = useIconLibraryStore()
+    const toastStore = useToastStore()
+    vi.spyOn(libStore, 'loadIcons').mockResolvedValue()
+    const pushSpy = vi.spyOn(toastStore, 'pushToast')
+    const readAsTextMock = vi.fn()
+    vi.stubGlobal('FileReader', vi.fn(() => ({
+      readAsText: readAsTextMock,
+      onload: null,
+      onerror: null,
+    })))
+
+    const mockFile = new File(['data'], 'notes.txt', { type: 'text/plain' })
+    const wrapper = await mountHud(pinia)
+    const input = wrapper.find('[data-testid="icon-upload"]')
+    Object.defineProperty(input.element, 'files', { value: [mockFile], configurable: true })
+    await input.trigger('change')
+
+    expect(pushSpy).toHaveBeenCalledWith(expect.any(String), 'error')
+    expect(readAsTextMock).not.toHaveBeenCalled()
+    wrapper.unmount()
+  })
+
+  it('non-SVG file clears input value', async () => {
+    const libStore = useIconLibraryStore()
+    vi.spyOn(libStore, 'loadIcons').mockResolvedValue()
+    const mockFile = new File(['data'], 'notes.txt', { type: 'text/plain' })
+
+    const wrapper = await mountHud(pinia)
+    const input = wrapper.find('[data-testid="icon-upload"]')
+    const valueSetter = vi.fn()
+    Object.defineProperty(input.element, 'files', { value: [mockFile], configurable: true })
+    Object.defineProperty(input.element, 'value', { get: () => 'notes.txt', set: valueSetter, configurable: true })
+    await input.trigger('change')
+
+    expect(valueSetter).toHaveBeenCalledWith('')
+    wrapper.unmount()
+  })
+
+  it('no-file selected is a no-op and does not show any toast', async () => {
+    const libStore = useIconLibraryStore()
+    const toastStore = useToastStore()
+    vi.spyOn(libStore, 'loadIcons').mockResolvedValue()
+    const pushSpy = vi.spyOn(toastStore, 'pushToast')
+
+    const wrapper = await mountHud(pinia)
+    const input = wrapper.find('[data-testid="icon-upload"]')
+    Object.defineProperty(input.element, 'files', { value: [], configurable: true })
+    await input.trigger('change')
+
+    expect(pushSpy).not.toHaveBeenCalled()
     wrapper.unmount()
   })
 
@@ -466,7 +520,7 @@ describe('IconToolHud — SVG upload', () => {
     const libStore = useIconLibraryStore()
     const toastStore = useToastStore()
     vi.spyOn(libStore, 'loadIcons').mockResolvedValue()
-    vi.spyOn(libStore, 'addIcon').mockResolvedValue()
+    vi.spyOn(libStore, 'addIcon').mockResolvedValue({ id: 'dragon-id', rawSvg: '<svg><rect/></svg>', name: 'dragon', createdAt: 0 })
     const pushSpy = vi.spyOn(toastStore, 'pushToast')
 
     const svgContent = '<svg><rect/></svg>'
@@ -544,7 +598,7 @@ describe('IconToolHud — SVG upload', () => {
   it('resets input value after successful upload so the same file can be re-selected', async () => {
     const libStore = useIconLibraryStore()
     vi.spyOn(libStore, 'loadIcons').mockResolvedValue()
-    vi.spyOn(libStore, 'addIcon').mockResolvedValue()
+    vi.spyOn(libStore, 'addIcon').mockResolvedValue({ id: 'icon-id', rawSvg: '<svg><rect/></svg>', name: 'icon', createdAt: 0 })
     const svgContent = '<svg><rect/></svg>'
     const mockFile = new File([svgContent], 'icon.svg', { type: 'image/svg+xml' })
 
@@ -592,6 +646,35 @@ describe('IconToolHud — SVG upload', () => {
     await flushPromises()
 
     expect(valueSetter).toHaveBeenCalledWith('')
+    wrapper.unmount()
+  })
+
+  it('duplicate-named SVG upload selects the new entry id, not the old one', async () => {
+    const libStore = useIconLibraryStore()
+    const iconStore = useIconStore()
+    vi.spyOn(libStore, 'loadIcons').mockResolvedValue()
+    const oldEntry: IconEntry = { id: 'old-tree-id', rawSvg: '<svg/>', name: 'tree', createdAt: 100 }
+    const newEntry: IconEntry = { id: 'new-tree-id', rawSvg: '<svg/>', name: 'tree', createdAt: 200 }
+    libStore.icons = [oldEntry]
+    vi.spyOn(libStore, 'addIcon').mockResolvedValue(newEntry)
+
+    const svgContent = '<svg><path/></svg>'
+    const mockFile = new File([svgContent], 'tree.svg', { type: 'image/svg+xml' })
+    vi.stubGlobal('FileReader', vi.fn(() => ({
+      readAsText: vi.fn(function (this: { onload?: (e: { target: { result: string } }) => void }) {
+        this.onload?.({ target: { result: svgContent } })
+      }),
+      onload: null,
+      onerror: null,
+    })))
+
+    const wrapper = await mountHud(pinia)
+    const input = wrapper.find('[data-testid="icon-upload"]')
+    Object.defineProperty(input.element, 'files', { value: [mockFile], configurable: true })
+    await input.trigger('change')
+    await flushPromises()
+
+    expect(iconStore.selectedSvgId).toBe('new-tree-id')
     wrapper.unmount()
   })
 

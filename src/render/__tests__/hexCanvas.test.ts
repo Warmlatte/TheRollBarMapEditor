@@ -195,6 +195,129 @@ describe('HexCanvas shift key and drag state tracking', () => {
   })
 })
 
+describe('HexCanvas anyDragging — only left-click activates drag preview', () => {
+  let pinia: Pinia
+
+  beforeEach(() => {
+    pinia = createPinia()
+    setActivePinia(pinia)
+  })
+
+  it('right-click (button=2) with shift held does not show ShiftErasePreview', async () => {
+    const { useBrushStore } = await import('../../stores/brushStore')
+    const { default: HexCanvas } = await import('../HexCanvas.vue')
+    const brushStore = useBrushStore()
+    brushStore.tool = 'paint'
+    const wrapper = mount(HexCanvas, {
+      global: { plugins: [pinia] },
+      attachTo: document.body,
+    })
+
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Shift' }))
+    await wrapper.vm.$nextTick()
+
+    await wrapper.trigger('pointerdown', { button: 2, pointerId: 1 })
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('circle[r="5"]').exists()).toBe(false)
+
+    window.dispatchEvent(new KeyboardEvent('keyup', { key: 'Shift' }))
+    wrapper.unmount()
+  })
+
+  it('middle-click (button=1) with shift held does not show ShiftErasePreview', async () => {
+    const { useBrushStore } = await import('../../stores/brushStore')
+    const { default: HexCanvas } = await import('../HexCanvas.vue')
+    const brushStore = useBrushStore()
+    brushStore.tool = 'paint'
+    const wrapper = mount(HexCanvas, {
+      global: { plugins: [pinia] },
+      attachTo: document.body,
+    })
+
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Shift' }))
+    await wrapper.vm.$nextTick()
+
+    await wrapper.trigger('pointerdown', { button: 1, pointerId: 1 })
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('circle[r="5"]').exists()).toBe(false)
+
+    window.dispatchEvent(new KeyboardEvent('keyup', { key: 'Shift' }))
+    wrapper.unmount()
+  })
+})
+
+describe('HexCanvas anyDragging — pointercancel and lostpointercapture reset', () => {
+  let pinia: Pinia
+
+  beforeEach(() => {
+    pinia = createPinia()
+    setActivePinia(pinia)
+  })
+
+  async function mountWithLeftClickDrag() {
+    const { useBrushStore } = await import('../../stores/brushStore')
+    const { default: HexCanvas } = await import('../HexCanvas.vue')
+    const brushStore = useBrushStore()
+    brushStore.tool = 'paint'
+    const wrapper = mount(HexCanvas, {
+      global: { plugins: [pinia] },
+      attachTo: document.body,
+    })
+
+    // Mock SVG methods that may be absent in happy-dom
+    const svgEl = wrapper.element as SVGSVGElement
+    Object.defineProperty(svgEl, 'setPointerCapture', { value: vi.fn(), configurable: true, writable: true })
+    Object.defineProperty(svgEl, 'createSVGPoint', {
+      value: () => ({ x: 0, y: 0, matrixTransform: () => ({ x: 0, y: 0 }) }),
+      configurable: true, writable: true,
+    })
+    Object.defineProperty(svgEl, 'getScreenCTM', { value: () => null, configurable: true, writable: true })
+
+    // Hold shift, then left-click to set anyDragging=true
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Shift' }))
+    await wrapper.vm.$nextTick()
+    await wrapper.trigger('pointerdown', { button: 0, pointerId: 1, clientX: 0, clientY: 0 })
+    await wrapper.vm.$nextTick()
+
+    return wrapper
+  }
+
+  it('left-click with shift shows ShiftErasePreview (precondition)', async () => {
+    const wrapper = await mountWithLeftClickDrag()
+    expect(wrapper.find('circle[r="5"]').exists()).toBe(true)
+    window.dispatchEvent(new KeyboardEvent('keyup', { key: 'Shift' }))
+    wrapper.unmount()
+  })
+
+  it('pointercancel after left-click drag makes ShiftErasePreview disappear', async () => {
+    const wrapper = await mountWithLeftClickDrag()
+    expect(wrapper.find('circle[r="5"]').exists()).toBe(true)
+
+    await wrapper.trigger('pointercancel', { pointerId: 1 })
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('circle[r="5"]').exists()).toBe(false)
+
+    window.dispatchEvent(new KeyboardEvent('keyup', { key: 'Shift' }))
+    wrapper.unmount()
+  })
+
+  it('lostpointercapture after left-click drag makes ShiftErasePreview disappear', async () => {
+    const wrapper = await mountWithLeftClickDrag()
+    expect(wrapper.find('circle[r="5"]').exists()).toBe(true)
+
+    await wrapper.trigger('lostpointercapture', { pointerId: 1 })
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('circle[r="5"]').exists()).toBe(false)
+
+    window.dispatchEvent(new KeyboardEvent('keyup', { key: 'Shift' }))
+    wrapper.unmount()
+  })
+})
+
 describe('HexCanvas icon rendering follows the SVG library styling contract', () => {
   let pinia: Pinia
 

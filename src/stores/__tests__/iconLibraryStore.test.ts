@@ -223,6 +223,17 @@ describe('iconLibraryStore.addIcon', () => {
     await store.loadIcons()
     await expect(store.addIcon('<svg/>', 'test')).rejects.toThrow()
   })
+
+  it('resolves to the newly created entry whose id matches the icons list', async () => {
+    buildFakeIDB()
+    const { useIconLibraryStore } = await import('../iconLibraryStore')
+    const store = useIconLibraryStore()
+    await store.loadIcons()
+    const entry = await store.addIcon('<svg/>', 'sword')
+    const inList = store.icons.find((e) => e.name === 'sword')!
+    expect(entry).toBeDefined()
+    expect(entry.id).toBe(inList.id)
+  })
 })
 
 describe('iconLibraryStore.deleteIcon', () => {
