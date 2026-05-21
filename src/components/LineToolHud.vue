@@ -98,10 +98,7 @@
 
     <hr class="hud-divider" />
 
-    <!-- 儲存按鈕（非全寬，放在 row 容器） -->
-    <div class="line-save-row">
-      <button class="hud-btn" @click="handleSave">儲存線條</button>
-    </div>
+    <button class="hud-btn w-full" @click="handleSave">儲存線條</button>
 
     <!-- Saved presets banner grid -->
     <div v-if="lineStore.savedLines.length > 0" class="saved-icons-section">
@@ -131,7 +128,7 @@
           <button
             class="icon-cell-x"
             aria-label="移除"
-            @click.stop="lineStore.removeSavedLine(saved.id)"
+            @click.stop="handleRemove(saved.id)"
           >
             ×
           </button>
@@ -168,16 +165,14 @@ function handleApply(id: string): void {
     toastStore.pushToast('線條已套用', 'success')
   }
 }
+
+function handleRemove(id: string): void {
+  lineStore.removeSavedLine(id)
+  toastStore.pushToast('線條已移除', 'info')
+}
 </script>
 
 <style scoped>
-.line-save-row {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  margin: 2px 0;
-}
-
 .dash-checkbox {
   display: inline-flex;
   align-items: center;
