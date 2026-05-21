@@ -105,7 +105,11 @@ onMounted(async () => {
   window.addEventListener('beforeunload', handleBeforeUnload)
   window.addEventListener('keydown', handleKeyDown)
   await restoreWorkspace()
-  brushStore.loadSavedCells()
+  try {
+    brushStore.loadSavedCells()
+  } catch {
+    toastStore.pushToast('色塊載入失敗，請重新整理頁面', 'error', 0)
+  }
   try {
     await iconLibraryStore.loadIcons()
     const selectedExists =

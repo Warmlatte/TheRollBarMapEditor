@@ -66,16 +66,24 @@ const thumbPoints = hexCorners(20, 20, 17)
 
 function handleSaveCell(): void {
   const alreadyExists = brushStore.savedCells.some((c) => c.color === brushStore.color)
-  brushStore.saveCurrentCell()
-  if (alreadyExists) {
-    toastStore.pushToast('此顏色已在色塊清單中', 'info')
-  } else {
-    toastStore.pushToast('色塊已儲存', 'success')
+  try {
+    brushStore.saveCurrentCell()
+    if (alreadyExists) {
+      toastStore.pushToast('此顏色已在色塊清單中', 'info')
+    } else {
+      toastStore.pushToast('色塊已儲存', 'success')
+    }
+  } catch {
+    toastStore.pushToast('色塊儲存失敗，請重試', 'error')
   }
 }
 
 function handleRemoveCell(id: string): void {
-  brushStore.removeSavedCell(id)
-  toastStore.pushToast('色塊已移除', 'info')
+  try {
+    brushStore.removeSavedCell(id)
+    toastStore.pushToast('色塊已移除', 'info')
+  } catch {
+    toastStore.pushToast('色塊移除失敗，請重試', 'error')
+  }
 }
 </script>

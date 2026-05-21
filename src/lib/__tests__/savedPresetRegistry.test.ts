@@ -1,8 +1,12 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { createSavedPresetRegistry, type Saved } from '../savedPresetRegistry'
 
 beforeEach(() => {
   localStorage.clear()
+})
+
+afterEach(() => {
+  vi.restoreAllMocks()
 })
 
 type Color = { color: string }
@@ -150,6 +154,16 @@ describe('save deduplicates and persists new items', () => {
     expect(raw).toBeTruthy()
     expect(JSON.parse(raw!)[0].color).toBe('#abc')
   })
+
+  it('throws and does not mutate the list when localStorage write fails', () => {
+    const { registry, getList } = makeColorRegistry('test.persist-fail.v1')
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('storage full')
+    })
+
+    expect(() => registry.save({ color: '#abc' })).toThrow('storage full')
+    expect(getList()).toHaveLength(0)
+  })
 })
 
 describe('remove deletes an item by id and persists the change', () => {
@@ -177,6 +191,18 @@ describe('remove deletes an item by id and persists the change', () => {
     registry.save({ color: '#aaa' })
     expect(() => registry.remove('does-not-exist')).not.toThrow()
     expect(getList()).toHaveLength(1)
+  })
+
+  it('throws and keeps the list unchanged when localStorage write fails during remove', () => {
+    const { registry, getList } = makeColorRegistry('test.remove-fail.v1')
+    const id = registry.save({ color: '#aaa' })
+    registry.save({ color: '#bbb' })
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('storage full')
+    })
+
+    expect(() => registry.remove(id)).toThrow('storage full')
+    expect(getList()).toHaveLength(2)
   })
 })
 

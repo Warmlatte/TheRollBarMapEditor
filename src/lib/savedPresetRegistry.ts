@@ -30,12 +30,8 @@ export function createSavedPresetRegistry<T extends object>(
 ): SavedPresetRegistry<T> {
   const { storageKey, binding, validate, isDuplicate, seed } = opts
 
-  function persist(): void {
-    try {
-      localStorage.setItem(storageKey, JSON.stringify(binding.get()))
-    } catch {
-      // localStorage full or disabled — silent fail
-    }
+  function persistList(next: Saved<T>[]): void {
+    localStorage.setItem(storageKey, JSON.stringify(next))
   }
 
   return {
@@ -45,12 +41,8 @@ export function createSavedPresetRegistry<T extends object>(
         if (raw === null) {
           if (seed && seed.length > 0) {
             const seeded: Saved<T>[] = seed.map((item) => ({ id: genId(), ...item } as Saved<T>))
+            persistList(seeded)
             binding.set(seeded)
-            try {
-              localStorage.setItem(storageKey, JSON.stringify(seeded))
-            } catch {
-              // localStorage full — seed still in reactive state for this session
-            }
           }
           return
         }
@@ -77,14 +69,16 @@ export function createSavedPresetRegistry<T extends object>(
       const dup = list.find((s) => isDuplicate(s, item))
       if (dup) return dup.id
       const id = genId()
-      binding.set([...list, { id, ...item } as Saved<T>])
-      persist()
+      const next = [...list, { id, ...item } as Saved<T>]
+      persistList(next)
+      binding.set(next)
       return id
     },
 
     remove(id: string): void {
-      binding.set(binding.get().filter((s) => s.id !== id))
-      persist()
+      const next = binding.get().filter((s) => s.id !== id)
+      persistList(next)
+      binding.set(next)
     },
 
     find(id: string): Saved<T> | undefined {

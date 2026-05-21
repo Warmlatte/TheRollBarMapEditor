@@ -210,6 +210,21 @@ describe('App loadSavedCells on mount', () => {
 
     expect(spy).toHaveBeenCalledTimes(1)
   })
+
+  it('shows error toast when saved cells fail to load', async () => {
+    vi.mocked(loadWorkspace).mockReturnValue(null)
+    const brushStore = useBrushStore()
+    vi.spyOn(brushStore, 'loadSavedCells').mockImplementation(() => {
+      throw new Error('storage full')
+    })
+
+    const wrapper = mount(App)
+    await flushPromises()
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('[data-testid^="toast-item"].toast-error').exists()).toBe(true)
+    wrapper.unmount()
+  })
 })
 
 describe('App icon library init', () => {

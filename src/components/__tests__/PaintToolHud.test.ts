@@ -1,13 +1,18 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { useBrushStore } from '../../stores/brushStore'
+import { useToastStore } from '../../stores/toastStore'
 import type { SavedCell } from '../../stores/brushStore'
 import type { Pinia } from 'pinia'
 
 vi.mock('../picker/ColorPickerGrid.vue', () => ({
   default: { template: '<div data-test="color-picker-grid" />' },
 }))
+
+afterEach(() => {
+  vi.restoreAllMocks()
+})
 
 async function mountHud(pinia: Pinia) {
   const { default: PaintToolHud } = await import('../PaintToolHud.vue')
@@ -178,6 +183,26 @@ describe('each saved cell thumbnail has a remove button', () => {
     expect(brushStore.savedCells.some((c) => c.id === 'rem-a')).toBe(false)
     expect(brushStore.color).toBe(originalColor)
   })
+
+  it('shows error toast when removeSavedCell throws', async () => {
+    const brushStore = useBrushStore()
+    const toastStore = useToastStore()
+    localStorage.setItem(
+      'hexmap.savedCells.v1',
+      JSON.stringify([{ id: 'rem-fail', color: '#aaa' }]),
+    )
+    brushStore.loadSavedCells()
+    vi.spyOn(brushStore, 'removeSavedCell').mockImplementation(() => {
+      throw new Error('storage full')
+    })
+    const pushSpy = vi.spyOn(toastStore, 'pushToast')
+
+    const wrapper = await mountHud(pinia)
+    await flushPromises()
+
+    await wrapper.find('[data-testid="saved-cell-remove"]').trigger('click')
+    expect(pushSpy).toHaveBeenCalledWith('色塊移除失敗，請重試', 'error')
+  })
 })
 
 describe('PaintToolHud has a save button that stores the current color', () => {
@@ -220,5 +245,19 @@ describe('PaintToolHud has a save button that stores the current color', () => {
     await wrapper.find('[data-testid="save-cell-btn"]').trigger('click')
     await wrapper.find('[data-testid="save-cell-btn"]').trigger('click')
     expect(brushStore.savedCells.filter((c) => c.color === '#dup222')).toHaveLength(1)
+  })
+
+  it('shows error toast when saveCurrentCell throws', async () => {
+    const brushStore = useBrushStore()
+    const toastStore = useToastStore()
+    vi.spyOn(brushStore, 'saveCurrentCell').mockImplementation(() => {
+      throw new Error('storage full')
+    })
+    const pushSpy = vi.spyOn(toastStore, 'pushToast')
+
+    const wrapper = await mountHud(pinia)
+    await wrapper.find('[data-testid="save-cell-btn"]').trigger('click')
+
+    expect(pushSpy).toHaveBeenCalledWith('色塊儲存失敗，請重試', 'error')
   })
 })
