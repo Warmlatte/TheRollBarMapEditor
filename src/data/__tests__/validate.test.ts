@@ -93,6 +93,29 @@ describe('validateMapFile — Icon x/y coordinates (pixel coords, breaking chang
   })
 })
 
+describe('validateMapFile — line dashLength/dashGap fallback', () => {
+  it('accepts a line without dashLength/dashGap and supplies defaults', () => {
+    const data = {
+      ...minimalValid,
+      lines: [{ id: 'l1', x1: 0, y1: 0, x2: 10, y2: 10, width: 2, dashed: false, color: '#000000' }],
+    }
+    expect(() => validateMapFile(data)).not.toThrow()
+    const result = validateMapFile(data)
+    expect(result.lines[0]!.dashLength).toBe(8)
+    expect(result.lines[0]!.dashGap).toBe(4)
+  })
+
+  it('accepts a line with explicit dashLength/dashGap and preserves them', () => {
+    const data = {
+      ...minimalValid,
+      lines: [{ id: 'l1', x1: 0, y1: 0, x2: 10, y2: 10, width: 2, dashed: true, dashLength: 12, dashGap: 6, color: '#000000' }],
+    }
+    const result = validateMapFile(data)
+    expect(result.lines[0]!.dashLength).toBe(12)
+    expect(result.lines[0]!.dashGap).toBe(6)
+  })
+})
+
 describe('validateMapFile — structuredClone compatibility', () => {
   it('produces independent copy via structuredClone', () => {
     const original = {

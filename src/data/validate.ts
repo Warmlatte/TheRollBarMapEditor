@@ -59,7 +59,9 @@ function validateLine(val: unknown, index: number): Line {
   assertNumber(val.width, `lines[${index}].width`)
   assertBoolean(val.dashed, `lines[${index}].dashed`)
   assertColor(val.color, `lines[${index}].color`)
-  return { id: val.id, x1: val.x1, y1: val.y1, x2: val.x2, y2: val.y2, width: val.width, dashed: val.dashed, color: val.color }
+  const dashLength = typeof val.dashLength === 'number' ? val.dashLength : 8
+  const dashGap = typeof val.dashGap === 'number' ? val.dashGap : 4
+  return { id: val.id, x1: val.x1, y1: val.y1, x2: val.x2, y2: val.y2, width: val.width, dashed: val.dashed, dashLength, dashGap, color: val.color }
 }
 
 function validateDoodle(val: unknown, index: number): Doodle {

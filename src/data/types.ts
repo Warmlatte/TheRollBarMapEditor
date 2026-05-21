@@ -22,6 +22,8 @@ export type Line = {
   y2: number
   width: number
   dashed: boolean
+  dashLength: number
+  dashGap: number
   color: string
 }
 
