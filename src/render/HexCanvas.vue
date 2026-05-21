@@ -182,7 +182,7 @@ function onPointerCancel() {
         :y2="l.y2"
         :stroke="l.color"
         :stroke-width="l.width"
-        :stroke-dasharray="l.dashed ? '8 4' : undefined"
+        :stroke-dasharray="l.dashed ? `${l.dashLength} ${l.dashGap}` : undefined"
         stroke-linecap="round"
       />
     </g>
