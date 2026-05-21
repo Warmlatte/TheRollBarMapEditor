@@ -15,9 +15,11 @@ import IconGhost from './cursors/IconGhost.vue'
 import LineCursorAndPreview from './cursors/LineCursorAndPreview.vue'
 import ShiftErasePreview from './cursors/ShiftErasePreview.vue'
 import { useIconLibraryStore, getDisplaySvg } from '../stores/iconLibraryStore'
+import { useLineStore } from '../stores/lineStore'
 
 const mapStore = useMapStore()
 const brushStore = useBrushStore()
+const lineStore = useLineStore()
 const viewportStore = useViewportStore()
 const iconLibraryStore = useIconLibraryStore()
 
@@ -86,8 +88,20 @@ function buildContext(_e: PointerEvent): ToolContext {
   }
 }
 
+function onContextMenu(e: MouseEvent) {
+  if (brushStore.tool === 'line') {
+    e.preventDefault()
+    lineStore.pendingAnchor = null
+    lineStore.previewEnd = null
+  }
+}
+
 function onKeyDown(e: KeyboardEvent) {
   if (e.key === 'Shift') shiftHeld.value = true
+  if (e.key === 'Escape' && brushStore.tool === 'line') {
+    lineStore.pendingAnchor = null
+    lineStore.previewEnd = null
+  }
 }
 
 function onKeyUp(e: KeyboardEvent) {
@@ -146,6 +160,7 @@ function onPointerCancel() {
     @pointerup="onPointerUp"
     @pointercancel="onPointerCancel"
     @lostpointercapture="onPointerCancel"
+    @contextmenu="onContextMenu"
   >
     <!-- layer 1: grid outlines -->
     <g id="layer-grid">
