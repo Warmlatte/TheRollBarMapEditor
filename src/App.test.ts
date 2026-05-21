@@ -5,6 +5,7 @@ import App from './App.vue'
 import { useSessionStore } from './stores/sessionStore'
 import { useMapStore } from './stores/mapStore'
 import { useIconLibraryStore } from './stores/iconLibraryStore'
+import { useBrushStore } from './stores/brushStore'
 import { loadWorkspace } from './storage/persist'
 import type { MapData } from './data/types'
 
@@ -182,6 +183,46 @@ describe('App workspace restore — no workspace', () => {
     await flushPromises()
 
     expect(wrapper.find('[data-testid="toast-container"]').exists()).toBe(true)
+    wrapper.unmount()
+  })
+})
+
+describe('App loadSavedCells on mount', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    vi.clearAllMocks()
+    stubIndexedDB()
+    localStorage.clear()
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+    vi.unstubAllGlobals()
+  })
+
+  it('3.1 calls brushStore.loadSavedCells once on mount', async () => {
+    vi.mocked(loadWorkspace).mockReturnValue(null)
+    const brushStore = useBrushStore()
+    const spy = vi.spyOn(brushStore, 'loadSavedCells')
+
+    mount(App)
+    await flushPromises()
+
+    expect(spy).toHaveBeenCalledTimes(1)
+  })
+
+  it('shows error toast when saved cells fail to load', async () => {
+    vi.mocked(loadWorkspace).mockReturnValue(null)
+    const brushStore = useBrushStore()
+    vi.spyOn(brushStore, 'loadSavedCells').mockImplementation(() => {
+      throw new Error('storage full')
+    })
+
+    const wrapper = mount(App)
+    await flushPromises()
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('[data-testid^="toast-item"].toast-error').exists()).toBe(true)
     wrapper.unmount()
   })
 })

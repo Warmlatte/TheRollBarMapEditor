@@ -106,6 +106,11 @@ onMounted(async () => {
   window.addEventListener('keydown', handleKeyDown)
   await restoreWorkspace()
   try {
+    brushStore.loadSavedCells()
+  } catch {
+    toastStore.pushToast('色塊載入失敗，請重新整理頁面', 'error', 0)
+  }
+  try {
     await iconLibraryStore.loadIcons()
     const selectedExists =
       iconStore.selectedSvgId !== null &&

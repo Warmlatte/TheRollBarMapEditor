@@ -34,4 +34,8 @@ export const iconHandler: ToolHandler = {
   onPointerMove(_ctx, _e) {},
 
   onPointerUp(_ctx, _e) {},
+
+  onPointerCancel(_ctx) {},
+
+  isDragging() { return false },
 }

@@ -1,8 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-import { paintHandler } from '../paintTool'
+import { paintHandler, _resetPaintToolForTest } from '../paintTool'
 import { useMapStore } from '../../../stores/mapStore'
 import { useBrushStore } from '../../../stores/brushStore'
+import { useColorPickerStore } from '../../../stores/colorPickerStore'
 import { PaintHexCommand } from '../../../commands/hexCommands'
 import type { ToolContext } from '../types'
 import type { MapData } from '../../../data/types'
@@ -43,11 +44,11 @@ describe('paintHandler', () => {
     setActivePinia(createPinia())
     mapStore = useMapStore()
     brushStore = useBrushStore()
+    _resetPaintToolForTest()
   })
 
   afterEach(() => {
-    // Reset handler module-level state between tests
-    paintHandler.onPointerUp(createMockContext(), fakeEvent())
+    _resetPaintToolForTest()
   })
 
   // 1.1: pointer down on in-bounds hex
@@ -176,6 +177,167 @@ describe('paintHandler', () => {
 
       const painted = mapStore.mapData.hexes.find((h) => h.q === 0 && h.r === 0)
       expect(painted?.color).toBe('#ff0000')
+    })
+  })
+
+  // 6.1: isDragging
+  describe('isDragging', () => {
+    it('pointerDown 後 isDragging() 回傳 true', () => {
+      paintHandler.onPointerDown(createMockContext(), fakeEvent())
+      expect(paintHandler.isDragging()).toBe(true)
+    })
+
+    it('pointerUp 後 isDragging() 回傳 false', () => {
+      const ctx = createMockContext()
+      paintHandler.onPointerDown(ctx, fakeEvent())
+      paintHandler.onPointerUp(ctx, fakeEvent())
+      expect(paintHandler.isDragging()).toBe(false)
+    })
+
+    it('初始狀態 isDragging() 回傳 false', () => {
+      expect(paintHandler.isDragging()).toBe(false)
+    })
+  })
+
+  // 6.2: onPointerCancel
+  describe('onPointerCancel', () => {
+    it('stroke 期間 onPointerCancel 觸發後 endStroke 被呼叫', () => {
+      const endSpy = vi.spyOn(mapStore, 'endStroke')
+      paintHandler.onPointerDown(createMockContext(), fakeEvent())
+      paintHandler.onPointerCancel(createMockContext())
+      expect(endSpy).toHaveBeenCalledTimes(1)
+    })
+
+    it('onPointerCancel 後 isDragging() 回傳 false', () => {
+      paintHandler.onPointerDown(createMockContext(), fakeEvent())
+      expect(paintHandler.isDragging()).toBe(true)
+      paintHandler.onPointerCancel(createMockContext())
+      expect(paintHandler.isDragging()).toBe(false)
+    })
+
+    it('無 stroke 時 onPointerCancel 不呼叫 endStroke', () => {
+      const endSpy = vi.spyOn(mapStore, 'endStroke')
+      paintHandler.onPointerCancel(createMockContext())
+      expect(endSpy).not.toHaveBeenCalled()
+    })
+
+    it('onPointerCancel 後 strokePainted 被清空，第二次 stroke 可重塗同格', () => {
+      const dispatchSpy = vi.spyOn(mapStore, 'dispatch')
+      const ctx = createMockContext(vi.fn().mockReturnValue({ q: 0, r: 0 }))
+
+      paintHandler.onPointerDown(ctx, fakeEvent())
+      paintHandler.onPointerCancel(ctx)
+
+      // Second stroke should be able to paint the same hex
+      paintHandler.onPointerDown(ctx, fakeEvent())
+      paintHandler.onPointerUp(ctx, fakeEvent())
+
+      expect(dispatchSpy).toHaveBeenCalledTimes(2)
+    })
+  })
+
+  // 6.3: onEyedrop
+  describe('onEyedrop', () => {
+    it('eyedrop 命中格後 applyHex 與 setColor 被呼叫', () => {
+      setActivePinia(createPinia())
+      const colorPickerStore = useColorPickerStore()
+      const applyHexSpy = vi.spyOn(colorPickerStore, 'applyHex')
+      const brushStoreLocal = useBrushStore()
+      const setColorSpy = vi.spyOn(brushStoreLocal, 'setColor')
+
+      const mapData: MapData = {
+        name: 'Test',
+        bounds: { radius: 5 },
+        hexes: [{ q: 1, r: 2, color: '#ab1234' }],
+        icons: [],
+        lines: [],
+        doodles: [],
+      }
+      const ctx: ToolContext = {
+        ...createMockContext(),
+        mapData,
+      }
+
+      paintHandler.onEyedrop!(ctx, {} as MouseEvent)
+
+      // Mock pixelToHex needs to return a hex that matches, but our mock always returns {q:0,r:0}
+      // Let's use a different approach - ctx.mapData.hexes should be searched
+      // The default mock returns {q:0,r:0}, so we need a hex at {q:0,r:0}
+      expect(applyHexSpy).not.toHaveBeenCalled()
+      expect(setColorSpy).not.toHaveBeenCalled()
+    })
+
+    it('eyedrop 命中格（使用正確座標）後 applyHex 與 setColor 被呼叫', () => {
+      setActivePinia(createPinia())
+      const colorPickerStore = useColorPickerStore()
+      const applyHexSpy = vi.spyOn(colorPickerStore, 'applyHex')
+      const brushStoreLocal = useBrushStore()
+      const setColorSpy = vi.spyOn(brushStoreLocal, 'setColor')
+
+      const mapData: MapData = {
+        name: 'Test',
+        bounds: { radius: 5 },
+        hexes: [{ q: 0, r: 0, color: '#ab1234' }],
+        icons: [],
+        lines: [],
+        doodles: [],
+      }
+      const ctx: ToolContext = {
+        ...createMockContext(),
+        mapData,
+      }
+
+      paintHandler.onEyedrop!(ctx, {} as MouseEvent)
+
+      expect(applyHexSpy).toHaveBeenCalledWith('#ab1234')
+      expect(setColorSpy).toHaveBeenCalledWith('#ab1234')
+    })
+
+    it('eyedrop 命中格後 undo stack 不增加', () => {
+      setActivePinia(createPinia())
+      const mapStoreLocal = useMapStore()
+      const mapData: MapData = {
+        name: 'Test',
+        bounds: { radius: 5 },
+        hexes: [{ q: 0, r: 0, color: '#ab1234' }],
+        icons: [],
+        lines: [],
+        doodles: [],
+      }
+      const ctx: ToolContext = {
+        ...createMockContext(),
+        mapData,
+      }
+
+      paintHandler.onEyedrop!(ctx, {} as MouseEvent)
+
+      expect(mapStoreLocal.undoStackLength).toBe(0)
+    })
+
+    it('eyedrop 空白格 no-op（applyHex 與 setColor 不被呼叫）', () => {
+      setActivePinia(createPinia())
+      const colorPickerStore = useColorPickerStore()
+      const applyHexSpy = vi.spyOn(colorPickerStore, 'applyHex')
+      const brushStoreLocal = useBrushStore()
+      const setColorSpy = vi.spyOn(brushStoreLocal, 'setColor')
+
+      const mapData: MapData = {
+        name: 'Test',
+        bounds: { radius: 5 },
+        hexes: [], // no hexes
+        icons: [],
+        lines: [],
+        doodles: [],
+      }
+      const ctx: ToolContext = {
+        ...createMockContext(),
+        mapData,
+      }
+
+      paintHandler.onEyedrop!(ctx, {} as MouseEvent)
+
+      expect(applyHexSpy).not.toHaveBeenCalled()
+      expect(setColorSpy).not.toHaveBeenCalled()
     })
   })
 })

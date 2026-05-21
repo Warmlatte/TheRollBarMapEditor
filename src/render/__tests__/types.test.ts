@@ -9,6 +9,8 @@ describe('ToolContext and ToolHandler interfaces are defined', () => {
       onPointerDown(_ctx, _e) { called = 'down' },
       onPointerMove(_ctx, _e) { called = 'move' },
       onPointerUp(_ctx, _e) { called = 'up' },
+      onPointerCancel(_ctx) {},
+      isDragging() { return false },
     }
     handler.onPointerDown({} as ToolContext, {} as PointerEvent)
     expect(called).toBe('down')

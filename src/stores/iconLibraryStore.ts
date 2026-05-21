@@ -112,7 +112,7 @@ export const useIconLibraryStore = defineStore('iconLibrary', () => {
     icons.value = sortIconEntries(loaded)
   }
 
-  async function addIcon(rawSvg: string, name: string): Promise<void> {
+  async function addIcon(rawSvg: string, name: string): Promise<IconEntry> {
     let sanitized: string
     try {
       sanitized = sanitizeSvgIcon(rawSvg)
@@ -134,6 +134,7 @@ export const useIconLibraryStore = defineStore('iconLibrary', () => {
     }
     await idbPut(db, entry)
     icons.value = [...icons.value, entry]
+    return entry
   }
 
   async function deleteIcon(id: string): Promise<void> {

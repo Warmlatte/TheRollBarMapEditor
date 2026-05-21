@@ -10,17 +10,80 @@
     </ColorPickerGrid>
 
     <hr class="hud-divider" />
-    <button class="hud-btn w-full" @click="brushStore.saveCurrentCell()">
+    <button
+      class="hud-btn w-full"
+      data-testid="save-cell-btn"
+      @click="handleSaveCell"
+    >
       儲存色塊
     </button>
+
+    <div
+      v-if="brushStore.savedCells.length > 0"
+      data-testid="saved-cells-section"
+      class="saved-icons-section"
+    >
+      <div class="saved-icons-title">已存色塊</div>
+      <div class="icon-picker" role="radiogroup" aria-label="saved cell picker">
+        <div
+          v-for="cell in brushStore.savedCells"
+          :key="cell.id"
+          class="icon-cell-wrap"
+        >
+          <button
+            class="icon-cell"
+            :class="{ active: brushStore.color === cell.color }"
+            data-testid="saved-cell-thumb"
+            @click="brushStore.applySavedCell(cell.id)"
+          >
+            <svg viewBox="0 0 40 40" width="36" height="36" aria-hidden="true">
+              <polygon :points="thumbPoints" :fill="cell.color" />
+            </svg>
+          </button>
+          <button
+            class="icon-cell-x"
+            data-testid="saved-cell-remove"
+            @click.stop="handleRemoveCell(cell.id)"
+          >
+            ×
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import ColorPickerGrid from './picker/ColorPickerGrid.vue'
 import { useBrushStore } from '../stores/brushStore'
+import { useToastStore } from '../stores/toastStore'
 import { hexCorners } from '../lib/hexMath'
 
 const brushStore = useBrushStore()
+const toastStore = useToastStore()
 const hexPoints = hexCorners(20, 20, 16)
+const thumbPoints = hexCorners(20, 20, 17)
+
+function handleSaveCell(): void {
+  const alreadyExists = brushStore.savedCells.some((c) => c.color === brushStore.color)
+  try {
+    brushStore.saveCurrentCell()
+    if (alreadyExists) {
+      toastStore.pushToast('此顏色已在色塊清單中', 'info')
+    } else {
+      toastStore.pushToast('色塊已儲存', 'success')
+    }
+  } catch {
+    toastStore.pushToast('色塊儲存失敗，請重試', 'error')
+  }
+}
+
+function handleRemoveCell(id: string): void {
+  try {
+    brushStore.removeSavedCell(id)
+    toastStore.pushToast('色塊已移除', 'info')
+  } catch {
+    toastStore.pushToast('色塊移除失敗，請重試', 'error')
+  }
+}
 </script>

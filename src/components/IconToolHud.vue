@@ -186,7 +186,7 @@ const snapStore = useSnapStore()
 const i18n = useI18nStore()
 const colorPicker = useColorPickerStore()
 const previewHexPoints = hexCorners(0, 0, 100)
-const defaultIconColor = '#7a7a7a'
+const defaultIconColor = '#D0D0D0'
 
 const selectedEntry = computed(() =>
   iconStore.selectedSvgId
@@ -262,16 +262,21 @@ function handleUpload(event: Event): void {
   const input = event.target as HTMLInputElement
   const file = input.files?.[0]
   if (!file) return
-  if (!file.name.endsWith('.svg') && file.type !== 'image/svg+xml') return
+  if (!file.name.endsWith('.svg') && file.type !== 'image/svg+xml') {
+    input.value = ''
+    toastStore.pushToast('無效的 SVG 檔案，請確認檔案格式正確', 'error')
+    return
+  }
+
+  input.value = ''
 
   const reader = new FileReader()
   reader.onload = async (e) => {
     const content = (e.target as FileReader).result as string
     const name = file.name.replace(/\.svg$/i, '')
     try {
-      await libStore.addIcon(content, name)
-      const uploaded = libStore.icons.find((entry) => entry.name === name)
-      if (uploaded) iconStore.setSelectedSvgId(uploaded.id)
+      const uploaded = await libStore.addIcon(content, name)
+      iconStore.setSelectedSvgId(uploaded.id)
       toastStore.pushToast(`圖示「${name}」已新增`, 'success')
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : ''
