@@ -155,6 +155,118 @@ describe('lineStore preference persistence', () => {
 
 const SAVED_LINES_KEY = 'hexmap.savedLines.v1'
 
+describe('lineStore saved line preset validation — invalid data is discarded', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    localStorage.clear()
+  })
+
+  afterEach(() => {
+    localStorage.clear()
+  })
+
+  it('invalid JSON in savedLines key falls back to 4 default seeds', () => {
+    localStorage.setItem(SAVED_LINES_KEY, '{not valid json}')
+    const line = useLineStore()
+    expect(line.savedLines).toHaveLength(4)
+  })
+
+  it('non-array JSON in savedLines key falls back to 4 default seeds', () => {
+    localStorage.setItem(SAVED_LINES_KEY, JSON.stringify({ id: 'x', color: '#000', width: 2, dashed: false }))
+    const line = useLineStore()
+    expect(line.savedLines).toHaveLength(4)
+  })
+
+  it('preset missing id is discarded', () => {
+    const valid = { id: 'keep', color: '#111', width: 2, dashed: false, dashLength: 8, dashGap: 4 }
+    const missing_id = { color: '#222', width: 3, dashed: true, dashLength: 8, dashGap: 4 }
+    localStorage.setItem(SAVED_LINES_KEY, JSON.stringify([valid, missing_id]))
+    const line = useLineStore()
+    expect(line.savedLines).toHaveLength(1)
+    expect(line.savedLines[0]!.id).toBe('keep')
+  })
+
+  it('preset missing color is discarded', () => {
+    const valid = { id: 'keep', color: '#111', width: 2, dashed: false, dashLength: 8, dashGap: 4 }
+    const missing_color = { id: 'bad', width: 3, dashed: true, dashLength: 8, dashGap: 4 }
+    localStorage.setItem(SAVED_LINES_KEY, JSON.stringify([valid, missing_color]))
+    const line = useLineStore()
+    expect(line.savedLines).toHaveLength(1)
+    expect(line.savedLines[0]!.id).toBe('keep')
+  })
+
+  it('preset missing width is discarded', () => {
+    const valid = { id: 'keep', color: '#111', width: 2, dashed: false, dashLength: 8, dashGap: 4 }
+    const missing_width = { id: 'bad', color: '#222', dashed: true, dashLength: 8, dashGap: 4 }
+    localStorage.setItem(SAVED_LINES_KEY, JSON.stringify([valid, missing_width]))
+    const line = useLineStore()
+    expect(line.savedLines).toHaveLength(1)
+  })
+
+  it('preset missing dashed is discarded', () => {
+    const valid = { id: 'keep', color: '#111', width: 2, dashed: false, dashLength: 8, dashGap: 4 }
+    const missing_dashed = { id: 'bad', color: '#222', width: 3, dashLength: 8, dashGap: 4 }
+    localStorage.setItem(SAVED_LINES_KEY, JSON.stringify([valid, missing_dashed]))
+    const line = useLineStore()
+    expect(line.savedLines).toHaveLength(1)
+  })
+})
+
+describe('lineStore saved line preset validation — legacy and boundary values', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    localStorage.clear()
+  })
+
+  afterEach(() => {
+    localStorage.clear()
+  })
+
+  it('legacy preset without dashLength/dashGap fills defaults 8 and 4', () => {
+    const legacy = { id: 'old', color: '#333', width: 2, dashed: false }
+    localStorage.setItem(SAVED_LINES_KEY, JSON.stringify([legacy]))
+    const line = useLineStore()
+    expect(line.savedLines).toHaveLength(1)
+    expect(line.savedLines[0]!.dashLength).toBe(8)
+    expect(line.savedLines[0]!.dashGap).toBe(4)
+  })
+
+  it('preset with dashLength as non-number is discarded', () => {
+    const bad = { id: 'bad', color: '#333', width: 2, dashed: false, dashLength: 'fast', dashGap: 4 }
+    localStorage.setItem(SAVED_LINES_KEY, JSON.stringify([bad]))
+    const line = useLineStore()
+    expect(line.savedLines).toHaveLength(0)
+  })
+
+  it('preset with dashGap as non-number is discarded', () => {
+    const bad = { id: 'bad', color: '#333', width: 2, dashed: false, dashLength: 8, dashGap: null }
+    localStorage.setItem(SAVED_LINES_KEY, JSON.stringify([bad]))
+    const line = useLineStore()
+    expect(line.savedLines).toHaveLength(0)
+  })
+
+  it('width=99 is clamped to 10', () => {
+    const entry = { id: 'clamp', color: '#000', width: 99, dashed: false, dashLength: 8, dashGap: 4 }
+    localStorage.setItem(SAVED_LINES_KEY, JSON.stringify([entry]))
+    const line = useLineStore()
+    expect(line.savedLines[0]!.width).toBe(10)
+  })
+
+  it('dashLength=0 is clamped to 1', () => {
+    const entry = { id: 'clamp', color: '#000', width: 2, dashed: false, dashLength: 0, dashGap: 4 }
+    localStorage.setItem(SAVED_LINES_KEY, JSON.stringify([entry]))
+    const line = useLineStore()
+    expect(line.savedLines[0]!.dashLength).toBe(1)
+  })
+
+  it('dashGap=99 is clamped to 40', () => {
+    const entry = { id: 'clamp', color: '#000', width: 2, dashed: false, dashLength: 8, dashGap: 99 }
+    localStorage.setItem(SAVED_LINES_KEY, JSON.stringify([entry]))
+    const line = useLineStore()
+    expect(line.savedLines[0]!.dashGap).toBe(40)
+  })
+})
+
 describe('lineStore saved line presets', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
