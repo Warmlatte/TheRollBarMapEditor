@@ -43,11 +43,37 @@ function savePref(width: number, dashed: boolean, dashLength: number, dashGap: n
   localStorage.setItem(PREF_KEY, JSON.stringify({ width, dashed, dashLength, dashGap }))
 }
 
+function validateSavedLine(entry: unknown): SavedLine | null {
+  if (typeof entry !== 'object' || entry === null || Array.isArray(entry)) return null
+  const e = entry as Record<string, unknown>
+  if (typeof e['id'] !== 'string') return null
+  if (typeof e['color'] !== 'string') return null
+  if (typeof e['width'] !== 'number') return null
+  if (typeof e['dashed'] !== 'boolean') return null
+  const hasDashLength = 'dashLength' in e
+  const hasDashGap = 'dashGap' in e
+  if (hasDashLength && typeof e['dashLength'] !== 'number') return null
+  if (hasDashGap && typeof e['dashGap'] !== 'number') return null
+  const dashLength = hasDashLength ? Math.min(40, Math.max(1, e['dashLength'] as number)) : 8
+  const dashGap = hasDashGap ? Math.min(40, Math.max(1, e['dashGap'] as number)) : 4
+  return {
+    id: e['id'] as string,
+    color: e['color'] as string,
+    width: Math.min(10, Math.max(1, e['width'] as number)),
+    dashed: e['dashed'] as boolean,
+    dashLength,
+    dashGap,
+  }
+}
+
 function loadSavedLines(): SavedLine[] {
   try {
     const raw = localStorage.getItem(SAVED_LINES_KEY)
     if (raw === null) return [...DEFAULT_SEEDS]
-    return JSON.parse(raw) as SavedLine[]
+    const parsed: unknown = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return [...DEFAULT_SEEDS]
+    const valid = parsed.map(validateSavedLine).filter((e): e is SavedLine => e !== null)
+    return valid
   } catch {
     return [...DEFAULT_SEEDS]
   }
