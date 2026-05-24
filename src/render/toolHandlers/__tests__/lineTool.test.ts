@@ -3,6 +3,8 @@ import { setActivePinia, createPinia } from 'pinia'
 import { lineHandler, _resetLineToolForTest } from '../lineTool'
 import { useLineStore } from '../../../stores/lineStore'
 import { useMapStore } from '../../../stores/mapStore'
+import { useBrushStore } from '../../../stores/brushStore'
+import { useSnapStore } from '../../../stores/snapStore'
 import { DrawLineCommand, RemoveLineCommand } from '../../../commands/lineCommands'
 import type { ToolContext } from '../types'
 import type { MapData, Line } from '../../../data/types'
@@ -56,6 +58,7 @@ describe('lineTool — chain-click drawing', () => {
     localStorage.clear()
     mapStore = useMapStore()
     lineStore = useLineStore()
+    useSnapStore().setMode('free')
     _resetLineToolForTest()
   })
 
@@ -140,6 +143,7 @@ describe('lineTool — preview line', () => {
     setActivePinia(createPinia())
     localStorage.clear()
     lineStore = useLineStore()
+    useSnapStore().setMode('free')
     _resetLineToolForTest()
   })
 
@@ -160,6 +164,135 @@ describe('lineTool — preview line', () => {
     const ctx = createMockContext({ svgPoint: vi.fn().mockReturnValue({ x: 50, y: 60 }) })
     lineHandler.onPointerMove(ctx, fakeEvent())
     expect(lineStore.previewEnd).toBeNull()
+  })
+})
+
+describe('lineTool — eyedrop (Shift+right-click)', () => {
+  let lineStore: ReturnType<typeof useLineStore>
+  let brushStore: ReturnType<typeof useBrushStore>
+
+  const hitLine: Line = {
+    id: 'x',
+    x1: 0, y1: 0, x2: 1, y2: 1,
+    width: 3,
+    dashed: true,
+    dashLength: 6,
+    dashGap: 3,
+    color: '#ff0000',
+  }
+
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    localStorage.clear()
+    lineStore = useLineStore()
+    brushStore = useBrushStore()
+    _resetLineToolForTest()
+  })
+
+  afterEach(() => {
+    _resetLineToolForTest()
+    localStorage.clear()
+  })
+
+  function createEyedropContext(overrides?: Partial<ToolContext>): ToolContext {
+    return {
+      svgPoint: vi.fn().mockReturnValue({ x: 0, y: 0 }),
+      pixelToHex: vi.fn().mockReturnValue({ q: 0, r: 0 }),
+      hexToPixel: vi.fn().mockReturnValue({ x: 0, y: 0 }),
+      findHexAt: vi.fn().mockReturnValue(undefined),
+      findHexesInRadius: vi.fn().mockReturnValue([]),
+      findIconAt: vi.fn().mockReturnValue(undefined),
+      findLineAt: vi.fn().mockReturnValue(undefined),
+      findDoodleAt: vi.fn().mockReturnValue(undefined),
+      newId: vi.fn().mockReturnValue('id'),
+      mapData: BASE_MAP_DATA,
+      svgPointFromMouse: vi.fn().mockReturnValue({ x: 10, y: 20 }),
+      ...overrides,
+    }
+  }
+
+  it('eyedrop on existing line applies all line properties', () => {
+    const ctx = createEyedropContext({ findLineAt: vi.fn().mockReturnValue(hitLine) })
+    const mockEvent = { clientX: 0, clientY: 0 } as MouseEvent
+    lineHandler.onEyedrop!(ctx, mockEvent)
+    expect(lineStore.lineWidth).toBe(3)
+    expect(lineStore.dashed).toBe(true)
+    expect(lineStore.dashLength).toBe(6)
+    expect(lineStore.dashGap).toBe(3)
+    expect(brushStore.currentColor).toBe('#ff0000')
+  })
+
+  it('eyedrop uses svgPointFromMouse to resolve coordinates', () => {
+    const svgPointFromMouse = vi.fn().mockReturnValue({ x: 10, y: 20 })
+    const findLineAt = vi.fn().mockReturnValue(undefined)
+    const ctx = createEyedropContext({ svgPointFromMouse, findLineAt })
+    lineHandler.onEyedrop!(ctx, { clientX: 0, clientY: 0 } as MouseEvent)
+    expect(svgPointFromMouse).toHaveBeenCalledTimes(1)
+    expect(findLineAt).toHaveBeenCalledWith(10, 20)
+  })
+
+  it('eyedrop on empty area is a no-op (no store changes)', () => {
+    const initialWidth = lineStore.lineWidth
+    const initialColor = brushStore.currentColor
+    const ctx = createEyedropContext({ findLineAt: vi.fn().mockReturnValue(undefined) })
+    lineHandler.onEyedrop!(ctx, { clientX: 0, clientY: 0 } as MouseEvent)
+    expect(lineStore.lineWidth).toBe(initialWidth)
+    expect(brushStore.currentColor).toBe(initialColor)
+  })
+})
+
+describe('lineTool — pointer capture during Shift+drag', () => {
+  let mapStore: ReturnType<typeof useMapStore>
+
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    localStorage.clear()
+    mapStore = useMapStore()
+    _resetLineToolForTest()
+  })
+
+  afterEach(() => {
+    _resetLineToolForTest()
+    localStorage.clear()
+  })
+
+  function createCaptureContext(overrides?: Partial<ToolContext>): ToolContext {
+    return {
+      svgPoint: vi.fn().mockReturnValue({ x: 0, y: 0 }),
+      pixelToHex: vi.fn().mockReturnValue({ q: 0, r: 0 }),
+      hexToPixel: vi.fn().mockReturnValue({ x: 0, y: 0 }),
+      findHexAt: vi.fn().mockReturnValue(undefined),
+      findHexesInRadius: vi.fn().mockReturnValue([]),
+      findIconAt: vi.fn().mockReturnValue(undefined),
+      findLineAt: vi.fn().mockReturnValue(undefined),
+      findDoodleAt: vi.fn().mockReturnValue(undefined),
+      newId: vi.fn().mockReturnValue('id'),
+      mapData: BASE_MAP_DATA,
+      tryCapture: vi.fn(),
+      tryRelease: vi.fn(),
+      ...overrides,
+    }
+  }
+
+  it('Shift+pointerDown calls tryCapture with the pointerId', () => {
+    const ctx = createCaptureContext()
+    lineHandler.onPointerDown(ctx, fakeEvent({ shiftKey: true, pointerId: 77 }))
+    expect(ctx.tryCapture).toHaveBeenCalledTimes(1)
+    expect(ctx.tryCapture).toHaveBeenCalledWith(77)
+  })
+
+  it('pointerUp after Shift+drag calls tryRelease', () => {
+    const ctx = createCaptureContext()
+    lineHandler.onPointerDown(ctx, fakeEvent({ shiftKey: true, pointerId: 77 }))
+    lineHandler.onPointerUp(ctx, fakeEvent({ pointerId: 77 }))
+    expect(ctx.tryRelease).toHaveBeenCalledTimes(1)
+    expect(ctx.tryRelease).toHaveBeenCalledWith(77)
+  })
+
+  it('non-Shift pointerDown does NOT call tryCapture', () => {
+    const ctx = createCaptureContext()
+    lineHandler.onPointerDown(ctx, fakeEvent({ shiftKey: false }))
+    expect(ctx.tryCapture).not.toHaveBeenCalled()
   })
 })
 

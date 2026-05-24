@@ -32,6 +32,47 @@ describe('lineStore watches activeId', () => {
   })
 })
 
+describe('lineStore setWidth clamping', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    localStorage.clear()
+  })
+
+  afterEach(() => {
+    localStorage.clear()
+  })
+
+  it('setWidth(0) clamps to 1', () => {
+    const line = useLineStore()
+    line.setWidth(0)
+    expect(line.lineWidth).toBe(1)
+  })
+
+  it('setWidth(15) clamps to 10', () => {
+    const line = useLineStore()
+    line.setWidth(15)
+    expect(line.lineWidth).toBe(10)
+  })
+
+  it('setWidth(5) stays at 5', () => {
+    const line = useLineStore()
+    line.setWidth(5)
+    expect(line.lineWidth).toBe(5)
+  })
+
+  it('setWidth(1) stays at 1 (lower boundary)', () => {
+    const line = useLineStore()
+    line.setWidth(1)
+    expect(line.lineWidth).toBe(1)
+  })
+
+  it('setWidth(10) stays at 10 (upper boundary)', () => {
+    const line = useLineStore()
+    line.setWidth(10)
+    expect(line.lineWidth).toBe(10)
+  })
+})
+
 describe('lineStore preference persistence', () => {
   beforeEach(() => {
     setActivePinia(createPinia())

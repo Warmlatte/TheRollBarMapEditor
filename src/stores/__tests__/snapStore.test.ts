@@ -20,15 +20,15 @@ describe('snapStore preference persistence', () => {
     expect(snap.snapMode).toBe('node')
   })
 
-  it('uses default value when key is absent', () => {
+  it('defaults to node when key is absent', () => {
     const snap = useSnapStore()
-    expect(snap.snapMode).toBe('free')
+    expect(snap.snapMode).toBe('node')
   })
 
-  it('uses default value when key contains invalid JSON', () => {
+  it('defaults to node when key contains invalid JSON', () => {
     localStorage.setItem(SNAP_KEY, '{invalid')
     const snap = useSnapStore()
-    expect(snap.snapMode).toBe('free')
+    expect(snap.snapMode).toBe('node')
   })
 
   it('writes to localStorage when setMode is called', () => {

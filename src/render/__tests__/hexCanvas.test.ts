@@ -318,6 +318,48 @@ describe('HexCanvas anyDragging — pointercancel and lostpointercapture reset',
   })
 })
 
+describe('HexCanvas onContextMenu — right-click anchor behavior', () => {
+  let pinia: Pinia
+
+  beforeEach(() => {
+    pinia = createPinia()
+    setActivePinia(pinia)
+  })
+
+  async function mountLineToolCanvas() {
+    const { useBrushStore } = await import('../../stores/brushStore')
+    const { useLineStore } = await import('../../stores/lineStore')
+    const { default: HexCanvas } = await import('../HexCanvas.vue')
+    const brushStore = useBrushStore()
+    brushStore.tool = 'line'
+    const lineStore = useLineStore()
+    lineStore.pendingAnchor = { x: 10, y: 20 }
+    const wrapper = mount(HexCanvas, {
+      global: { plugins: [pinia] },
+      attachTo: document.body,
+    })
+    return { wrapper, lineStore }
+  }
+
+  it('pure right-click clears pendingAnchor', async () => {
+    const { wrapper, lineStore } = await mountLineToolCanvas()
+    expect(lineStore.pendingAnchor).not.toBeNull()
+    await wrapper.trigger('contextmenu', { shiftKey: false })
+    await wrapper.vm.$nextTick()
+    expect(lineStore.pendingAnchor).toBeNull()
+    wrapper.unmount()
+  })
+
+  it('Shift+right-click does NOT clear pendingAnchor', async () => {
+    const { wrapper, lineStore } = await mountLineToolCanvas()
+    expect(lineStore.pendingAnchor).not.toBeNull()
+    await wrapper.trigger('contextmenu', { shiftKey: true })
+    await wrapper.vm.$nextTick()
+    expect(lineStore.pendingAnchor).not.toBeNull()
+    wrapper.unmount()
+  })
+})
+
 describe('HexCanvas icon rendering follows the SVG library styling contract', () => {
   let pinia: Pinia
 
