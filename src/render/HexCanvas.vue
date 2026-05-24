@@ -162,8 +162,11 @@ function onPointerUp(e: PointerEvent) {
   handlePointerUp(e, getHandler(brushStore.tool), buildContext)
 }
 
-function onPointerCancel() {
+function onPointerCancel(e: PointerEvent) {
   anyDragging.value = false
+  if (svgEl.value) {
+    getHandler(brushStore.tool).onPointerCancel(buildContext(e), e)
+  }
 }
 </script>
 

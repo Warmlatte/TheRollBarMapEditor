@@ -106,11 +106,11 @@ export const lineHandler: ToolHandler = {
     }
   },
 
-  onPointerCancel(ctx): void {
+  onPointerCancel(ctx, e): void {
     if (dragErasing) {
       const mapStore = useMapStore()
       mapStore.endStroke()
-      ctx.tryRelease?.(0)
+      ctx.tryRelease?.(e.pointerId)
       dragErasing = false
       lastErasedLineId = null
     }
