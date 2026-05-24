@@ -5,7 +5,7 @@ import { useBrushStore } from '../../stores/brushStore'
 import { DrawLineCommand, RemoveLineCommand } from '../../commands/lineCommands'
 import { snapPoint } from '../../lib/snap'
 import { HEX_SIZE } from '../../lib/hexMath'
-import type { ToolHandler } from './types'
+import type { ToolContext, ToolHandler } from './types'
 
 let dragErasing = false
 let lastErasedLineId: string | null = null
@@ -31,6 +31,7 @@ export const lineHandler: ToolHandler = {
       dragErasing = true
       lastErasedLineId = null
       mapStore.beginStroke()
+      ctx.tryCapture?.(e.pointerId)
       const hit = ctx.findLineAt(rawX, rawY)
       if (hit) {
         mapStore.dispatch(new RemoveLineCommand(hit.id))
@@ -95,19 +96,21 @@ export const lineHandler: ToolHandler = {
     lineStore.previewEnd = snapPoint(rawX, rawY, snapStore.snapMode, HEX_SIZE)
   },
 
-  onPointerUp(_ctx, _e): void {
+  onPointerUp(ctx, e): void {
     if (dragErasing) {
       const mapStore = useMapStore()
       mapStore.endStroke()
+      ctx.tryRelease?.(e.pointerId)
       dragErasing = false
       lastErasedLineId = null
     }
   },
 
-  onPointerCancel(_ctx): void {
+  onPointerCancel(ctx): void {
     if (dragErasing) {
       const mapStore = useMapStore()
       mapStore.endStroke()
+      ctx.tryRelease?.(0)
       dragErasing = false
       lastErasedLineId = null
     }
@@ -115,5 +118,18 @@ export const lineHandler: ToolHandler = {
 
   isDragging(): boolean {
     return dragErasing
+  },
+
+  onEyedrop(ctx: ToolContext, e: MouseEvent): void {
+    const { x, y } = ctx.svgPointFromMouse?.(e) ?? { x: e.clientX, y: e.clientY }
+    const hit = ctx.findLineAt(x, y)
+    if (!hit) return
+    const lineStore = useLineStore()
+    const brushStore = useBrushStore()
+    lineStore.setWidth(hit.width)
+    lineStore.setDashed(hit.dashed)
+    lineStore.setDashLength(hit.dashLength)
+    lineStore.setDashGap(hit.dashGap)
+    brushStore.setColor(hit.color)
   },
 }

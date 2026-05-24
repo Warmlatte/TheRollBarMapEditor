@@ -76,7 +76,7 @@ export const useLineStore = defineStore('line', () => {
   )
 
   function setWidth(w: number): void {
-    lineWidth.value = w
+    lineWidth.value = Math.min(10, Math.max(1, w))
     savePref(lineWidth.value, dashed.value, dashLength.value, dashGap.value)
   }
 

@@ -44,14 +44,17 @@
       </button>
     </div>
 
+    <!-- pending anchor hint -->
+    <div v-if="lineStore.pendingAnchor" class="hint">起點已放置，點選終點完成這段線條</div>
+
     <!-- 線寬 slider -->
     <div class="slider-row">
       <span class="slabel">線寬</span>
       <input
         type="range"
         min="1"
-        max="12"
-        step="1"
+        max="10"
+        step="0.5"
         :value="lineStore.lineWidth"
         @input="lineStore.setWidth(Number(($event.target as HTMLInputElement).value))"
       />
@@ -173,6 +176,11 @@ function handleRemove(id: string): void {
 </script>
 
 <style scoped>
+.hint {
+  opacity: 0.55;
+  font-size: 11px;
+  margin: 2px 0;
+}
 .dash-checkbox {
   display: inline-flex;
   align-items: center;

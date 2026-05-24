@@ -85,14 +85,31 @@ function buildContext(_e: PointerEvent): ToolContext {
     findDoodleAt: (x, y) => findDoodleAt(rawMap.doodles, x, y),
     newId: () => crypto.randomUUID(),
     mapData: rawMap,
+    tryCapture(pointerId: number): void {
+      try { svg.setPointerCapture(pointerId) } catch { /* silent */ }
+    },
+    tryRelease(pointerId: number): void {
+      try { svg.releasePointerCapture(pointerId) } catch { /* silent */ }
+    },
+    svgPointFromMouse(e: MouseEvent): { x: number; y: number } {
+      const rect = svg.getBoundingClientRect()
+      const { panX, panY, zoom } = viewportStore
+      const x = (e.clientX - rect.left) / zoom + panX
+      const y = (e.clientY - rect.top) / zoom + panY
+      return { x, y }
+    },
   }
 }
 
 function onContextMenu(e: MouseEvent) {
   if (brushStore.tool === 'line') {
     e.preventDefault()
-    lineStore.pendingAnchor = null
-    lineStore.previewEnd = null
+    if (e.shiftKey) {
+      getHandler(brushStore.tool).onEyedrop?.(buildContext(e as unknown as PointerEvent), e)
+    } else {
+      lineStore.pendingAnchor = null
+      lineStore.previewEnd = null
+    }
   }
 }
 

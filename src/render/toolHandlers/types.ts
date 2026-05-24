@@ -11,6 +11,9 @@ export interface ToolContext {
   findDoodleAt(x: number, y: number): Doodle | undefined
   newId(): string
   readonly mapData: MapData
+  tryCapture?(pointerId: number): void
+  tryRelease?(pointerId: number): void
+  svgPointFromMouse?(e: MouseEvent): { x: number; y: number }
 }
 
 export interface ToolHandler {
