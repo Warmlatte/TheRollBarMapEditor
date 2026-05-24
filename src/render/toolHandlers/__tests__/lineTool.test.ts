@@ -375,4 +375,28 @@ describe('lineTool — Shift+drag erase', () => {
     lineHandler.onPointerUp(ctx, fakeEvent())
     expect(lineHandler.isDragging()).toBe(false)
   })
+
+  it('onPointerCancel ends erase stroke and calls endStroke once', () => {
+    const endSpy = vi.spyOn(mapStore, 'endStroke')
+    const ctx = createMockContext()
+    lineHandler.onPointerDown(ctx, fakeEvent({ shiftKey: true }))
+    lineHandler.onPointerCancel(ctx, fakeEvent({ pointerId: 5 }))
+    expect(endSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it('onPointerCancel releases capture using the event pointerId (not 0)', () => {
+    const tryRelease = vi.fn()
+    const ctx = { ...createMockContext(), tryRelease }
+    lineHandler.onPointerDown(ctx, fakeEvent({ shiftKey: true, pointerId: 5 }))
+    lineHandler.onPointerCancel(ctx, fakeEvent({ pointerId: 5 }))
+    expect(tryRelease).toHaveBeenCalledWith(5)
+  })
+
+  it('onPointerCancel clears isDragging', () => {
+    const ctx = createMockContext()
+    lineHandler.onPointerDown(ctx, fakeEvent({ shiftKey: true }))
+    expect(lineHandler.isDragging()).toBe(true)
+    lineHandler.onPointerCancel(ctx, fakeEvent({ pointerId: 5 }))
+    expect(lineHandler.isDragging()).toBe(false)
+  })
 })

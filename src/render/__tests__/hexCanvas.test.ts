@@ -1,10 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { buildSvgPoint, handlePointerDown } from '../pointerHandlers'
 import { pixelToHex, hexToPixel, HEX_SIZE } from '../../lib/hexMath'
 import type { ToolContext, ToolHandler } from '../toolHandlers/types'
 import type { Pinia } from 'pinia'
+import { lineHandler, _resetLineToolForTest } from '../toolHandlers/lineTool'
 
 vi.mock('../../storage/svgNormalize', () => ({
   sanitizeSvgIcon: vi.fn((s: string) => s),
@@ -413,6 +414,91 @@ describe('HexCanvas icon rendering follows the SVG library styling contract', ()
     expect(iconGroup.attributes('transform')).toContain('scale(0.6)')
     expect(iconGroup.attributes('transform')).toContain('translate(-50,-50)')
     expect(iconGroup.html()).toContain('path')
+    wrapper.unmount()
+  })
+})
+
+describe('HexCanvas forwards pointer cancel to line tool handler', () => {
+  let pinia: Pinia
+
+  beforeEach(() => {
+    pinia = createPinia()
+    setActivePinia(pinia)
+    _resetLineToolForTest()
+  })
+
+  afterEach(() => {
+    _resetLineToolForTest()
+  })
+
+  async function mountLineToolWithShiftDrag() {
+    const { useBrushStore } = await import('../../stores/brushStore')
+    const { default: HexCanvas } = await import('../HexCanvas.vue')
+    const brushStore = useBrushStore()
+    brushStore.tool = 'line'
+    const wrapper = mount(HexCanvas, {
+      global: { plugins: [pinia] },
+      attachTo: document.body,
+    })
+
+    const svgEl = wrapper.element as SVGSVGElement
+    Object.defineProperty(svgEl, 'setPointerCapture', { value: vi.fn(), configurable: true, writable: true })
+    Object.defineProperty(svgEl, 'releasePointerCapture', { value: vi.fn(), configurable: true, writable: true })
+    Object.defineProperty(svgEl, 'createSVGPoint', {
+      value: () => ({ x: 0, y: 0, matrixTransform: () => ({ x: 0, y: 0 }) }),
+      configurable: true, writable: true,
+    })
+    Object.defineProperty(svgEl, 'getScreenCTM', { value: () => null, configurable: true, writable: true })
+
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Shift' }))
+    await wrapper.vm.$nextTick()
+    await wrapper.trigger('pointerdown', { button: 0, pointerId: 1, clientX: 0, clientY: 0, shiftKey: true })
+    await wrapper.vm.$nextTick()
+
+    return wrapper
+  }
+
+  it('pointercancel after line Shift+drag makes lineHandler.isDragging() false', async () => {
+    const wrapper = await mountLineToolWithShiftDrag()
+    expect(lineHandler.isDragging()).toBe(true)
+
+    await wrapper.trigger('pointercancel', { pointerId: 1 })
+    await wrapper.vm.$nextTick()
+
+    expect(lineHandler.isDragging()).toBe(false)
+
+    window.dispatchEvent(new KeyboardEvent('keyup', { key: 'Shift' }))
+    wrapper.unmount()
+  })
+
+  it('after pointercancel, subsequent pointermove does not dispatch remove commands', async () => {
+    const { useMapStore } = await import('../../stores/mapStore')
+    const mapStore = useMapStore()
+    const wrapper = await mountLineToolWithShiftDrag()
+
+    await wrapper.trigger('pointercancel', { pointerId: 1 })
+    await wrapper.vm.$nextTick()
+
+    const dispatchSpy = vi.spyOn(mapStore, 'dispatch')
+    await wrapper.trigger('pointermove', { clientX: 5, clientY: 5 })
+    await wrapper.vm.$nextTick()
+
+    expect(dispatchSpy).not.toHaveBeenCalled()
+
+    window.dispatchEvent(new KeyboardEvent('keyup', { key: 'Shift' }))
+    wrapper.unmount()
+  })
+
+  it('lostpointercapture after line Shift+drag makes lineHandler.isDragging() false', async () => {
+    const wrapper = await mountLineToolWithShiftDrag()
+    expect(lineHandler.isDragging()).toBe(true)
+
+    await wrapper.trigger('lostpointercapture', { pointerId: 1 })
+    await wrapper.vm.$nextTick()
+
+    expect(lineHandler.isDragging()).toBe(false)
+
+    window.dispatchEvent(new KeyboardEvent('keyup', { key: 'Shift' }))
     wrapper.unmount()
   })
 })
