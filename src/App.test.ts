@@ -225,6 +225,35 @@ describe('App loadSavedCells on mount', () => {
     expect(wrapper.find('[data-testid^="toast-item"].toast-error').exists()).toBe(true)
     wrapper.unmount()
   })
+
+  it('3.1 shows error toast when localStorage.getItem throws for saved cells key', async () => {
+    vi.mocked(loadWorkspace).mockReturnValue(null)
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation((key) => {
+      if (key === 'hexmap.savedCells.v1') throw new DOMException('storage unavailable', 'SecurityError')
+      return null
+    })
+
+    const wrapper = mount(App)
+    await flushPromises()
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('[data-testid^="toast-item"].toast-error').exists()).toBe(true)
+    wrapper.unmount()
+  })
+
+  it('3.2 shows error toast and app mounts when seed setItem throws for saved cells', async () => {
+    vi.mocked(loadWorkspace).mockReturnValue(null)
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementationOnce(() => {
+      throw new DOMException('QuotaExceededError', 'QuotaExceededError')
+    })
+
+    const wrapper = mount(App)
+    await flushPromises()
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('[data-testid^="toast-item"].toast-error').exists()).toBe(true)
+    wrapper.unmount()
+  })
 })
 
 describe('App icon library init', () => {
