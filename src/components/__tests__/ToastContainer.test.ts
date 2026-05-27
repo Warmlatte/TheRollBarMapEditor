@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { useToastStore } from '../../stores/toastStore'
 import type { ToastKind } from '../../stores/toastStore'
 
@@ -187,5 +189,13 @@ describe('ToastContainer — pointer events', () => {
     )
     expect(container.attributes('style')).toBeUndefined()
     wrapper.unmount()
+  })
+})
+
+describe('ToastContainer — styling architecture', () => {
+  it('does not define scoped CSS styles', () => {
+    const source = readFileSync(resolve(__dirname, '../ToastContainer.vue'), 'utf-8')
+
+    expect(source).not.toContain('<style scoped>')
   })
 })

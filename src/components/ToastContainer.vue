@@ -30,33 +30,3 @@ const kindClass: Record<ToastKind, string> = {
     </div>
   </div>
 </template>
-
-<style scoped>
-.toast-container {
-  position: fixed;
-  bottom: 1rem;
-  right: 1rem;
-  z-index: 9999;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  align-items: flex-end;
-}
-
-.toast-item {
-  padding: 0.6rem 1rem;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #fff;
-  cursor: pointer;
-  max-width: 320px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
-  user-select: none;
-}
-
-.toast-error   { background: #dc2626; }
-.toast-warning { background: #d97706; }
-.toast-info    { background: #2563eb; }
-.toast-success { background: #16a34a; }
-</style>
