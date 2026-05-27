@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { useToastStore } from '../../stores/toastStore'
+import type { ToastKind } from '../../stores/toastStore'
 
 async function mountContainer(pinia: ReturnType<typeof createPinia>) {
   const { default: ToastContainer } = await import('../ToastContainer.vue')
@@ -76,6 +77,49 @@ describe('ToastContainer — rendering', () => {
       ]),
     )
     expect(toastEl.attributes('style')).toBeUndefined()
+    wrapper.unmount()
+  })
+
+  it.each([
+    [
+      'error',
+      [
+        'border-[rgba(194,90,74,0.45)]',
+        'before:bg-[#c25a4a]',
+        'before:shadow-[0_0_8px_rgba(194,90,74,0.6)]',
+      ],
+    ],
+    [
+      'warning',
+      [
+        'border-[rgba(212,181,110,0.5)]',
+        'before:bg-[#d4b56e]',
+        'before:shadow-[0_0_8px_rgba(212,181,110,0.55)]',
+      ],
+    ],
+    [
+      'info',
+      [
+        'border-[rgba(74,122,138,0.5)]',
+        'before:bg-[#4a7a8a]',
+        'before:shadow-[0_0_8px_rgba(74,122,138,0.55)]',
+      ],
+    ],
+    [
+      'success',
+      [
+        'border-[rgba(106,154,82,0.45)]',
+        'before:bg-[#6a9a52]',
+        'before:shadow-[0_0_8px_rgba(106,154,82,0.55)]',
+      ],
+    ],
+  ] satisfies Array<[ToastKind, string[]]>)('renders %s toasts with type-specific Tailwind classes', async (kind, classes) => {
+    const store = useToastStore()
+    store.pushToast(`${kind} toast`, kind, 0)
+    const wrapper = await mountContainer(pinia)
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.get('[data-testid^="toast-item"]').classes()).toEqual(expect.arrayContaining(classes))
     wrapper.unmount()
   })
 

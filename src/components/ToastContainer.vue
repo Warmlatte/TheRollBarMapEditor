@@ -7,10 +7,10 @@ const store = useToastStore()
 const baseItemClass = "inline-flex items-center gap-2.5 py-2 pr-3.5 pl-2.5 rounded-md border text-[#e8dcc4] text-sm font-medium leading-[1.4] cursor-pointer max-w-xs select-none shadow-[0_4px_16px_rgba(0,0,0,0.5)] bg-[rgba(20,20,20,0.85)] backdrop-blur-md before:content-[''] before:w-2 before:h-2 before:rounded-full before:shrink-0"
 
 const kindClass: Record<ToastKind, string> = {
-  error:   'toast-error',
-  warning: 'toast-warning',
-  info:    'toast-info',
-  success: 'toast-success',
+  error:   'border-[rgba(194,90,74,0.45)] before:bg-[#c25a4a] before:shadow-[0_0_8px_rgba(194,90,74,0.6)]',
+  warning: 'border-[rgba(212,181,110,0.5)] before:bg-[#d4b56e] before:shadow-[0_0_8px_rgba(212,181,110,0.55)]',
+  info:    'border-[rgba(74,122,138,0.5)] before:bg-[#4a7a8a] before:shadow-[0_0_8px_rgba(74,122,138,0.55)]',
+  success: 'border-[rgba(106,154,82,0.45)] before:bg-[#6a9a52] before:shadow-[0_0_8px_rgba(106,154,82,0.55)]',
 }
 </script>
 
