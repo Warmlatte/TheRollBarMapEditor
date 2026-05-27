@@ -143,6 +143,17 @@ describe('App brand bar integration', () => {
     const source = readFileSync(resolve(__dirname, 'App.vue'), 'utf-8')
     expect(source).toContain("import BrandBar from './components/BrandBar.vue'")
   })
+
+  it('renders BrandBar as the first root child before the canvas', async () => {
+    vi.mocked(loadWorkspace).mockReturnValue(null)
+
+    const wrapper = mount(App)
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="brand-bar"]').exists()).toBe(true)
+    expect(wrapper.element.firstElementChild?.getAttribute('data-testid')).toBe('brand-bar')
+    wrapper.unmount()
+  })
 })
 
 describe('App workspace restore — no workspace', () => {

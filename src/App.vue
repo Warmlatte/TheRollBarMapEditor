@@ -132,6 +132,7 @@ onUnmounted(() => {
 
 <template>
   <div class="relative h-screen w-screen overflow-hidden">
+    <BrandBar />
     <HexCanvas class="absolute inset-0" />
 
     <div data-testid="tab-strip" class="tab-strip">
