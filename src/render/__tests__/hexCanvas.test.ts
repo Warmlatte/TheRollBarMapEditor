@@ -6,6 +6,7 @@ import { pixelToHex, hexToPixel, HEX_SIZE } from '../../lib/hexMath'
 import type { ToolContext, ToolHandler } from '../toolHandlers/types'
 import type { Pinia } from 'pinia'
 import { lineHandler, _resetLineToolForTest } from '../toolHandlers/lineTool'
+import { paintHandler, _resetPaintToolForTest } from '../toolHandlers/paintTool'
 
 vi.mock('../../storage/svgNormalize', () => ({
   sanitizeSvgIcon: vi.fn((s: string) => s),
@@ -497,6 +498,104 @@ describe('HexCanvas forwards pointer cancel to line tool handler', () => {
     await wrapper.vm.$nextTick()
 
     expect(lineHandler.isDragging()).toBe(false)
+
+    window.dispatchEvent(new KeyboardEvent('keyup', { key: 'Shift' }))
+    wrapper.unmount()
+  })
+})
+
+describe('HexCanvas forwards pointer cancel to paint tool handler', () => {
+  let pinia: Pinia
+
+  beforeEach(() => {
+    pinia = createPinia()
+    setActivePinia(pinia)
+    _resetPaintToolForTest()
+  })
+
+  afterEach(() => {
+    _resetPaintToolForTest()
+  })
+
+  async function mountPaintToolWithStroke() {
+    const { useBrushStore } = await import('../../stores/brushStore')
+    const { default: HexCanvas } = await import('../HexCanvas.vue')
+    const brushStore = useBrushStore()
+    brushStore.tool = 'paint'
+    const wrapper = mount(HexCanvas, {
+      global: { plugins: [pinia] },
+      attachTo: document.body,
+    })
+
+    const svgEl = wrapper.element as SVGSVGElement
+    Object.defineProperty(svgEl, 'setPointerCapture', { value: vi.fn(), configurable: true, writable: true })
+    Object.defineProperty(svgEl, 'releasePointerCapture', { value: vi.fn(), configurable: true, writable: true })
+    Object.defineProperty(svgEl, 'createSVGPoint', {
+      value: () => ({ x: 0, y: 0, matrixTransform: () => ({ x: 0, y: 0 }) }),
+      configurable: true, writable: true,
+    })
+    Object.defineProperty(svgEl, 'getScreenCTM', { value: () => null, configurable: true, writable: true })
+
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Shift' }))
+    await wrapper.vm.$nextTick()
+    await wrapper.trigger('pointerdown', { button: 0, pointerId: 1, clientX: 0, clientY: 0 })
+    await wrapper.vm.$nextTick()
+
+    return wrapper
+  }
+
+  it('1.1 pointercancel after paint stroke: canUndo true, isDragging false, ShiftErasePreview gone', async () => {
+    const { useMapStore } = await import('../../stores/mapStore')
+    const mapStore = useMapStore()
+    const wrapper = await mountPaintToolWithStroke()
+
+    expect(paintHandler.isDragging()).toBe(true)
+    expect(wrapper.find('circle[r="5"]').exists()).toBe(true)
+
+    await wrapper.trigger('pointercancel', { pointerId: 1 })
+    await wrapper.vm.$nextTick()
+
+    expect(mapStore.canUndo).toBe(true)
+    expect(paintHandler.isDragging()).toBe(false)
+    expect(wrapper.find('circle[r="5"]').exists()).toBe(false)
+
+    window.dispatchEvent(new KeyboardEvent('keyup', { key: 'Shift' }))
+    wrapper.unmount()
+  })
+
+  it('1.2 lostpointercapture after paint stroke: canUndo true, isDragging false, ShiftErasePreview gone', async () => {
+    const { useMapStore } = await import('../../stores/mapStore')
+    const mapStore = useMapStore()
+    const wrapper = await mountPaintToolWithStroke()
+
+    expect(paintHandler.isDragging()).toBe(true)
+    expect(wrapper.find('circle[r="5"]').exists()).toBe(true)
+
+    await wrapper.trigger('lostpointercapture', { pointerId: 1 })
+    await wrapper.vm.$nextTick()
+
+    expect(mapStore.canUndo).toBe(true)
+    expect(paintHandler.isDragging()).toBe(false)
+    expect(wrapper.find('circle[r="5"]').exists()).toBe(false)
+
+    window.dispatchEvent(new KeyboardEvent('keyup', { key: 'Shift' }))
+    wrapper.unmount()
+  })
+
+  it('1.3 pointermove after pointercancel without new pointerdown does not add more hexes', async () => {
+    const { useMapStore } = await import('../../stores/mapStore')
+    const mapStore = useMapStore()
+    const wrapper = await mountPaintToolWithStroke()
+
+    const hexCountAfterStroke = mapStore.mapData.hexes.length
+
+    await wrapper.trigger('pointercancel', { pointerId: 1 })
+    await wrapper.vm.$nextTick()
+
+    await wrapper.trigger('pointermove', { clientX: 50, clientY: 50 })
+    await wrapper.vm.$nextTick()
+
+    expect(mapStore.mapData.hexes.length).toBe(hexCountAfterStroke)
 
     window.dispatchEvent(new KeyboardEvent('keyup', { key: 'Shift' }))
     wrapper.unmount()
