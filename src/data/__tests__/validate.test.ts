@@ -130,6 +130,33 @@ describe('validateMapFile — line dashLength/dashGap fallback', () => {
     }
     expect(() => validateMapFile(data)).toThrow(/dashGap/)
   })
+
+  it.each([
+    ['dashLength', 0],
+    ['dashLength', -1],
+    ['dashLength', Infinity],
+    ['dashGap', 0],
+    ['dashGap', -1],
+    ['dashGap', Infinity],
+  ])('rejects a line with invalid %s value %s', (field, value) => {
+    const data = {
+      ...minimalValid,
+      lines: [{
+        id: 'l1',
+        x1: 0,
+        y1: 0,
+        x2: 10,
+        y2: 10,
+        width: 2,
+        dashed: true,
+        dashLength: 12,
+        dashGap: 6,
+        [field]: value,
+        color: '#000000',
+      }],
+    }
+    expect(() => validateMapFile(data)).toThrow(new RegExp(field))
+  })
 })
 
 describe('validateMapFile — structuredClone compatibility', () => {

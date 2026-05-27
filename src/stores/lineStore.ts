@@ -16,6 +16,8 @@ export type SavedLine = {
 
 type LinePref = { width: number; dashed: boolean; dashLength: number; dashGap: number }
 
+const DEFAULT_PREF: LinePref = { width: 2, dashed: false, dashLength: 8, dashGap: 4 }
+
 const DEFAULT_SEEDS: SavedLine[] = [
   { id: 'seed-1', color: '#222222', width: 4, dashed: false, dashLength: 5, dashGap: 5 },
   { id: 'seed-2', color: '#7a4a2a', width: 2, dashed: true,  dashLength: 4, dashGap: 4 },
@@ -25,17 +27,23 @@ const DEFAULT_SEEDS: SavedLine[] = [
 
 function loadPref(): LinePref {
   const raw = localStorage.getItem(PREF_KEY)
-  if (raw === null) return { width: 2, dashed: false, dashLength: 8, dashGap: 4 }
+  if (raw === null) return { ...DEFAULT_PREF }
   try {
-    const parsed = JSON.parse(raw) as Partial<LinePref>
+    const parsed = JSON.parse(raw) as Record<string, unknown>
     return {
-      width: parsed.width ?? 2,
-      dashed: parsed.dashed ?? false,
-      dashLength: parsed.dashLength ?? 8,
-      dashGap: parsed.dashGap ?? 4,
+      width: typeof parsed.width === 'number' && Number.isFinite(parsed.width)
+        ? Math.min(10, Math.max(1, parsed.width))
+        : DEFAULT_PREF.width,
+      dashed: typeof parsed.dashed === 'boolean' ? parsed.dashed : DEFAULT_PREF.dashed,
+      dashLength: typeof parsed.dashLength === 'number' && Number.isFinite(parsed.dashLength)
+        ? Math.min(40, Math.max(1, parsed.dashLength))
+        : DEFAULT_PREF.dashLength,
+      dashGap: typeof parsed.dashGap === 'number' && Number.isFinite(parsed.dashGap)
+        ? Math.min(40, Math.max(1, parsed.dashGap))
+        : DEFAULT_PREF.dashGap,
     }
   } catch {
-    return { width: 2, dashed: false, dashLength: 8, dashGap: 4 }
+    return { ...DEFAULT_PREF }
   }
 }
 

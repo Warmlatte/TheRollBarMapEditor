@@ -105,6 +105,48 @@ describe('lineStore preference persistence', () => {
     expect(line.dashed).toBe(false)
   })
 
+  it('uses default values when preference fields have invalid types', () => {
+    localStorage.setItem(LINE_KEY, JSON.stringify({
+      width: 'wide',
+      dashed: 'yes',
+      dashLength: null,
+      dashGap: {},
+    }))
+    const line = useLineStore()
+    expect(line.lineWidth).toBe(2)
+    expect(line.dashed).toBe(false)
+    expect(line.dashLength).toBe(8)
+    expect(line.dashGap).toBe(4)
+  })
+
+  it('clamps persisted preference number fields to safe ranges', () => {
+    localStorage.setItem(LINE_KEY, JSON.stringify({
+      width: 99,
+      dashed: true,
+      dashLength: 0,
+      dashGap: 999,
+    }))
+    const line = useLineStore()
+    expect(line.lineWidth).toBe(10)
+    expect(line.dashed).toBe(true)
+    expect(line.dashLength).toBe(1)
+    expect(line.dashGap).toBe(40)
+  })
+
+  it('uses default values when preference number fields are not finite', () => {
+    localStorage.setItem(LINE_KEY, JSON.stringify({
+      width: 3,
+      dashed: true,
+      dashLength: null,
+      dashGap: 4,
+    }))
+    const line = useLineStore()
+    expect(line.lineWidth).toBe(3)
+    expect(line.dashed).toBe(true)
+    expect(line.dashLength).toBe(8)
+    expect(line.dashGap).toBe(4)
+  })
+
   it('writes to localStorage when setWidth is called', () => {
     const line = useLineStore()
     line.setWidth(5)
