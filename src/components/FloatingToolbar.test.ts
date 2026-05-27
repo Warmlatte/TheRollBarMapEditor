@@ -26,30 +26,30 @@ describe('FloatingToolbar', () => {
     }
   })
 
-  it('erase 按鈕含 .btn-danger class（variant 欄位控制）', () => {
+  it('erase 按鈕含 .is-danger class（variant 欄位控制）', () => {
     const wrapper = mount(FloatingToolbar)
     const eraseIndex = TOOLS.findIndex(t => t.id === 'erase')
     const buttons = wrapper.findAll('button')
-    expect(buttons[eraseIndex].classes()).toContain('btn-danger')
+    expect(buttons[eraseIndex].classes()).toContain('is-danger')
   })
 
-  it('brushStore.tool === "line" 時，line 按鈕含 .active class', async () => {
+  it('brushStore.tool === "line" 時，line 按鈕含 .is-active class', async () => {
     const store = useBrushStore()
     store.setTool('line')
     const wrapper = mount(FloatingToolbar)
     const lineIndex = TOOLS.findIndex(t => t.id === 'line')
     const buttons = wrapper.findAll('button')
-    expect(buttons[lineIndex].classes()).toContain('active')
+    expect(buttons[lineIndex].classes()).toContain('is-active')
   })
 
-  it('非 active 工具按鈕不含 .active class', async () => {
+  it('非 active 工具按鈕不含 .is-active class', async () => {
     const store = useBrushStore()
     store.setTool('line')
     const wrapper = mount(FloatingToolbar)
     const buttons = wrapper.findAll('button')
     for (let i = 0; i < TOOLS.length; i++) {
       if (TOOLS[i].id !== 'line') {
-        expect(buttons[i].classes()).not.toContain('active')
+        expect(buttons[i].classes()).not.toContain('is-active')
       }
     }
   })
@@ -71,5 +71,32 @@ describe('FloatingToolbar', () => {
       const expected = TOOLS[i].id === 'line' ? 'true' : 'false'
       expect(buttons[i].attributes('aria-pressed')).toBe(expected)
     }
+  })
+
+  it('每個工具按鈕都有 SVG icon', () => {
+    const wrapper = mount(FloatingToolbar)
+    const buttons = wrapper.findAll('button')
+    for (const button of buttons) {
+      expect(button.find('svg').exists()).toBe(true)
+    }
+  })
+
+  it('每個工具按鈕都有 indicator bar，active 時含 indicator-on', () => {
+    const store = useBrushStore()
+    store.setTool('line')
+    const wrapper = mount(FloatingToolbar)
+    const lineIndex = TOOLS.findIndex(t => t.id === 'line')
+    const buttons = wrapper.findAll('button')
+
+    for (const button of buttons) {
+      expect(button.find('.indicator').exists()).toBe(true)
+    }
+    expect(buttons[lineIndex].find('.indicator').classes()).toContain('indicator-on')
+  })
+
+  it('erase 工具前有 separator', () => {
+    const wrapper = mount(FloatingToolbar)
+
+    expect(wrapper.find('.toolbar-sep').exists()).toBe(true)
   })
 })

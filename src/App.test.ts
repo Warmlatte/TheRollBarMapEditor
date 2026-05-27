@@ -1,7 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
-import { readFileSync } from 'node:fs'
-import { resolve } from 'node:path'
 import { setActivePinia, createPinia } from 'pinia'
 import App from './App.vue'
 import { useSessionStore } from './stores/sessionStore'
@@ -15,8 +13,8 @@ vi.mock('./components/FloatingToolbar.vue', () => ({
   default: { template: '<div data-test="toolbar" />' },
 }))
 
-vi.mock('./components/BrandBar.vue', () => ({
-  default: { template: '<div data-testid="brand-bar" />' },
+vi.mock('./components/LoadHud.vue', () => ({
+  default: { template: '<div data-testid="load-hud" />' },
 }))
 
 vi.mock('./storage/persist', () => ({
@@ -144,20 +142,16 @@ describe('App workspace restore', () => {
   })
 })
 
-describe('App brand bar integration', () => {
-  it('imports the BrandBar component', () => {
-    const source = readFileSync(resolve(__dirname, 'App.vue'), 'utf-8')
-    expect(source).toContain("import BrandBar from './components/BrandBar.vue'")
-  })
-
-  it('renders BrandBar as the first root child before the canvas', async () => {
+describe('App tab strip brand integration', () => {
+  it('renders brand inside TabStrip instead of a separate BrandBar overlay', async () => {
     vi.mocked(loadWorkspace).mockReturnValue(null)
 
     const wrapper = mount(App)
     await flushPromises()
 
-    expect(wrapper.find('[data-testid="brand-bar"]').exists()).toBe(true)
-    expect(wrapper.element.firstElementChild?.getAttribute('data-testid')).toBe('brand-bar')
+    const tabStrip = wrapper.get('[data-testid="tab-strip"]')
+    expect(tabStrip.find('.tab-brand').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="brand-bar"]').exists()).toBe(false)
     wrapper.unmount()
   })
 })
@@ -213,6 +207,63 @@ describe('App workspace restore — no workspace', () => {
     await flushPromises()
 
     expect(wrapper.find('[data-testid="toast-container"]').exists()).toBe(true)
+    wrapper.unmount()
+  })
+
+  it('tab strip reorder event reorders sessions', async () => {
+    vi.mocked(loadWorkspace).mockReturnValue({
+      tabs: [
+        { id: 'tab-1', name: 'One', mapData },
+        { id: 'tab-2', name: 'Two', mapData: alternateMapData },
+        { id: 'tab-3', name: 'Three', mapData },
+      ],
+      activeTabId: 'tab-1',
+    })
+    const sessionStore = useSessionStore()
+    const wrapper = mount(App)
+    await flushPromises()
+    const tabButtons = wrapper.findAll('[data-testid="tab-strip"] .tab-btn')
+
+    await tabButtons[0].trigger('dragstart')
+    await tabButtons[2].trigger('dragover')
+    await tabButtons[2].trigger('drop')
+
+    expect(sessionStore.sessions.map((session) => session.id)).toEqual([
+      'tab-2',
+      'tab-3',
+      'tab-1',
+    ])
+    wrapper.unmount()
+  })
+
+  it('tab strip rename event renames the session', async () => {
+    vi.mocked(loadWorkspace).mockReturnValue({
+      tabs: [{ id: 'tab-1', name: 'One', mapData }],
+      activeTabId: 'tab-1',
+    })
+    const sessionStore = useSessionStore()
+    const wrapper = mount(App)
+    await flushPromises()
+
+    await wrapper.find('[data-testid="tab-strip"] .tab-name').trigger('dblclick')
+    const input = wrapper.get('[data-testid="tab-name-input"]')
+    await input.setValue('Renamed Map')
+    await input.trigger('keydown.enter')
+
+    expect(sessionStore.sessions[0].name).toBe('Renamed Map')
+    expect(sessionStore.sessions[0].mapData.name).toBe('Renamed Map')
+    wrapper.unmount()
+  })
+
+  it('clicking map list button toggles active state and renders LoadHud', async () => {
+    vi.mocked(loadWorkspace).mockReturnValue(null)
+    const wrapper = mount(App)
+    await flushPromises()
+
+    await wrapper.find('.map-list-btn').trigger('click')
+
+    expect(wrapper.find('.map-list-btn').classes()).toContain('is-active')
+    expect(wrapper.find('[data-testid="load-hud"]').exists()).toBe(true)
     wrapper.unmount()
   })
 })

@@ -210,6 +210,13 @@ describe('sessionStore.renameSession', () => {
     expect(store.sessions.find((x) => x.id === s.id)?.name).toBe('Dungeon Level 1')
   })
 
+  it('updates mapData name with the session name', () => {
+    const store = useSessionStore()
+    const s = store.makeSession()
+    store.renameSession(s.id, 'Dungeon Level 1')
+    expect(store.sessions.find((x) => x.id === s.id)?.mapData.name).toBe('Dungeon Level 1')
+  })
+
   it('sets isDirty to true after rename', () => {
     const store = useSessionStore()
     const s = store.makeSession()
