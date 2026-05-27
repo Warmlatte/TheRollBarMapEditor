@@ -93,6 +93,72 @@ describe('validateMapFile — Icon x/y coordinates (pixel coords, breaking chang
   })
 })
 
+describe('validateMapFile — line dashLength/dashGap fallback', () => {
+  it('accepts a line without dashLength/dashGap and supplies defaults', () => {
+    const data = {
+      ...minimalValid,
+      lines: [{ id: 'l1', x1: 0, y1: 0, x2: 10, y2: 10, width: 2, dashed: false, color: '#000000' }],
+    }
+    expect(() => validateMapFile(data)).not.toThrow()
+    const result = validateMapFile(data)
+    expect(result.lines[0]!.dashLength).toBe(8)
+    expect(result.lines[0]!.dashGap).toBe(4)
+  })
+
+  it('accepts a line with explicit dashLength/dashGap and preserves them', () => {
+    const data = {
+      ...minimalValid,
+      lines: [{ id: 'l1', x1: 0, y1: 0, x2: 10, y2: 10, width: 2, dashed: true, dashLength: 12, dashGap: 6, color: '#000000' }],
+    }
+    const result = validateMapFile(data)
+    expect(result.lines[0]!.dashLength).toBe(12)
+    expect(result.lines[0]!.dashGap).toBe(6)
+  })
+
+  it('rejects a line with non-number dashLength', () => {
+    const data = {
+      ...minimalValid,
+      lines: [{ id: 'l1', x1: 0, y1: 0, x2: 10, y2: 10, width: 2, dashed: true, dashLength: '12', dashGap: 6, color: '#000000' }],
+    }
+    expect(() => validateMapFile(data)).toThrow(/dashLength/)
+  })
+
+  it('rejects a line with non-number dashGap', () => {
+    const data = {
+      ...minimalValid,
+      lines: [{ id: 'l1', x1: 0, y1: 0, x2: 10, y2: 10, width: 2, dashed: true, dashLength: 12, dashGap: null, color: '#000000' }],
+    }
+    expect(() => validateMapFile(data)).toThrow(/dashGap/)
+  })
+
+  it.each([
+    ['dashLength', 0],
+    ['dashLength', -1],
+    ['dashLength', Infinity],
+    ['dashGap', 0],
+    ['dashGap', -1],
+    ['dashGap', Infinity],
+  ])('rejects a line with invalid %s value %s', (field, value) => {
+    const data = {
+      ...minimalValid,
+      lines: [{
+        id: 'l1',
+        x1: 0,
+        y1: 0,
+        x2: 10,
+        y2: 10,
+        width: 2,
+        dashed: true,
+        dashLength: 12,
+        dashGap: 6,
+        [field]: value,
+        color: '#000000',
+      }],
+    }
+    expect(() => validateMapFile(data)).toThrow(new RegExp(field))
+  })
+})
+
 describe('validateMapFile — structuredClone compatibility', () => {
   it('produces independent copy via structuredClone', () => {
     const original = {

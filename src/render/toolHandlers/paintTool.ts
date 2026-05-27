@@ -51,7 +51,7 @@ export const paintHandler: ToolHandler = {
     strokePainted.clear()
   },
 
-  onPointerCancel(_ctx) {
+  onPointerCancel(_ctx, _e) {
     if (isStrokeActive) {
       const mapStore = useMapStore()
       mapStore.endStroke()

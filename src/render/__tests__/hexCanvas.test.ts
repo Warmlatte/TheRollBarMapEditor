@@ -1,10 +1,12 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { buildSvgPoint, handlePointerDown } from '../pointerHandlers'
 import { pixelToHex, hexToPixel, HEX_SIZE } from '../../lib/hexMath'
 import type { ToolContext, ToolHandler } from '../toolHandlers/types'
 import type { Pinia } from 'pinia'
+import { lineHandler, _resetLineToolForTest } from '../toolHandlers/lineTool'
+import { paintHandler, _resetPaintToolForTest } from '../toolHandlers/paintTool'
 
 vi.mock('../../storage/svgNormalize', () => ({
   sanitizeSvgIcon: vi.fn((s: string) => s),
@@ -318,6 +320,48 @@ describe('HexCanvas anyDragging — pointercancel and lostpointercapture reset',
   })
 })
 
+describe('HexCanvas onContextMenu — right-click anchor behavior', () => {
+  let pinia: Pinia
+
+  beforeEach(() => {
+    pinia = createPinia()
+    setActivePinia(pinia)
+  })
+
+  async function mountLineToolCanvas() {
+    const { useBrushStore } = await import('../../stores/brushStore')
+    const { useLineStore } = await import('../../stores/lineStore')
+    const { default: HexCanvas } = await import('../HexCanvas.vue')
+    const brushStore = useBrushStore()
+    brushStore.tool = 'line'
+    const lineStore = useLineStore()
+    lineStore.pendingAnchor = { x: 10, y: 20 }
+    const wrapper = mount(HexCanvas, {
+      global: { plugins: [pinia] },
+      attachTo: document.body,
+    })
+    return { wrapper, lineStore }
+  }
+
+  it('pure right-click clears pendingAnchor', async () => {
+    const { wrapper, lineStore } = await mountLineToolCanvas()
+    expect(lineStore.pendingAnchor).not.toBeNull()
+    await wrapper.trigger('contextmenu', { shiftKey: false })
+    await wrapper.vm.$nextTick()
+    expect(lineStore.pendingAnchor).toBeNull()
+    wrapper.unmount()
+  })
+
+  it('Shift+right-click does NOT clear pendingAnchor', async () => {
+    const { wrapper, lineStore } = await mountLineToolCanvas()
+    expect(lineStore.pendingAnchor).not.toBeNull()
+    await wrapper.trigger('contextmenu', { shiftKey: true })
+    await wrapper.vm.$nextTick()
+    expect(lineStore.pendingAnchor).not.toBeNull()
+    wrapper.unmount()
+  })
+})
+
 describe('HexCanvas icon rendering follows the SVG library styling contract', () => {
   let pinia: Pinia
 
@@ -371,6 +415,189 @@ describe('HexCanvas icon rendering follows the SVG library styling contract', ()
     expect(iconGroup.attributes('transform')).toContain('scale(0.6)')
     expect(iconGroup.attributes('transform')).toContain('translate(-50,-50)')
     expect(iconGroup.html()).toContain('path')
+    wrapper.unmount()
+  })
+})
+
+describe('HexCanvas forwards pointer cancel to line tool handler', () => {
+  let pinia: Pinia
+
+  beforeEach(() => {
+    pinia = createPinia()
+    setActivePinia(pinia)
+    _resetLineToolForTest()
+  })
+
+  afterEach(() => {
+    _resetLineToolForTest()
+  })
+
+  async function mountLineToolWithShiftDrag() {
+    const { useBrushStore } = await import('../../stores/brushStore')
+    const { default: HexCanvas } = await import('../HexCanvas.vue')
+    const brushStore = useBrushStore()
+    brushStore.tool = 'line'
+    const wrapper = mount(HexCanvas, {
+      global: { plugins: [pinia] },
+      attachTo: document.body,
+    })
+
+    const svgEl = wrapper.element as SVGSVGElement
+    Object.defineProperty(svgEl, 'setPointerCapture', { value: vi.fn(), configurable: true, writable: true })
+    Object.defineProperty(svgEl, 'releasePointerCapture', { value: vi.fn(), configurable: true, writable: true })
+    Object.defineProperty(svgEl, 'createSVGPoint', {
+      value: () => ({ x: 0, y: 0, matrixTransform: () => ({ x: 0, y: 0 }) }),
+      configurable: true, writable: true,
+    })
+    Object.defineProperty(svgEl, 'getScreenCTM', { value: () => null, configurable: true, writable: true })
+
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Shift' }))
+    await wrapper.vm.$nextTick()
+    await wrapper.trigger('pointerdown', { button: 0, pointerId: 1, clientX: 0, clientY: 0, shiftKey: true })
+    await wrapper.vm.$nextTick()
+
+    return wrapper
+  }
+
+  it('pointercancel after line Shift+drag makes lineHandler.isDragging() false', async () => {
+    const wrapper = await mountLineToolWithShiftDrag()
+    expect(lineHandler.isDragging()).toBe(true)
+
+    await wrapper.trigger('pointercancel', { pointerId: 1 })
+    await wrapper.vm.$nextTick()
+
+    expect(lineHandler.isDragging()).toBe(false)
+
+    window.dispatchEvent(new KeyboardEvent('keyup', { key: 'Shift' }))
+    wrapper.unmount()
+  })
+
+  it('after pointercancel, subsequent pointermove does not dispatch remove commands', async () => {
+    const { useMapStore } = await import('../../stores/mapStore')
+    const mapStore = useMapStore()
+    const wrapper = await mountLineToolWithShiftDrag()
+
+    await wrapper.trigger('pointercancel', { pointerId: 1 })
+    await wrapper.vm.$nextTick()
+
+    const dispatchSpy = vi.spyOn(mapStore, 'dispatch')
+    await wrapper.trigger('pointermove', { clientX: 5, clientY: 5 })
+    await wrapper.vm.$nextTick()
+
+    expect(dispatchSpy).not.toHaveBeenCalled()
+
+    window.dispatchEvent(new KeyboardEvent('keyup', { key: 'Shift' }))
+    wrapper.unmount()
+  })
+
+  it('lostpointercapture after line Shift+drag makes lineHandler.isDragging() false', async () => {
+    const wrapper = await mountLineToolWithShiftDrag()
+    expect(lineHandler.isDragging()).toBe(true)
+
+    await wrapper.trigger('lostpointercapture', { pointerId: 1 })
+    await wrapper.vm.$nextTick()
+
+    expect(lineHandler.isDragging()).toBe(false)
+
+    window.dispatchEvent(new KeyboardEvent('keyup', { key: 'Shift' }))
+    wrapper.unmount()
+  })
+})
+
+describe('HexCanvas forwards pointer cancel to paint tool handler', () => {
+  let pinia: Pinia
+
+  beforeEach(() => {
+    pinia = createPinia()
+    setActivePinia(pinia)
+    _resetPaintToolForTest()
+  })
+
+  afterEach(() => {
+    _resetPaintToolForTest()
+  })
+
+  async function mountPaintToolWithStroke() {
+    const { useBrushStore } = await import('../../stores/brushStore')
+    const { default: HexCanvas } = await import('../HexCanvas.vue')
+    const brushStore = useBrushStore()
+    brushStore.tool = 'paint'
+    const wrapper = mount(HexCanvas, {
+      global: { plugins: [pinia] },
+      attachTo: document.body,
+    })
+
+    const svgEl = wrapper.element as SVGSVGElement
+    Object.defineProperty(svgEl, 'setPointerCapture', { value: vi.fn(), configurable: true, writable: true })
+    Object.defineProperty(svgEl, 'releasePointerCapture', { value: vi.fn(), configurable: true, writable: true })
+    Object.defineProperty(svgEl, 'createSVGPoint', {
+      value: () => ({ x: 0, y: 0, matrixTransform: () => ({ x: 0, y: 0 }) }),
+      configurable: true, writable: true,
+    })
+    Object.defineProperty(svgEl, 'getScreenCTM', { value: () => null, configurable: true, writable: true })
+
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Shift' }))
+    await wrapper.vm.$nextTick()
+    await wrapper.trigger('pointerdown', { button: 0, pointerId: 1, clientX: 0, clientY: 0 })
+    await wrapper.vm.$nextTick()
+
+    return wrapper
+  }
+
+  it('1.1 pointercancel after paint stroke: canUndo true, isDragging false, ShiftErasePreview gone', async () => {
+    const { useMapStore } = await import('../../stores/mapStore')
+    const mapStore = useMapStore()
+    const wrapper = await mountPaintToolWithStroke()
+
+    expect(paintHandler.isDragging()).toBe(true)
+    expect(wrapper.find('circle[r="5"]').exists()).toBe(true)
+
+    await wrapper.trigger('pointercancel', { pointerId: 1 })
+    await wrapper.vm.$nextTick()
+
+    expect(mapStore.canUndo).toBe(true)
+    expect(paintHandler.isDragging()).toBe(false)
+    expect(wrapper.find('circle[r="5"]').exists()).toBe(false)
+
+    window.dispatchEvent(new KeyboardEvent('keyup', { key: 'Shift' }))
+    wrapper.unmount()
+  })
+
+  it('1.2 lostpointercapture after paint stroke: canUndo true, isDragging false, ShiftErasePreview gone', async () => {
+    const { useMapStore } = await import('../../stores/mapStore')
+    const mapStore = useMapStore()
+    const wrapper = await mountPaintToolWithStroke()
+
+    expect(paintHandler.isDragging()).toBe(true)
+    expect(wrapper.find('circle[r="5"]').exists()).toBe(true)
+
+    await wrapper.trigger('lostpointercapture', { pointerId: 1 })
+    await wrapper.vm.$nextTick()
+
+    expect(mapStore.canUndo).toBe(true)
+    expect(paintHandler.isDragging()).toBe(false)
+    expect(wrapper.find('circle[r="5"]').exists()).toBe(false)
+
+    window.dispatchEvent(new KeyboardEvent('keyup', { key: 'Shift' }))
+    wrapper.unmount()
+  })
+
+  it('1.3 pointermove after pointercancel without new pointerdown does not add more hexes', async () => {
+    const { useMapStore } = await import('../../stores/mapStore')
+    const mapStore = useMapStore()
+    const wrapper = await mountPaintToolWithStroke()
+
+    const hexCountAfterStroke = mapStore.mapData.hexes.length
+
+    await wrapper.trigger('pointercancel', { pointerId: 1 })
+    await wrapper.vm.$nextTick()
+
+    await wrapper.trigger('pointermove', { clientX: 50, clientY: 50 })
+    await wrapper.vm.$nextTick()
+
+    expect(mapStore.mapData.hexes.length).toBe(hexCountAfterStroke)
+
+    window.dispatchEvent(new KeyboardEvent('keyup', { key: 'Shift' }))
     wrapper.unmount()
   })
 })

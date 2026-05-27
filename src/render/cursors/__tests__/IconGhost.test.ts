@@ -4,6 +4,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { useIconStore } from '../../../stores/iconStore'
 import { useIconLibraryStore } from '../../../stores/iconLibraryStore'
 import { useBrushStore } from '../../../stores/brushStore'
+import { useSnapStore } from '../../../stores/snapStore'
 import type { Pinia } from 'pinia'
 
 vi.mock('../../../storage/svgNormalize', () => ({
@@ -84,6 +85,7 @@ describe('IconGhost — displays safe SVG when icon selected', () => {
     pinia = createPinia()
     setActivePinia(pinia)
     vi.clearAllMocks()
+    useSnapStore().setMode('free')
   })
 
   afterEach(() => {

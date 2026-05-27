@@ -15,9 +15,11 @@ import IconGhost from './cursors/IconGhost.vue'
 import LineCursorAndPreview from './cursors/LineCursorAndPreview.vue'
 import ShiftErasePreview from './cursors/ShiftErasePreview.vue'
 import { useIconLibraryStore, getDisplaySvg } from '../stores/iconLibraryStore'
+import { useLineStore } from '../stores/lineStore'
 
 const mapStore = useMapStore()
 const brushStore = useBrushStore()
+const lineStore = useLineStore()
 const viewportStore = useViewportStore()
 const iconLibraryStore = useIconLibraryStore()
 
@@ -83,11 +85,40 @@ function buildContext(_e: PointerEvent): ToolContext {
     findDoodleAt: (x, y) => findDoodleAt(rawMap.doodles, x, y),
     newId: () => crypto.randomUUID(),
     mapData: rawMap,
+    tryCapture(pointerId: number): void {
+      try { svg.setPointerCapture(pointerId) } catch { /* silent */ }
+    },
+    tryRelease(pointerId: number): void {
+      try { svg.releasePointerCapture(pointerId) } catch { /* silent */ }
+    },
+    svgPointFromMouse(e: MouseEvent): { x: number; y: number } {
+      const rect = svg.getBoundingClientRect()
+      const { panX, panY, zoom } = viewportStore
+      const x = (e.clientX - rect.left) / zoom + panX
+      const y = (e.clientY - rect.top) / zoom + panY
+      return { x, y }
+    },
+  }
+}
+
+function onContextMenu(e: MouseEvent) {
+  if (brushStore.tool === 'line') {
+    e.preventDefault()
+    if (e.shiftKey) {
+      getHandler(brushStore.tool).onEyedrop?.(buildContext(e as unknown as PointerEvent), e)
+    } else {
+      lineStore.pendingAnchor = null
+      lineStore.previewEnd = null
+    }
   }
 }
 
 function onKeyDown(e: KeyboardEvent) {
   if (e.key === 'Shift') shiftHeld.value = true
+  if (e.key === 'Escape' && brushStore.tool === 'line') {
+    lineStore.pendingAnchor = null
+    lineStore.previewEnd = null
+  }
 }
 
 function onKeyUp(e: KeyboardEvent) {
@@ -131,8 +162,11 @@ function onPointerUp(e: PointerEvent) {
   handlePointerUp(e, getHandler(brushStore.tool), buildContext)
 }
 
-function onPointerCancel() {
+function onPointerCancel(e: PointerEvent) {
   anyDragging.value = false
+  if (svgEl.value) {
+    getHandler(brushStore.tool).onPointerCancel(buildContext(e), e)
+  }
 }
 </script>
 
@@ -146,6 +180,7 @@ function onPointerCancel() {
     @pointerup="onPointerUp"
     @pointercancel="onPointerCancel"
     @lostpointercapture="onPointerCancel"
+    @contextmenu="onContextMenu"
   >
     <!-- layer 1: grid outlines -->
     <g id="layer-grid">
@@ -182,7 +217,7 @@ function onPointerCancel() {
         :y2="l.y2"
         :stroke="l.color"
         :stroke-width="l.width"
-        :stroke-dasharray="l.dashed ? '8 4' : undefined"
+        :stroke-dasharray="l.dashed ? `${l.dashLength} ${l.dashGap}` : undefined"
         stroke-linecap="round"
       />
     </g>

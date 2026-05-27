@@ -10,6 +10,13 @@ function assertNumber(val: unknown, field: string): asserts val is number {
   if (typeof val !== 'number') throw new Error(`${field}: expected number`)
 }
 
+function assertNumberInRange(val: unknown, field: string, min: number, max: number): asserts val is number {
+  assertNumber(val, field)
+  if (!Number.isFinite(val) || val < min || val > max) {
+    throw new Error(`${field}: expected finite number between ${min} and ${max}`)
+  }
+}
+
 function assertBoolean(val: unknown, field: string): asserts val is boolean {
   if (typeof val !== 'boolean') throw new Error(`${field}: expected boolean`)
 }
@@ -59,7 +66,11 @@ function validateLine(val: unknown, index: number): Line {
   assertNumber(val.width, `lines[${index}].width`)
   assertBoolean(val.dashed, `lines[${index}].dashed`)
   assertColor(val.color, `lines[${index}].color`)
-  return { id: val.id, x1: val.x1, y1: val.y1, x2: val.x2, y2: val.y2, width: val.width, dashed: val.dashed, color: val.color }
+  if ('dashLength' in val) assertNumberInRange(val.dashLength, `lines[${index}].dashLength`, 1, 40)
+  if ('dashGap' in val) assertNumberInRange(val.dashGap, `lines[${index}].dashGap`, 1, 40)
+  const dashLength = 'dashLength' in val ? val.dashLength : 8
+  const dashGap = 'dashGap' in val ? val.dashGap : 4
+  return { id: val.id, x1: val.x1, y1: val.y1, x2: val.x2, y2: val.y2, width: val.width, dashed: val.dashed, dashLength, dashGap, color: val.color }
 }
 
 function validateDoodle(val: unknown, index: number): Doodle {

@@ -22,6 +22,8 @@ const testLine: Line = {
   y2: 100,
   width: 2,
   dashed: false,
+  dashLength: 8,
+  dashGap: 4,
   color: '#000000',
 }
 
@@ -87,5 +89,24 @@ describe('RemoveLineCommand', () => {
     const { state: next, inverse } = cmd.apply(state)
     const { state: restored } = inverse.apply(next)
     expect(restored.lines).toContainEqual(testLine)
+  })
+})
+
+describe('DrawLineCommand — idempotency', () => {
+  it('dispatching with duplicate id does not append again', () => {
+    const state = makeMapData()
+    const cmd = new DrawLineCommand(testLine)
+    const { state: after1 } = cmd.apply(state)
+    const { state: after2 } = cmd.apply(after1)
+    expect(after2.lines).toHaveLength(1)
+  })
+
+  it('duplicate id no-op inverse does not remove the existing line', () => {
+    const state = makeMapData({ lines: [testLine] })
+    const cmd = new DrawLineCommand(testLine)
+    const { state: afterDuplicate, inverse } = cmd.apply(state)
+    const { state: afterUndo } = inverse.apply(afterDuplicate)
+    expect(afterDuplicate).toBe(state)
+    expect(afterUndo.lines).toEqual([testLine])
   })
 })
