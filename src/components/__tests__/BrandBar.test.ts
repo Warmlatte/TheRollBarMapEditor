@@ -29,10 +29,22 @@ describe('BrandBar', () => {
       ]),
     )
 
-    const image = wrapper.get('img')
-    expect(image.attributes('src')).toBe('/src/assets/the-roll-bar-mark-light.png')
-    expect(image.attributes('alt')).toBe('The Roll Bar')
-    expect(image.classes()).toEqual(expect.arrayContaining(['h-9', 'w-auto', 'block']))
+    const mark = wrapper.get('[data-testid="brand-mark"]')
+    expect(mark.classes()).toEqual(
+      expect.arrayContaining([
+        'h-9',
+        'w-9',
+        'shrink-0',
+        'bg-[#e8dcc4]',
+        '[mask-repeat:no-repeat]',
+        '[mask-position:center]',
+        '[mask-size:contain]',
+        '[webkit-mask-repeat:no-repeat]',
+        '[webkit-mask-position:center]',
+        '[webkit-mask-size:contain]',
+      ]),
+    )
+    expect(mark.attributes('aria-label')).toBe('The Roll Bar')
 
     expect(wrapper.text()).toContain('THE ROLL BAR')
     expect(wrapper.text()).toContain('地圖編輯器')
