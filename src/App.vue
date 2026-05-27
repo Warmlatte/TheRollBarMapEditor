@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, watch } from 'vue'
-import BrandBar from './components/BrandBar.vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import FloatingToolbar from './components/FloatingToolbar.vue'
+import LoadHud from './components/LoadHud.vue'
+import TabStrip from './components/TabStrip.vue'
 import HexCanvas from './render/HexCanvas.vue'
 import { TOOLS } from './tools/registry'
 import { useBrushStore } from './stores/brushStore'
@@ -28,6 +29,11 @@ const activeToolName = computed(() => i18n.t(activeTool.value?.i18nKey ?? ''))
 const toastStore = useToastStore()
 const autoSaveStore = useAutoSaveStore()
 const sessionStore = useSessionStore()
+const brandMarkUrl = new URL('./assets/the-roll-bar-mark-light.png', import.meta.url).href
+const mapListOpen = ref(false)
+const sessionTabs = computed(() =>
+  sessionStore.sessions.map((session) => ({ id: session.id, name: session.name })),
+)
 
 function syncActiveSessionMapData(): void {
   const activeSession = sessionStore.activeSession
@@ -62,6 +68,27 @@ function handleBeforeUnload(): void {
 function createNewTab(): void {
   const session = sessionStore.makeSession()
   sessionStore.setActive(session.id)
+}
+
+function onReorder(from: number, to: number): void {
+  if (
+    from === to ||
+    from < 0 ||
+    to < 0 ||
+    from >= sessionStore.sessions.length ||
+    to >= sessionStore.sessions.length
+  ) {
+    return
+  }
+  const reordered = sessionStore.sessions.slice()
+  const [moved] = reordered.splice(from, 1)
+  if (!moved) return
+  reordered.splice(to, 0, moved)
+  sessionStore.sessions = reordered
+}
+
+function onRename(id: string, name: string): void {
+  sessionStore.renameSession(id, name)
 }
 
 async function restoreWorkspace(): Promise<void> {
@@ -132,22 +159,20 @@ onUnmounted(() => {
 
 <template>
   <div class="relative h-screen w-screen overflow-hidden">
-    <BrandBar />
     <HexCanvas class="absolute inset-0" />
 
-    <div data-testid="tab-strip" class="tab-strip">
-      <button
-        v-for="session in sessionStore.sessions"
-        :key="session.id"
-        class="tab-btn"
-        :class="{ active: session.id === sessionStore.activeId }"
-        @click="sessionStore.setActive(session.id)"
-      >
-        {{ session.name }}
-      </button>
-      <button class="tab-btn tab-add-btn" aria-label="new tab" @click="createNewTab">+</button>
-      <button class="tab-btn map-list-btn">📁 地圖</button>
-    </div>
+    <TabStrip
+      v-model:active-id="sessionStore.activeId"
+      :tabs="sessionTabs"
+      :logo-src="brandMarkUrl"
+      :map-list-open="mapListOpen"
+      @add="createNewTab"
+      @open-map-list="mapListOpen = !mapListOpen"
+      @reorder="onReorder"
+      @rename="onRename"
+    />
+
+    <LoadHud v-if="mapListOpen" />
 
     <div class="hud-panel absolute right-2 top-2">
       <div class="flex items-center gap-1.5">

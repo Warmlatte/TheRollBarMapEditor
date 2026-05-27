@@ -15,19 +15,20 @@
 
     <hr class="hud-divider" />
 
-    <div class="grid grid-cols-2 gap-1">
-      <button
+    <div class="grid grid-cols-2 gap-2">
+      <SwitchToggle
         v-for="key in targetKeys"
         :key="key"
-        class="target-btn"
-        :class="{ active: eraseStore.targets[key] }"
-        @click="eraseStore.toggleTarget(key)"
-      >{{ targetLabels[key] }}</button>
+        :model-value="eraseStore.targets[key]"
+        :label="targetLabels[key]"
+        @update:model-value="eraseStore.toggleTarget(key)"
+      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import SwitchToggle from './SwitchToggle.vue'
 import { useEraseStore } from '../stores/eraseStore'
 
 const eraseStore = useEraseStore()

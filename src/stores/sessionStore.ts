@@ -53,9 +53,19 @@ export const useSessionStore = defineStore('session', () => {
   }
 
   function renameSession(id: string, name: string): void {
-    const session = sessions.value.find((s) => s.id === id)
-    if (!session) return
-    session.name = name
+    const trimmedName = name.trim()
+    if (trimmedName === '') return
+    let renamed = false
+    sessions.value = sessions.value.map((session) => {
+      if (session.id !== id) return session
+      renamed = true
+      return {
+        ...session,
+        name: trimmedName,
+        mapData: { ...session.mapData, name: trimmedName },
+      }
+    })
+    if (!renamed) return
     markSessionDirty(id)
   }
 
