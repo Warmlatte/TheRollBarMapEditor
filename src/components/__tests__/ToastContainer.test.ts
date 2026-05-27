@@ -86,11 +86,24 @@ describe('ToastContainer — pointer events', () => {
     setActivePinia(pinia)
   })
 
-  it('container has pointer-events: none', async () => {
+  it('container uses Tailwind positioning classes and disables pointer events', async () => {
     const wrapper = await mountContainer(pinia)
     const container = wrapper.find('[data-testid="toast-container"]')
     expect(container.exists()).toBe(true)
-    expect(container.attributes('style') ?? '').toContain('pointer-events: none')
+    expect(container.classes()).toEqual(
+      expect.arrayContaining([
+        'fixed',
+        'bottom-4',
+        'right-4',
+        'z-[9999]',
+        'flex',
+        'flex-col',
+        'gap-2',
+        'items-end',
+        'pointer-events-none',
+      ]),
+    )
+    expect(container.attributes('style')).toBeUndefined()
     wrapper.unmount()
   })
 })
