@@ -6,7 +6,7 @@ export class DrawLineCommand implements Command {
 
   apply(state: MapData): { state: MapData; inverse: Command } {
     if (state.lines.some(l => l.id === this.line.id)) {
-      return { state, inverse: new RemoveLineCommand(this.line.id) }
+      return { state, inverse: this }
     }
     const next: MapData = { ...state, lines: [...state.lines, this.line] }
     return { state: next, inverse: new RemoveLineCommand(this.line.id) }

@@ -114,6 +114,22 @@ describe('validateMapFile — line dashLength/dashGap fallback', () => {
     expect(result.lines[0]!.dashLength).toBe(12)
     expect(result.lines[0]!.dashGap).toBe(6)
   })
+
+  it('rejects a line with non-number dashLength', () => {
+    const data = {
+      ...minimalValid,
+      lines: [{ id: 'l1', x1: 0, y1: 0, x2: 10, y2: 10, width: 2, dashed: true, dashLength: '12', dashGap: 6, color: '#000000' }],
+    }
+    expect(() => validateMapFile(data)).toThrow(/dashLength/)
+  })
+
+  it('rejects a line with non-number dashGap', () => {
+    const data = {
+      ...minimalValid,
+      lines: [{ id: 'l1', x1: 0, y1: 0, x2: 10, y2: 10, width: 2, dashed: true, dashLength: 12, dashGap: null, color: '#000000' }],
+    }
+    expect(() => validateMapFile(data)).toThrow(/dashGap/)
+  })
 })
 
 describe('validateMapFile — structuredClone compatibility', () => {

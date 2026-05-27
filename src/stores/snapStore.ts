@@ -8,11 +8,11 @@ const PREF_KEY = 'hexmap.snap.v1'
 function loadPref(): SnapMode {
   try {
     const raw = localStorage.getItem(PREF_KEY)
-    if (raw === null) return 'node'
+    if (raw === null) return 'free'
     const parsed = JSON.parse(raw) as { mode: SnapMode }
     return parsed.mode === 'node' ? 'node' : 'free'
   } catch {
-    return 'node'
+    return 'free'
   }
 }
 

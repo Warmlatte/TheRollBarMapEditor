@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useLineStore } from '../lineStore'
 import { useSessionStore } from '../sessionStore'
@@ -39,6 +39,7 @@ describe('lineStore setWidth clamping', () => {
   })
 
   afterEach(() => {
+    vi.restoreAllMocks()
     localStorage.clear()
   })
 
@@ -80,6 +81,7 @@ describe('lineStore preference persistence', () => {
   })
 
   afterEach(() => {
+    vi.restoreAllMocks()
     localStorage.clear()
   })
 
@@ -151,6 +153,14 @@ describe('lineStore preference persistence', () => {
     expect(line.dashLength).toBe(15)
     expect(line.dashGap).toBe(7)
   })
+
+  it('rethrows localStorage read failures when loading preferences', () => {
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation((key: string) => {
+      if (key === LINE_KEY) throw new Error('storage unavailable')
+      return null
+    })
+    expect(() => useLineStore()).toThrow('storage unavailable')
+  })
 })
 
 const SAVED_LINES_KEY = 'hexmap.savedLines.v1'
@@ -162,6 +172,7 @@ describe('lineStore saved line preset validation — invalid data is discarded',
   })
 
   afterEach(() => {
+    vi.restoreAllMocks()
     localStorage.clear()
   })
 
@@ -219,6 +230,7 @@ describe('lineStore saved line preset validation — legacy and boundary values'
   })
 
   afterEach(() => {
+    vi.restoreAllMocks()
     localStorage.clear()
   })
 
@@ -265,6 +277,14 @@ describe('lineStore saved line preset validation — legacy and boundary values'
     const line = useLineStore()
     expect(line.savedLines[0]!.dashGap).toBe(40)
   })
+
+  it('rethrows localStorage read failures when loading saved lines', () => {
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation((key: string) => {
+      if (key === SAVED_LINES_KEY) throw new Error('saved lines unavailable')
+      return null
+    })
+    expect(() => useLineStore()).toThrow('saved lines unavailable')
+  })
 })
 
 describe('lineStore saved line presets', () => {
@@ -274,6 +294,7 @@ describe('lineStore saved line presets', () => {
   })
 
   afterEach(() => {
+    vi.restoreAllMocks()
     localStorage.clear()
   })
 
@@ -343,5 +364,26 @@ describe('lineStore saved line presets', () => {
     const stored = JSON.parse(localStorage.getItem(SAVED_LINES_KEY)!)
     expect(Array.isArray(stored)).toBe(true)
     expect(stored.length).toBe(5) // 4 seeds + 1
+  })
+
+  it('does not update savedLines when save persistence fails', () => {
+    const line = useLineStore()
+    const before = line.savedLines
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation((key: string) => {
+      if (key === SAVED_LINES_KEY) throw new Error('persist failed')
+    })
+    expect(() => line.saveCurrentLine('#112233')).toThrow('persist failed')
+    expect(line.savedLines).toBe(before)
+  })
+
+  it('does not update savedLines when remove persistence fails', () => {
+    const line = useLineStore()
+    const id = line.saveCurrentLine('#112233')
+    const before = line.savedLines
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation((key: string) => {
+      if (key === SAVED_LINES_KEY) throw new Error('persist failed')
+    })
+    expect(() => line.removeSavedLine(id)).toThrow('persist failed')
+    expect(line.savedLines).toBe(before)
   })
 })

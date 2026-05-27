@@ -24,9 +24,9 @@ const DEFAULT_SEEDS: SavedLine[] = [
 ]
 
 function loadPref(): LinePref {
+  const raw = localStorage.getItem(PREF_KEY)
+  if (raw === null) return { width: 2, dashed: false, dashLength: 8, dashGap: 4 }
   try {
-    const raw = localStorage.getItem(PREF_KEY)
-    if (raw === null) return { width: 2, dashed: false, dashLength: 8, dashGap: 4 }
     const parsed = JSON.parse(raw) as Partial<LinePref>
     return {
       width: parsed.width ?? 2,
@@ -67,9 +67,9 @@ function validateSavedLine(entry: unknown): SavedLine | null {
 }
 
 function loadSavedLines(): SavedLine[] {
+  const raw = localStorage.getItem(SAVED_LINES_KEY)
+  if (raw === null) return [...DEFAULT_SEEDS]
   try {
-    const raw = localStorage.getItem(SAVED_LINES_KEY)
-    if (raw === null) return [...DEFAULT_SEEDS]
     const parsed: unknown = JSON.parse(raw)
     if (!Array.isArray(parsed)) return [...DEFAULT_SEEDS]
     const valid = parsed.map(validateSavedLine).filter((e): e is SavedLine => e !== null)
@@ -98,6 +98,7 @@ export const useLineStore = defineStore('line', () => {
     () => sessionStore.activeId,
     () => {
       pendingAnchor.value = null
+      previewEnd.value = null
     },
   )
 
@@ -141,14 +142,16 @@ export const useLineStore = defineStore('line', () => {
       dashLength: dashLength.value,
       dashGap: dashGap.value,
     }
-    savedLines.value = [...savedLines.value, entry]
-    persistSavedLines(savedLines.value)
+    const next = [...savedLines.value, entry]
+    persistSavedLines(next)
+    savedLines.value = next
     return id
   }
 
   function removeSavedLine(id: string): void {
-    savedLines.value = savedLines.value.filter(s => s.id !== id)
-    persistSavedLines(savedLines.value)
+    const next = savedLines.value.filter(s => s.id !== id)
+    persistSavedLines(next)
+    savedLines.value = next
   }
 
   function applySavedLine(id: string): SavedLine | null {

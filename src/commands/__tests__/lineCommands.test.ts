@@ -100,4 +100,13 @@ describe('DrawLineCommand — idempotency', () => {
     const { state: after2 } = cmd.apply(after1)
     expect(after2.lines).toHaveLength(1)
   })
+
+  it('duplicate id no-op inverse does not remove the existing line', () => {
+    const state = makeMapData({ lines: [testLine] })
+    const cmd = new DrawLineCommand(testLine)
+    const { state: afterDuplicate, inverse } = cmd.apply(state)
+    const { state: afterUndo } = inverse.apply(afterDuplicate)
+    expect(afterDuplicate).toBe(state)
+    expect(afterUndo.lines).toEqual([testLine])
+  })
 })
