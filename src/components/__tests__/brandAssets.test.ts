@@ -17,4 +17,10 @@ describe('brand assets', () => {
   it('provides the public brand mark for the favicon', () => {
     expectPngFile(resolve(__dirname, '../../../public/the-roll-bar-mark-light.png'))
   })
+
+  it('references the public brand mark as the favicon', () => {
+    const html = readFileSync(resolve(__dirname, '../../../index.html'), 'utf-8')
+
+    expect(html).toContain('<link rel="icon" type="image/png" href="/the-roll-bar-mark-light.png" />')
+  })
 })
