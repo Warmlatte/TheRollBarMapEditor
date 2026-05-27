@@ -36,16 +36,16 @@ export function createSavedPresetRegistry<T extends object>(
 
   return {
     load() {
-      try {
-        const raw = localStorage.getItem(storageKey)
-        if (raw === null) {
-          if (seed && seed.length > 0) {
-            const seeded: Saved<T>[] = seed.map((item) => ({ id: genId(), ...item } as Saved<T>))
-            persistList(seeded)
-            binding.set(seeded)
-          }
-          return
+      const raw = localStorage.getItem(storageKey)
+      if (raw === null) {
+        if (seed && seed.length > 0) {
+          const seeded: Saved<T>[] = seed.map((item) => ({ id: genId(), ...item } as Saved<T>))
+          persistList(seeded)
+          binding.set(seeded)
         }
+        return
+      }
+      try {
         const parsed = JSON.parse(raw)
         if (!Array.isArray(parsed)) return
         const valid: Saved<T>[] = []

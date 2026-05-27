@@ -222,6 +222,28 @@ describe('find returns the item with the given id or undefined', () => {
   })
 })
 
+describe('load storage I/O failure propagation', () => {
+  it('2.1 localStorage.getItem throw propagates out of load()', () => {
+    const storageError = new DOMException('storage unavailable', 'SecurityError')
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw storageError })
+
+    const { registry, getList } = makeColorRegistry()
+    expect(() => registry.load()).toThrow(storageError)
+    expect(getList()).toEqual([])
+  })
+
+  it('2.2 seed setItem throw propagates out of load() and leaves list unchanged', () => {
+    const seeds: Color[] = [{ color: '#4a7a3a' }]
+    const { registry, getList } = makeColorRegistry('test.seed-fail.v1', seeds)
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementationOnce(() => {
+      throw new DOMException('QuotaExceededError', 'QuotaExceededError')
+    })
+
+    expect(() => registry.load()).toThrow()
+    expect(getList()).toEqual([])
+  })
+})
+
 describe('multi-field isDuplicate', () => {
   it('uses custom isDuplicate for complex types', () => {
     type Multi = { color: string; width: number }
