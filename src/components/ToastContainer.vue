@@ -4,6 +4,8 @@ import type { ToastKind } from '../stores/toastStore'
 
 const store = useToastStore()
 
+const baseItemClass = "inline-flex items-center gap-2.5 py-2 pr-3.5 pl-2.5 rounded-md border text-[#e8dcc4] text-sm font-medium leading-[1.4] cursor-pointer max-w-xs select-none shadow-[0_4px_16px_rgba(0,0,0,0.5)] bg-[rgba(20,20,20,0.85)] backdrop-blur-md before:content-[''] before:w-2 before:h-2 before:rounded-full before:shrink-0"
+
 const kindClass: Record<ToastKind, string> = {
   error:   'toast-error',
   warning: 'toast-warning',
@@ -21,8 +23,7 @@ const kindClass: Record<ToastKind, string> = {
       v-for="toast in [...store.toasts].reverse()"
       :key="toast.id"
       :data-testid="`toast-item-${toast.id}`"
-      :class="['toast-item', kindClass[toast.kind]]"
-      style="pointer-events: auto"
+      :class="[baseItemClass, kindClass[toast.kind]]"
       @click="store.dismissToast(toast.id)"
     >
       {{ toast.message }}

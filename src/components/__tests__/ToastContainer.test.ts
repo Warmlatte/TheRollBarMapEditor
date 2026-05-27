@@ -41,6 +41,44 @@ describe('ToastContainer — rendering', () => {
     wrapper.unmount()
   })
 
+  it('renders toast items with the required Tailwind base classes', async () => {
+    const store = useToastStore()
+    store.pushToast('Styled toast', 'info', 0)
+    const wrapper = await mountContainer(pinia)
+    await wrapper.vm.$nextTick()
+
+    const toastEl = wrapper.get('[data-testid^="toast-item"]')
+    expect(toastEl.classes()).toEqual(
+      expect.arrayContaining([
+        'inline-flex',
+        'items-center',
+        'gap-2.5',
+        'py-2',
+        'pr-3.5',
+        'pl-2.5',
+        'rounded-md',
+        'border',
+        'text-[#e8dcc4]',
+        'text-sm',
+        'font-medium',
+        'leading-[1.4]',
+        'cursor-pointer',
+        'max-w-xs',
+        'select-none',
+        'shadow-[0_4px_16px_rgba(0,0,0,0.5)]',
+        'bg-[rgba(20,20,20,0.85)]',
+        'backdrop-blur-md',
+        "before:content-['']",
+        'before:w-2',
+        'before:h-2',
+        'before:rounded-full',
+        'before:shrink-0',
+      ]),
+    )
+    expect(toastEl.attributes('style')).toBeUndefined()
+    wrapper.unmount()
+  })
+
   it('renders no toasts when list is empty', async () => {
     const wrapper = await mountContainer(pinia)
     await wrapper.vm.$nextTick()
