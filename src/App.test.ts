@@ -45,6 +45,12 @@ const alternateMapData: MapData = {
   doodles: [],
 }
 
+function hasErrorToast(wrapper: ReturnType<typeof mount>): boolean {
+  return wrapper
+    .findAll('[data-testid^="toast-item"]')
+    .some((toast) => toast.classes().includes('border-[rgba(194,90,74,0.45)]'))
+}
+
 function stubIndexedDB(): void {
   const entries = new Map<string, unknown>()
   const fakeObjectStore = {
@@ -246,7 +252,7 @@ describe('App loadSavedCells on mount', () => {
     await flushPromises()
     await wrapper.vm.$nextTick()
 
-    expect(wrapper.find('[data-testid^="toast-item"].toast-error').exists()).toBe(true)
+    expect(hasErrorToast(wrapper)).toBe(true)
     wrapper.unmount()
   })
 
@@ -261,7 +267,7 @@ describe('App loadSavedCells on mount', () => {
     await flushPromises()
     await wrapper.vm.$nextTick()
 
-    expect(wrapper.find('[data-testid^="toast-item"].toast-error').exists()).toBe(true)
+    expect(hasErrorToast(wrapper)).toBe(true)
     wrapper.unmount()
   })
 
@@ -275,7 +281,7 @@ describe('App loadSavedCells on mount', () => {
     await flushPromises()
     await wrapper.vm.$nextTick()
 
-    expect(wrapper.find('[data-testid^="toast-item"].toast-error').exists()).toBe(true)
+    expect(hasErrorToast(wrapper)).toBe(true)
     wrapper.unmount()
   })
 })
@@ -304,7 +310,7 @@ describe('App icon library init', () => {
     await flushPromises()
     await wrapper.vm.$nextTick()
 
-    expect(wrapper.find('[data-testid^="toast-item"].toast-error').exists()).toBe(true)
+    expect(hasErrorToast(wrapper)).toBe(true)
     expect(consoleSpy).not.toHaveBeenCalled()
 
     wrapper.unmount()
