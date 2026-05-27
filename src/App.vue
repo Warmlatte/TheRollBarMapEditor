@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, watch } from 'vue'
+import BrandBar from './components/BrandBar.vue'
 import FloatingToolbar from './components/FloatingToolbar.vue'
 import HexCanvas from './render/HexCanvas.vue'
 import { TOOLS } from './tools/registry'

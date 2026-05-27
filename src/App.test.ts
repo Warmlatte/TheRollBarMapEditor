@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { setActivePinia, createPinia } from 'pinia'
 import App from './App.vue'
 import { useSessionStore } from './stores/sessionStore'
@@ -11,6 +13,10 @@ import type { MapData } from './data/types'
 
 vi.mock('./components/FloatingToolbar.vue', () => ({
   default: { template: '<div data-test="toolbar" />' },
+}))
+
+vi.mock('./components/BrandBar.vue', () => ({
+  default: { template: '<div data-testid="brand-bar" />' },
 }))
 
 vi.mock('./storage/persist', () => ({
@@ -129,6 +135,13 @@ describe('App workspace restore', () => {
 
     expect(mapStore.mapData).toEqual(alternateMapData)
     expect(mapStore.canUndo).toBe(false)
+  })
+})
+
+describe('App brand bar integration', () => {
+  it('imports the BrandBar component', () => {
+    const source = readFileSync(resolve(__dirname, 'App.vue'), 'utf-8')
+    expect(source).toContain("import BrandBar from './components/BrandBar.vue'")
   })
 })
 
