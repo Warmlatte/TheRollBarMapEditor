@@ -13,4 +13,8 @@ describe('brand assets', () => {
   it('provides the bundled brand mark for Vue components', () => {
     expectPngFile(resolve(__dirname, '../../assets/the-roll-bar-mark-light.png'))
   })
+
+  it('provides the public brand mark for the favicon', () => {
+    expectPngFile(resolve(__dirname, '../../../public/the-roll-bar-mark-light.png'))
+  })
 })
