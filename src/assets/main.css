@@ -333,7 +333,7 @@ input[type="range"]::-moz-range-thumb {
 
 .tab-strip {
   position: absolute;
-  top: 8px;
+  top: 56px;
   left: 8px;
   display: flex;
   gap: 4px;

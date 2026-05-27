@@ -39,6 +39,12 @@ function countClassDefinitions(source: string, className: string): number {
   return [...source.matchAll(new RegExp(`\\.${className}\\s*\\{`, 'g'))].length
 }
 
+function classRuleBody(source: string, className: string): string {
+  const match = new RegExp(`\\.${className}\\s*\\{([^}]*)\\}`).exec(source)
+  expect(match, `${className} rule should exist`).not.toBeNull()
+  return match?.[1] ?? ''
+}
+
 describe('styling architecture', () => {
   it('declares Tailwind directives in the shared entry point', () => {
     expect(css).toContain('@tailwind base;')
@@ -55,5 +61,12 @@ describe('styling architecture', () => {
       )
       expect(countClassDefinitions(css, className), `${className} should have one base definition`).toBe(1)
     }
+  })
+
+  it('positions the tab strip below the Brand Bar without moving it horizontally', () => {
+    const rule = classRuleBody(css, 'tab-strip')
+
+    expect(rule).toContain('top: 56px;')
+    expect(rule).toContain('left: 8px;')
   })
 })
