@@ -31,7 +31,7 @@ export const lineHandler: ToolHandler = {
       dragErasing = true
       lastErasedLineId = null
       mapStore.beginStroke()
-      ctx.tryCapture?.(e.pointerId)
+      ctx.tryCapture(e.pointerId)
       const hit = ctx.findLineAt(rawX, rawY)
       if (hit) {
         mapStore.dispatch(new RemoveLineCommand(hit.id))
@@ -100,7 +100,7 @@ export const lineHandler: ToolHandler = {
     if (dragErasing) {
       const mapStore = useMapStore()
       mapStore.endStroke()
-      ctx.tryRelease?.(e.pointerId)
+      ctx.tryRelease(e.pointerId)
       dragErasing = false
       lastErasedLineId = null
     }
@@ -110,7 +110,7 @@ export const lineHandler: ToolHandler = {
     if (dragErasing) {
       const mapStore = useMapStore()
       mapStore.endStroke()
-      ctx.tryRelease?.(e.pointerId)
+      ctx.tryRelease(e.pointerId)
       dragErasing = false
       lastErasedLineId = null
     }
