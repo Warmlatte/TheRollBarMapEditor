@@ -19,6 +19,13 @@ const messages: Dictionary = {
     'icon.size':     '大小',
     'icon.rotation': '旋轉',
     'icon.color':    '顏色',
+    erase_radius_label: '半徑',
+    erase_targets_label: '擦除目標',
+    erase_target_hex: '格子',
+    erase_target_icon: '圖示',
+    erase_target_line: '線條',
+    erase_target_doodle: '塗鴉',
+    erase_target_all: '全部',
   },
   'en': {
     'tool.paint':    'Paint',
@@ -32,6 +39,13 @@ const messages: Dictionary = {
     'icon.size':     'Size',
     'icon.rotation': 'Rotation',
     'icon.color':    'Color',
+    erase_radius_label: 'Radius',
+    erase_targets_label: 'Erase Targets',
+    erase_target_hex: 'Hexes',
+    erase_target_icon: 'Icons',
+    erase_target_line: 'Lines',
+    erase_target_doodle: 'Doodles',
+    erase_target_all: 'All',
   },
 }
 

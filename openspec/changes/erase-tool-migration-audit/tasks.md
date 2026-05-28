@@ -18,7 +18,7 @@
 
 實作 "Erase HUD labels are i18n-driven"（spec: erase-tool），依設計決策「EraseToolHud 接 i18nStore」。
 
-- [ ] 2.1 在 `i18nStore.ts` 的 `zh-TW` locale 新增：`erase_radius_label: '半徑'`、`erase_targets_label: '擦除目標'`、`erase_target_hex: '格子'`、`erase_target_icon: '圖示'`、`erase_target_line: '線條'`、`erase_target_doodle: '塗鴉'`、`erase_target_all: '全部'`。在 `en` locale 新增：`erase_radius_label: 'Radius'`、`erase_targets_label: 'Erase Targets'`、`erase_target_hex: 'Hexes'`、`erase_target_icon: 'Icons'`、`erase_target_line: 'Lines'`、`erase_target_doodle: 'Doodles'`、`erase_target_all: 'All'`。驗證：`npm run typecheck` 零錯誤。
+- [x] 2.1 在 `i18nStore.ts` 的 `zh-TW` locale 新增：`erase_radius_label: '半徑'`、`erase_targets_label: '擦除目標'`、`erase_target_hex: '格子'`、`erase_target_icon: '圖示'`、`erase_target_line: '線條'`、`erase_target_doodle: '塗鴉'`、`erase_target_all: '全部'`。在 `en` locale 新增：`erase_radius_label: 'Radius'`、`erase_targets_label: 'Erase Targets'`、`erase_target_hex: 'Hexes'`、`erase_target_icon: 'Icons'`、`erase_target_line: 'Lines'`、`erase_target_doodle: 'Doodles'`、`erase_target_all: 'All'`。驗證：`npm run typecheck` 零錯誤。
 
 ## 3. EraseToolHud.vue — UI 修正
 
