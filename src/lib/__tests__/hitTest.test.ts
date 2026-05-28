@@ -1,10 +1,18 @@
 import { describe, it, expect } from 'vitest'
-import { findIconAt } from '../hitTest'
+import { findIconAt, findIconsInRadius, findLinesInRadius, findDoodlesInRadius } from '../hitTest'
 import { HEX_SIZE } from '../hexMath'
-import type { Icon } from '../../data/types'
+import type { Icon, Line, Doodle } from '../../data/types'
 
 function makeIcon(id: string, x: number, y: number): Icon {
   return { id, x, y, svgId: 'test', size: 40, rotation: 0, color: '#000000' }
+}
+
+function makeLine(id: string, x1: number, y1: number, x2: number, y2: number): Line {
+  return { id, x1, y1, x2, y2, width: 2, dashed: false, dashLength: 8, dashGap: 4, color: '#000000' }
+}
+
+function makeDoodle(id: string, points: Array<{ x: number; y: number }>): Doodle {
+  return { id, points, width: 2, opacity: 1, color: '#000000' }
 }
 
 describe('findIconAt — pixel coordinate hit detection', () => {
@@ -45,5 +53,64 @@ describe('findIconAt — pixel coordinate hit detection', () => {
     // but we now check direct pixel distance
     const iconAtOrigin = makeIcon('b', 0, 0)
     expect(findIconAt([iconAtOrigin], 0, 0)).toBe(iconAtOrigin)
+  })
+})
+
+describe('findIconsInRadius', () => {
+  it('returns only icons whose center distance is <= r (spec example)', () => {
+    const icons = [makeIcon('a', 30, 0), makeIcon('b', 80, 0)]
+    const result = findIconsInRadius(icons, 0, 0, 50)
+    expect(result).toHaveLength(1)
+    expect(result[0]?.id).toBe('a')
+  })
+
+  it('includes icon whose center is exactly at r', () => {
+    const icon = makeIcon('a', 50, 0)
+    expect(findIconsInRadius([icon], 0, 0, 50)).toHaveLength(1)
+  })
+
+  it('excludes icon just beyond r', () => {
+    const icon = makeIcon('a', 51, 0)
+    expect(findIconsInRadius([icon], 0, 0, 50)).toHaveLength(0)
+  })
+
+  it('returns empty array when icons list is empty', () => {
+    expect(findIconsInRadius([], 0, 0, 50)).toHaveLength(0)
+  })
+})
+
+describe('findLinesInRadius', () => {
+  it('returns horizontal line when point is within r of it', () => {
+    const line = makeLine('a', 0, 0, 100, 0)
+    const result = findLinesInRadius([line], 50, 30, 50)
+    expect(result).toHaveLength(1)
+    expect(result[0]?.id).toBe('a')
+  })
+
+  it('returns line when point is within r of an endpoint', () => {
+    const line = makeLine('a', 0, 0, 100, 0)
+    const result = findLinesInRadius([line], 0, 40, 50)
+    expect(result).toHaveLength(1)
+  })
+
+  it('excludes line when point is outside r from entire segment', () => {
+    const line = makeLine('a', 0, 0, 100, 0)
+    const result = findLinesInRadius([line], 50, 60, 50)
+    expect(result).toHaveLength(0)
+  })
+})
+
+describe('findDoodlesInRadius', () => {
+  it('returns doodle when any point is within r', () => {
+    const doodle = makeDoodle('a', [{ x: 20, y: 0 }, { x: 200, y: 200 }])
+    const result = findDoodlesInRadius([doodle], 0, 0, 50)
+    expect(result).toHaveLength(1)
+    expect(result[0]?.id).toBe('a')
+  })
+
+  it('excludes doodle when all points are outside r', () => {
+    const doodle = makeDoodle('a', [{ x: 200, y: 0 }, { x: 300, y: 300 }])
+    const result = findDoodlesInRadius([doodle], 0, 0, 50)
+    expect(result).toHaveLength(0)
   })
 })

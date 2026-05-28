@@ -35,6 +35,20 @@ export function findDoodleAt(doodles: Doodle[], x: number, y: number): Doodle | 
   )
 }
 
+export function findIconsInRadius(icons: Icon[], x: number, y: number, r: number): Icon[] {
+  return icons.filter(icon => Math.sqrt((icon.x - x) ** 2 + (icon.y - y) ** 2) <= r)
+}
+
+export function findLinesInRadius(lines: Line[], x: number, y: number, r: number): Line[] {
+  return lines.filter(line => distToSegment(x, y, line) <= r)
+}
+
+export function findDoodlesInRadius(doodles: Doodle[], x: number, y: number, r: number): Doodle[] {
+  return doodles.filter(doodle =>
+    doodle.points.some(p => Math.sqrt((p.x - x) ** 2 + (p.y - y) ** 2) <= r),
+  )
+}
+
 function distToSegment(px: number, py: number, line: Line): number {
   const dx = line.x2 - line.x1
   const dy = line.y2 - line.y1
