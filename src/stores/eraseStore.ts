@@ -1,45 +1,83 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { HEX_SIZE } from '../lib/hexMath'
 
 const PREF_KEY = 'hexmap.erase.v1'
+const DEFAULT_RADIUS = 5
+const MIN_RADIUS = 5
+const MAX_RADIUS = 200
 
-function loadPref(): number {
-  try {
-    const raw = localStorage.getItem(PREF_KEY)
-    if (raw === null) return 1
-    const parsed = JSON.parse(raw) as { radius: number }
-    return parsed.radius ?? 1
-  } catch {
-    return 1
+type EraseTarget = 'hex' | 'icon' | 'line' | 'doodle'
+type EraseTargets = Record<EraseTarget, boolean>
+
+const DEFAULT_TARGETS: EraseTargets = {
+  hex: true,
+  icon: true,
+  line: true,
+  doodle: true,
+}
+
+type ErasePref = {
+  radius: number
+  targets: EraseTargets
+}
+
+function clampRadius(radius: number): number {
+  return Math.max(MIN_RADIUS, Math.min(MAX_RADIUS, radius))
+}
+
+function normalizeTargets(targets: unknown): EraseTargets {
+  if (targets === null || typeof targets !== 'object') return DEFAULT_TARGETS
+  const stored = targets as Partial<Record<EraseTarget, unknown>>
+  return {
+    hex: typeof stored.hex === 'boolean' ? stored.hex : true,
+    icon: typeof stored.icon === 'boolean' ? stored.icon : true,
+    line: typeof stored.line === 'boolean' ? stored.line : true,
+    doodle: typeof stored.doodle === 'boolean' ? stored.doodle : true,
   }
 }
 
-function savePref(radius: number): void {
-  localStorage.setItem(PREF_KEY, JSON.stringify({ radius }))
+function loadPref(): ErasePref {
+  try {
+    const raw = localStorage.getItem(PREF_KEY)
+    if (raw === null) return { radius: DEFAULT_RADIUS, targets: DEFAULT_TARGETS }
+    const parsed = JSON.parse(raw) as { radius?: unknown; targets?: unknown }
+    const radius = typeof parsed.radius === 'number'
+      ? clampRadius(parsed.radius)
+      : DEFAULT_RADIUS
+    return {
+      radius,
+      targets: normalizeTargets(parsed.targets),
+    }
+  } catch {
+    return { radius: DEFAULT_RADIUS, targets: DEFAULT_TARGETS }
+  }
 }
 
-type EraseTarget = 'hex' | 'icon' | 'line' | 'doodle'
+function savePref(radius: number, targets: EraseTargets): void {
+  localStorage.setItem(PREF_KEY, JSON.stringify({ radius, targets }))
+}
 
 export const useEraseStore = defineStore('erase', () => {
-  const eraseRadius = ref(loadPref())
-  const targets = ref<Record<EraseTarget, boolean>>({
-    hex: true,
-    icon: true,
-    line: true,
-    doodle: true,
-  })
+  const pref = loadPref()
+  const eraseRadius = ref(pref.radius)
+  const targets = ref<EraseTargets>(pref.targets)
 
   function setRadius(r: number): void {
-    eraseRadius.value = r
-    savePref(eraseRadius.value)
+    eraseRadius.value = clampRadius(r)
+    savePref(eraseRadius.value, targets.value)
   }
 
   function toggleTarget(key: EraseTarget): void {
     targets.value = { ...targets.value, [key]: !targets.value[key] }
+    savePref(eraseRadius.value, targets.value)
   }
 
-  const radius = computed(() => eraseRadius.value * HEX_SIZE)
+  function selectAllTargets(): void {
+    targets.value = { ...DEFAULT_TARGETS }
+    savePref(eraseRadius.value, targets.value)
+  }
 
-  return { eraseRadius, radius, targets, setRadius, toggleTarget }
+  const radius = computed(() => eraseRadius.value)
+
+  return { eraseRadius, radius, targets, setRadius, toggleTarget, selectAllTargets }
 })
