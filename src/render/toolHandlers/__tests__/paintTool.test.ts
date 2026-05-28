@@ -27,6 +27,11 @@ function createMockContext(pixelToHexMock?: ReturnType<typeof vi.fn>): ToolConte
     findIconAt: vi.fn().mockReturnValue(undefined),
     findLineAt: vi.fn().mockReturnValue(undefined),
     findDoodleAt: vi.fn().mockReturnValue(undefined),
+    findIconsInRadius: vi.fn().mockReturnValue([]),
+    findLinesInRadius: vi.fn().mockReturnValue([]),
+    findDoodlesInRadius: vi.fn().mockReturnValue([]),
+    tryCapture: vi.fn(),
+    tryRelease: vi.fn(),
     newId: vi.fn().mockReturnValue('id-1'),
     mapData: BASE_MAP_DATA,
   }

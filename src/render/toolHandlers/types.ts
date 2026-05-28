@@ -9,10 +9,13 @@ export interface ToolContext {
   findIconAt(x: number, y: number): Icon | undefined
   findLineAt(x: number, y: number): Line | undefined
   findDoodleAt(x: number, y: number): Doodle | undefined
+  findIconsInRadius(x: number, y: number, r: number): Icon[]
+  findLinesInRadius(x: number, y: number, r: number): Line[]
+  findDoodlesInRadius(x: number, y: number, r: number): Doodle[]
+  tryCapture(pointerId: number): void
+  tryRelease(pointerId: number): void
   newId(): string
   readonly mapData: MapData
-  tryCapture?(pointerId: number): void
-  tryRelease?(pointerId: number): void
   svgPointFromMouse?(e: MouseEvent): { x: number; y: number }
 }
 

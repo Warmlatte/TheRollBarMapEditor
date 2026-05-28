@@ -6,7 +6,7 @@ import { useViewportStore } from '../stores/viewportStore'
 import { getHandler } from '../tools/registry'
 import { buildSvgPoint, handlePointerDown, handlePointerMove, handlePointerUp } from './pointerHandlers'
 import { hexToPixel, pixelToHex, HEX_SIZE, hexDistance } from '../lib/hexMath'
-import { findHexAt, findHexesInRadius, findIconAt, findLineAt, findDoodleAt } from '../lib/hitTest'
+import { findHexAt, findHexesInRadius, findIconAt, findLineAt, findDoodleAt, findIconsInRadius, findLinesInRadius, findDoodlesInRadius } from '../lib/hitTest'
 import type { ToolContext } from './toolHandlers/types'
 import PaintCursor from './cursors/PaintCursor.vue'
 import EraseCursor from './cursors/EraseCursor.vue'
@@ -83,6 +83,9 @@ function buildContext(_e: PointerEvent): ToolContext {
     findIconAt: (x, y) => findIconAt(rawMap.icons, x, y),
     findLineAt: (x, y) => findLineAt(rawMap.lines, x, y),
     findDoodleAt: (x, y) => findDoodleAt(rawMap.doodles, x, y),
+    findIconsInRadius: (x, y, r) => findIconsInRadius(rawMap.icons, x, y, r),
+    findLinesInRadius: (x, y, r) => findLinesInRadius(rawMap.lines, x, y, r),
+    findDoodlesInRadius: (x, y, r) => findDoodlesInRadius(rawMap.doodles, x, y, r),
     newId: () => crypto.randomUUID(),
     mapData: rawMap,
     tryCapture(pointerId: number): void {
