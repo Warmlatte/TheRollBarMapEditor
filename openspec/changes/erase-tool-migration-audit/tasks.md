@@ -12,7 +12,7 @@
 
 實作 "Erase store exposes selectAllTargets action"（spec: erase-tool），依設計決策「eraseStore 加入 selectAllTargets()」與「eraseStore 行為契約」。
 
-- [ ] 1.4 在 `useEraseStore` 中新增 `selectAllTargets()` action：將 `targets` 的 `hex/icon/line/doodle` 全設為 `true`，呼叫 `savePref()` 持久化。行為：呼叫後四個 targets 皆為 `true`；localStorage 中 `targets` 四個 key 皆為 `true`。驗證：`npm run test:run` 中「selectAllTargets sets all four targets to true and persists」新案例通過。
+- [x] 1.4 在 `useEraseStore` 中新增 `selectAllTargets()` action：將 `targets` 的 `hex/icon/line/doodle` 全設為 `true`，呼叫 `savePref()` 持久化。行為：呼叫後四個 targets 皆為 `true`；localStorage 中 `targets` 四個 key 皆為 `true`。驗證：`npm run test:run` 中「selectAllTargets sets all four targets to true and persists」新案例通過。
 
 ## 2. i18nStore.ts — 補齊 i18n Keys
 
