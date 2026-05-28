@@ -8,7 +8,7 @@
 
 - [x] 1.2 [Erase radius is stored as SVG pixels with a clamped range of 5 to 200] 移除 `radius` 的 `computed(() => eraseRadius.value * HEX_SIZE)` 換算，讓 `radius` 直接等於 `eraseRadius`（getter 或 alias）。同步移除對 `HEX_SIZE` 的 import。行為：`eraseStore.radius` === `eraseStore.eraseRadius`，無係數乘法。驗證：`npm run typecheck` 零錯誤；既有 `eraseStore.test.ts` 案例繼續通過。
 
-- [ ] 1.3 [Erase radius is stored as SVG pixels with a clamped range of 5 to 200] 在 `setRadius(r)` 中加入 `Math.max(5, Math.min(200, r))` clamp，確保 `eraseRadius` 永遠在 5–200 之間。行為：`setRadius(0)` 後 `eraseStore.radius` === 5；`setRadius(999)` 後 === 200；`setRadius(80)` 後 === 80。驗證：`npm run test:run` 中「setRadius(0) clamps to 5」「setRadius(999) clamps to 200」新案例通過。
+- [x] 1.3 [Erase radius is stored as SVG pixels with a clamped range of 5 to 200] 在 `setRadius(r)` 中加入 `Math.max(5, Math.min(200, r))` clamp，確保 `eraseRadius` 永遠在 5–200 之間。行為：`setRadius(0)` 後 `eraseStore.radius` === 5；`setRadius(999)` 後 === 200；`setRadius(80)` 後 === 80。驗證：`npm run test:run` 中「setRadius(0) clamps to 5」「setRadius(999) clamps to 200」新案例通過。
 
 實作 "Erase store exposes selectAllTargets action"（spec: erase-tool），依設計決策「eraseStore 加入 selectAllTargets()」與「eraseStore 行為契約」。
 
