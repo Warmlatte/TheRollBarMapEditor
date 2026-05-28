@@ -1,8 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-import { PlaceIconCommand } from '../../../commands/iconCommands'
+import { PlaceIconCommand, RemoveIconCommand } from '../../../commands/iconCommands'
 import { useMapStore } from '../../../stores/mapStore'
 import { useIconStore } from '../../../stores/iconStore'
+import { useBrushStore } from '../../../stores/brushStore'
 import { useSnapStore } from '../../../stores/snapStore'
 import type { ToolContext } from '../types'
 import type { Icon, MapData } from '../../../data/types'
@@ -36,14 +37,19 @@ function makeCtx(overrides: Partial<ToolContext> = {}): ToolContext {
     findIconAt: vi.fn().mockReturnValue(undefined),
     findLineAt: vi.fn().mockReturnValue(undefined),
     findDoodleAt: vi.fn().mockReturnValue(undefined),
+    findIconsInRadius: vi.fn().mockReturnValue([]),
+    findLinesInRadius: vi.fn().mockReturnValue([]),
+    findDoodlesInRadius: vi.fn().mockReturnValue([]),
+    tryCapture: vi.fn(),
+    tryRelease: vi.fn(),
     newId: vi.fn().mockReturnValue('new-icon-id'),
     mapData: BASE_MAP_DATA,
     ...overrides,
   }
 }
 
-function fakeEvent(): PointerEvent {
-  return {} as PointerEvent
+function fakeEvent(overrides?: Partial<PointerEvent>): PointerEvent {
+  return { button: 0, shiftKey: false, pointerId: 1, ...overrides } as PointerEvent
 }
 
 describe('iconHandler', () => {
@@ -172,5 +178,101 @@ describe('iconHandler', () => {
       iconHandler.onPointerUp(makeCtx(), fakeEvent())
       expect(dispatchSpy).not.toHaveBeenCalled()
     })
+  })
+})
+
+describe('iconHandler — Shift+drag erase', () => {
+  let mapStore: ReturnType<typeof useMapStore>
+
+  beforeEach(async () => {
+    setActivePinia(createPinia())
+    localStorage.clear()
+    mapStore = useMapStore()
+    const { _resetIconToolForTest } = await import('../iconTool')
+    _resetIconToolForTest()
+  })
+
+  afterEach(async () => {
+    const { _resetIconToolForTest } = await import('../iconTool')
+    _resetIconToolForTest()
+    localStorage.clear()
+  })
+
+  it('Shift+drag over two icons wraps into a single BatchCommand', async () => {
+    const { iconHandler } = await import('../iconTool')
+    const iconA: Icon = { id: 'a', x: 0, y: 0, svgId: 'svg', size: 40, rotation: 0, color: '#000' }
+    const iconB: Icon = { id: 'b', x: 10, y: 10, svgId: 'svg', size: 40, rotation: 0, color: '#000' }
+    const findIconAt = vi.fn()
+      .mockReturnValueOnce(iconA)
+      .mockReturnValueOnce(iconB)
+    const ctx = makeCtx({ findIconAt })
+    const initialStack = mapStore.undoStackLength
+    iconHandler.onPointerDown(ctx, fakeEvent({ shiftKey: true }))
+    iconHandler.onPointerMove(ctx, fakeEvent())
+    iconHandler.onPointerUp(ctx, fakeEvent())
+    expect(mapStore.undoStackLength).toBe(initialStack + 1)
+  })
+
+  it('Shift+drag over same icon only dispatches RemoveIconCommand once', async () => {
+    const { iconHandler } = await import('../iconTool')
+    const dispatchSpy = vi.spyOn(mapStore, 'dispatch')
+    const icon: Icon = { id: 'dup', x: 0, y: 0, svgId: 'svg', size: 40, rotation: 0, color: '#000' }
+    const ctx = makeCtx({ findIconAt: vi.fn().mockReturnValue(icon) })
+    iconHandler.onPointerDown(ctx, fakeEvent({ shiftKey: true }))
+    iconHandler.onPointerMove(ctx, fakeEvent())
+    iconHandler.onPointerUp(ctx, fakeEvent())
+    expect(dispatchSpy).toHaveBeenCalledTimes(1)
+    expect(dispatchSpy.mock.calls[0]![0]).toBeInstanceOf(RemoveIconCommand)
+  })
+})
+
+describe('iconHandler — eyedrop (Shift+right-click)', () => {
+  let iconStore: ReturnType<typeof useIconStore>
+  let brushStore: ReturnType<typeof useBrushStore>
+
+  const HIT_ICON: Icon = {
+    id: 'hit-icon',
+    x: 10, y: 20,
+    svgId: 'svg-xyz',
+    size: 55,
+    rotation: 90,
+    color: '#aabbcc',
+  }
+
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    localStorage.clear()
+    iconStore = useIconStore()
+    brushStore = useBrushStore()
+  })
+
+  afterEach(() => {
+    localStorage.clear()
+  })
+
+  it('eyedrop on existing icon updates 4 store properties', async () => {
+    const { iconHandler } = await import('../iconTool')
+    const ctx: ToolContext = {
+      ...makeCtx({ findIconAt: vi.fn().mockReturnValue(HIT_ICON) }),
+      svgPointFromMouse: vi.fn().mockReturnValue({ x: 10, y: 20 }),
+    }
+    iconHandler.onEyedrop!(ctx, { clientX: 0, clientY: 0 } as MouseEvent)
+    expect(iconStore.selectedSvgId).toBe('svg-xyz')
+    expect(iconStore.size).toBe(55)
+    expect(iconStore.rotation).toBe(90)
+    expect(brushStore.currentColor).toBe('#aabbcc')
+  })
+
+  it('eyedrop on empty area is a no-op', async () => {
+    const { iconHandler } = await import('../iconTool')
+    iconStore.setSelectedSvgId('initial-svg')
+    const initialColor = brushStore.currentColor
+    const ctx: ToolContext = {
+      ...makeCtx({ findIconAt: vi.fn().mockReturnValue(undefined) }),
+      svgPointFromMouse: vi.fn().mockReturnValue({ x: 0, y: 0 }),
+    }
+    iconHandler.onEyedrop!(ctx, { clientX: 0, clientY: 0 } as MouseEvent)
+    expect(iconStore.selectedSvgId).toBe('initial-svg')
+    expect(brushStore.currentColor).toBe(initialColor)
   })
 })

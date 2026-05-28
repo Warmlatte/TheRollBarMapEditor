@@ -1,10 +1,19 @@
 import { useMapStore } from '../../stores/mapStore'
 import { useIconStore } from '../../stores/iconStore'
+import { useBrushStore } from '../../stores/brushStore'
 import { useSnapStore } from '../../stores/snapStore'
-import { PlaceIconCommand } from '../../commands/iconCommands'
+import { PlaceIconCommand, RemoveIconCommand } from '../../commands/iconCommands'
 import { snapPoint } from '../../lib/snap'
 import { hexDistance, HEX_SIZE } from '../../lib/hexMath'
-import type { ToolHandler } from './types'
+import type { ToolContext, ToolHandler } from './types'
+
+let dragErasing = false
+let lastErasedIconId: string | null = null
+
+export function _resetIconToolForTest(): void {
+  dragErasing = false
+  lastErasedIconId = null
+}
 
 export const iconHandler: ToolHandler = {
   onPointerDown(ctx, e) {
@@ -13,6 +22,20 @@ export const iconHandler: ToolHandler = {
     const snapStore = useSnapStore()
 
     const { x: rawX, y: rawY } = ctx.svgPoint(e)
+
+    if (e.shiftKey) {
+      if (e.button !== 0) return
+      dragErasing = true
+      lastErasedIconId = null
+      mapStore.beginStroke()
+      ctx.tryCapture(e.pointerId)
+      const hit = ctx.findIconAt(rawX, rawY)
+      if (hit) {
+        mapStore.dispatch(new RemoveIconCommand(hit.id))
+        lastErasedIconId = hit.id
+      }
+      return
+    }
 
     if (!iconStore.selectedSvgId) return
 
@@ -31,11 +54,48 @@ export const iconHandler: ToolHandler = {
     }))
   },
 
-  onPointerMove(_ctx, _e) {},
+  onPointerMove(ctx, e) {
+    if (!dragErasing) return
+    const mapStore = useMapStore()
+    const { x, y } = ctx.svgPoint(e)
+    const hit = ctx.findIconAt(x, y)
+    if (hit && hit.id !== lastErasedIconId) {
+      mapStore.dispatch(new RemoveIconCommand(hit.id))
+      lastErasedIconId = hit.id
+    }
+  },
 
-  onPointerUp(_ctx, _e) {},
+  onPointerUp(ctx, e) {
+    if (!dragErasing) return
+    const mapStore = useMapStore()
+    mapStore.endStroke()
+    ctx.tryRelease(e.pointerId)
+    dragErasing = false
+    lastErasedIconId = null
+  },
 
-  onPointerCancel(_ctx, _e) {},
+  onPointerCancel(ctx, e) {
+    if (!dragErasing) return
+    const mapStore = useMapStore()
+    mapStore.endStroke()
+    ctx.tryRelease(e.pointerId)
+    dragErasing = false
+    lastErasedIconId = null
+  },
 
-  isDragging() { return false },
+  isDragging(): boolean {
+    return dragErasing
+  },
+
+  onEyedrop(ctx: ToolContext, e: MouseEvent): void {
+    const { x, y } = ctx.svgPointFromMouse?.(e) ?? { x: e.clientX, y: e.clientY }
+    const hit = ctx.findIconAt(x, y)
+    if (!hit) return
+    const iconStore = useIconStore()
+    const brushStore = useBrushStore()
+    iconStore.setSelectedSvgId(hit.svgId)
+    iconStore.setSize(hit.size)
+    iconStore.setRotation(hit.rotation)
+    brushStore.setColor(hit.color)
+  },
 }
