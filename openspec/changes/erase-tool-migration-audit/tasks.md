@@ -24,7 +24,7 @@
 
 依設計決策「EraseToolHud 行為契約」與「EraseToolHud 接 i18nStore」。
 
-- [ ] 3.1 將半徑 slider 的 `min` 改為 `"5"`、`max` 改為 `"200"`；`:value` 綁定改為 `eraseStore.radius`；半徑顯示欄改為 `{{ eraseStore.radius }}`（px 直接值）。行為：slider 顯示範圍 5–200 px，不再是 1–5 單位。驗證：`npm run typecheck` 零錯誤；`EraseToolHud.test.ts` 確認 slider min/max 屬性。
+- [x] 3.1 將半徑 slider 的 `min` 改為 `"5"`、`max` 改為 `"200"`；`:value` 綁定改為 `eraseStore.radius`；半徑顯示欄改為 `{{ eraseStore.radius }}`（px 直接值）。行為：slider 顯示範圍 5–200 px，不再是 1–5 單位。驗證：`npm run typecheck` 零錯誤；`EraseToolHud.test.ts` 確認 slider min/max 屬性。
 
 - [ ] 3.2 將 HUD 中 hardcoded 的「半徑」改為 `{{ t('erase_radius_label') }}`；`targetLabels` 改為透過 `t('erase_target_hex')` 等取得。import `useI18nStore`，`<script setup>` 初始化 `const { t } = useI18nStore()`。行為："Erase HUD labels are i18n-driven"——語言切換後標籤即時更新。驗證：`npm run typecheck` 零錯誤；Component render 時無硬編碼中文字串。
 
