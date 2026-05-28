@@ -3,6 +3,7 @@ import type { ToolHandler } from '../render/toolHandlers/types'
 import { paintHandler } from '../render/toolHandlers/paintTool'
 import { iconHandler } from '../render/toolHandlers/iconTool'
 import { lineHandler } from '../render/toolHandlers/lineTool'
+import { eraseHandler } from '../render/toolHandlers/eraseTool'
 import PaintToolHud from '../components/PaintToolHud.vue'
 import IconToolHud from '../components/IconToolHud.vue'
 import LineToolHud from '../components/LineToolHud.vue'
@@ -21,17 +22,9 @@ export type ToolDef = {
 
 const noop = (): void => undefined
 
-export { paintHandler, iconHandler, lineHandler }
+export { paintHandler, iconHandler, lineHandler, eraseHandler }
 
 export const doodleHandler: ToolHandler = {
-  onPointerDown: noop,
-  onPointerMove: noop,
-  onPointerUp: noop,
-  onPointerCancel: noop,
-  isDragging: () => false,
-}
-
-export const eraseHandler: ToolHandler = {
   onPointerDown: noop,
   onPointerMove: noop,
   onPointerUp: noop,
