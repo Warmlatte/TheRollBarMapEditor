@@ -1,5 +1,5 @@
 import type { Hex, Icon, Line, Doodle } from '../data/types'
-import { pixelToHex, hexDistance, HEX_SIZE } from './hexMath'
+import { pixelToHex, hexToPixel, HEX_SIZE } from './hexMath'
 
 export function findHexAt(hexes: Hex[], x: number, y: number): Hex | undefined {
   const { q, r } = pixelToHex(x, y)
@@ -12,8 +12,10 @@ export function findHexesInRadius(
   y: number,
   radius: number,
 ): Hex[] {
-  const center = pixelToHex(x, y)
-  return hexes.filter(h => hexDistance(h, center) <= radius)
+  return hexes.filter((h) => {
+    const center = hexToPixel(h.q, h.r)
+    return Math.sqrt((center.x - x) ** 2 + (center.y - y) ** 2) <= radius
+  })
 }
 
 export function findIconAt(icons: Icon[], x: number, y: number): Icon | undefined {

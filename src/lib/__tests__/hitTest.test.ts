@@ -1,7 +1,11 @@
 import { describe, it, expect } from 'vitest'
-import { findIconAt, findIconsInRadius, findLinesInRadius, findDoodlesInRadius } from '../hitTest'
-import { HEX_SIZE } from '../hexMath'
-import type { Icon, Line, Doodle } from '../../data/types'
+import { findHexesInRadius, findIconAt, findIconsInRadius, findLinesInRadius, findDoodlesInRadius } from '../hitTest'
+import { HEX_SIZE, hexToPixel } from '../hexMath'
+import type { Hex, Icon, Line, Doodle } from '../../data/types'
+
+function makeHex(q: number, r: number): Hex {
+  return { q, r, color: '#ff0000' }
+}
 
 function makeIcon(id: string, x: number, y: number): Icon {
   return { id, x, y, svgId: 'test', size: 40, rotation: 0, color: '#000000' }
@@ -14,6 +18,18 @@ function makeLine(id: string, x1: number, y1: number, x2: number, y2: number): L
 function makeDoodle(id: string, points: Array<{ x: number; y: number }>): Doodle {
   return { id, points, width: 2, opacity: 1, color: '#000000' }
 }
+
+describe('findHexesInRadius', () => {
+  it('uses SVG pixel radius instead of hex-step distance', () => {
+    const center = makeHex(0, 0)
+    const adjacent = makeHex(1, 0)
+    const { x, y } = hexToPixel(0, 0)
+
+    const result = findHexesInRadius([center, adjacent], x, y, 5)
+
+    expect(result).toEqual([center])
+  })
+})
 
 describe('findIconAt — pixel coordinate hit detection', () => {
   it('returns undefined when icons list is empty', () => {
