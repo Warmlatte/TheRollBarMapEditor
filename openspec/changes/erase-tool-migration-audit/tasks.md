@@ -46,6 +46,6 @@
 
 - [x] 6.1 在 `src/stores/__tests__/eraseStore.test.ts` 新增：(a) `writes targets to localStorage when toggleTarget is called`；(b) `restores targets from localStorage on init`；(c) `missing targets key in localStorage defaults all targets to true`；(d) `setRadius(0) clamps to 5`；(e) `setRadius(999) clamps to 200`；(f) `selectAllTargets sets all four targets to true and persists`。驗證：`npm run test:run` 六個新案例全通過。
 
-- [ ] 6.2 在 `src/render/toolHandlers/__tests__/eraseTool.test.ts` 新增：`onPointerDown calls e.preventDefault when left button is pressed`，用 `vi.fn()` 追蹤 `preventDefault` 並斷言被呼叫一次。驗證：`npm run test:run` 新案例通過。
+- [x] 6.2 在 `src/render/toolHandlers/__tests__/eraseTool.test.ts` 新增：`onPointerDown calls e.preventDefault when left button is pressed`，用 `vi.fn()` 追蹤 `preventDefault` 並斷言被呼叫一次。驗證：`npm run test:run` 新案例通過。
 
 - [x] 6.3 在 `src/components/__tests__/EraseToolHud.test.ts` 新增：`renders All button and calls selectAllTargets on click`，mount `EraseToolHud`，找到含「全部」文字的按鈕，trigger click，斷言 `eraseStore.selectAllTargets` 被呼叫。驗證：`npm run test:run` 新案例通過。
