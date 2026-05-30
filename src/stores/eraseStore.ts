@@ -25,8 +25,12 @@ function clampRadius(radius: number): number {
   return Math.max(MIN_RADIUS, Math.min(MAX_RADIUS, radius))
 }
 
+function defaultTargets(): EraseTargets {
+  return { ...DEFAULT_TARGETS }
+}
+
 function normalizeTargets(targets: unknown): EraseTargets {
-  if (targets === null || typeof targets !== 'object') return DEFAULT_TARGETS
+  if (targets === null || typeof targets !== 'object') return defaultTargets()
   const stored = targets as Partial<Record<EraseTarget, unknown>>
   return {
     hex: typeof stored.hex === 'boolean' ? stored.hex : true,
@@ -39,7 +43,7 @@ function normalizeTargets(targets: unknown): EraseTargets {
 function loadPref(): ErasePref {
   try {
     const raw = localStorage.getItem(PREF_KEY)
-    if (raw === null) return { radius: DEFAULT_RADIUS, targets: DEFAULT_TARGETS }
+    if (raw === null) return { radius: DEFAULT_RADIUS, targets: defaultTargets() }
     const parsed = JSON.parse(raw) as { radius?: unknown; targets?: unknown }
     const radius = typeof parsed.radius === 'number'
       ? clampRadius(parsed.radius)
@@ -49,7 +53,7 @@ function loadPref(): ErasePref {
       targets: normalizeTargets(parsed.targets),
     }
   } catch {
-    return { radius: DEFAULT_RADIUS, targets: DEFAULT_TARGETS }
+    return { radius: DEFAULT_RADIUS, targets: defaultTargets() }
   }
 }
 
@@ -73,7 +77,7 @@ export const useEraseStore = defineStore('erase', () => {
   }
 
   function selectAllTargets(): void {
-    targets.value = { ...DEFAULT_TARGETS }
+    targets.value = defaultTargets()
     savePref(eraseRadius.value, targets.value)
   }
 

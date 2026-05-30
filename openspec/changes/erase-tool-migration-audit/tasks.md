@@ -40,7 +40,7 @@
 
 實作 "Erase tool handler calls preventDefault on pointerdown"（spec: erase-tool-handler），依設計決策「eraseTool 行為契約」。
 
-- [ ] 5.1 [Erase tool handler calls preventDefault on pointerdown] 在 `eraseHandler.onPointerDown` 的 `e.button !== 0` 檢查後立即呼叫 `e.preventDefault()`。行為：左鍵按下時阻止瀏覽器預設行為（如文字選取）。驗證：`npm run test:run` 中「onPointerDown calls e.preventDefault on left-button press」新案例通過。
+- [x] 5.1 [Erase tool handler calls preventDefault on pointerdown] 在 `eraseHandler.onPointerDown` 的 `e.button !== 0` 檢查後立即呼叫 `e.preventDefault()`。行為：左鍵按下時阻止瀏覽器預設行為（如文字選取）。驗證：`npm run test:run` 中「onPointerDown calls e.preventDefault on left-button press」新案例通過。
 
 ## 6. 補全測試
 

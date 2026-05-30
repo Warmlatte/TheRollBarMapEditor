@@ -78,6 +78,23 @@ describe('eraseStore preference persistence', () => {
     })
   })
 
+  it('uses fresh target defaults for each store instance', () => {
+    const first = useEraseStore()
+    first.targets.hex = false
+    first.targets.icon = false
+
+    setActivePinia(createPinia())
+    localStorage.clear()
+    const second = useEraseStore()
+
+    expect(second.targets).toEqual({
+      hex: true,
+      icon: true,
+      line: true,
+      doodle: true,
+    })
+  })
+
   it('setRadius(0) clamps to 5', () => {
     const erase = useEraseStore()
 

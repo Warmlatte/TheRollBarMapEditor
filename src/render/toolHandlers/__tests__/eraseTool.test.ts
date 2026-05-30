@@ -47,7 +47,7 @@ function makeCtx(overrides: Partial<ToolContext> = {}): ToolContext {
 }
 
 function fakeEvent(overrides?: Partial<PointerEvent>): PointerEvent {
-  return { button: 0, pointerId: 1, ...overrides } as PointerEvent
+  return { button: 0, pointerId: 1, preventDefault: vi.fn(), ...overrides } as PointerEvent
 }
 
 describe('eraseHandler', () => {
@@ -68,6 +68,17 @@ describe('eraseHandler', () => {
   })
 
   describe('Scenario: All targets disabled — no dispatch', () => {
+    it('onPointerDown calls e.preventDefault when left button is pressed', async () => {
+      const { eraseHandler } = await import('../eraseTool')
+      const preventDefault = vi.fn()
+      const ctx = makeCtx()
+
+      eraseHandler.onPointerDown(ctx, fakeEvent({ preventDefault } as Partial<PointerEvent>))
+      eraseHandler.onPointerUp(ctx, fakeEvent())
+
+      expect(preventDefault).toHaveBeenCalledTimes(1)
+    })
+
     it('does not call beginStroke when all targets are false', async () => {
       const { eraseHandler } = await import('../eraseTool')
       eraseStore.targets.hex = false

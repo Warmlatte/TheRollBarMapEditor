@@ -63,6 +63,7 @@ function eraseAt(ctx: ToolContext, x: number, y: number): void {
 export const eraseHandler: ToolHandler = {
   onPointerDown(ctx, e) {
     if (e.button !== 0) return
+    e.preventDefault()
 
     const eraseStore = useEraseStore()
     const { targets } = eraseStore
