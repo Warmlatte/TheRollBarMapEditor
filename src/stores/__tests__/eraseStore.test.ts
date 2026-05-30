@@ -22,13 +22,13 @@ describe('eraseStore preference persistence', () => {
 
   it('uses default value when key is absent', () => {
     const erase = useEraseStore()
-    expect(erase.eraseRadius).toBe(5)
+    expect(erase.eraseRadius).toBe(35)
   })
 
   it('uses default value when key contains invalid JSON', () => {
     localStorage.setItem(ERASE_KEY, '{invalid')
     const erase = useEraseStore()
-    expect(erase.eraseRadius).toBe(5)
+    expect(erase.eraseRadius).toBe(35)
   })
 
   it('writes to localStorage when setRadius is called', () => {

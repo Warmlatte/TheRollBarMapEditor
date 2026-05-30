@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
 const PREF_KEY = 'hexmap.erase.v1'
-const DEFAULT_RADIUS = 5
+const DEFAULT_RADIUS = 35
 const MIN_RADIUS = 5
 const MAX_RADIUS = 200
 
