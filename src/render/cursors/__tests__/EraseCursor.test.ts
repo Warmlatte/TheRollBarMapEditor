@@ -3,7 +3,6 @@ import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { useBrushStore } from '../../../stores/brushStore'
 import { useEraseStore } from '../../../stores/eraseStore'
-import { HEX_SIZE } from '../../../lib/hexMath'
 import type { Pinia } from 'pinia'
 
 async function mountCursor(pinia: Pinia, cursorX = 50, cursorY = 80) {
@@ -26,12 +25,11 @@ describe('EraseCursor displays a red circle matching the erase radius', () => {
     const brushStore = useBrushStore()
     const eraseStore = useEraseStore()
     brushStore.tool = 'erase'
-    eraseStore.setRadius(1)
-    const expectedR = String(1 * HEX_SIZE)
+    eraseStore.setRadius(80)
     const wrapper = await mountCursor(pinia)
     const circle = wrapper.find('circle')
     expect(circle.exists()).toBe(true)
-    expect(circle.attributes('r')).toBe(expectedR)
+    expect(circle.attributes('r')).toBe('80')
     wrapper.unmount()
   })
 
@@ -72,9 +70,9 @@ describe('EraseCursor displays a red circle matching the erase radius', () => {
   })
 
   it.each([
-    [1, 1 * HEX_SIZE],
-    [2, 2 * HEX_SIZE],
-    [5, 5 * HEX_SIZE],
+    [5, 5],
+    [80, 80],
+    [200, 200],
   ])('eraseRadius=%i produces r=%i', async (eraseRadius, expectedR) => {
     const brushStore = useBrushStore()
     const eraseStore = useEraseStore()
@@ -82,6 +80,16 @@ describe('EraseCursor displays a red circle matching the erase radius', () => {
     eraseStore.setRadius(eraseRadius)
     const wrapper = await mountCursor(pinia)
     expect(wrapper.find('circle').attributes('r')).toBe(String(expectedR))
+    wrapper.unmount()
+  })
+
+  it('does not intercept pointer events', async () => {
+    const brushStore = useBrushStore()
+    brushStore.tool = 'erase'
+    const wrapper = await mountCursor(pinia)
+
+    expect(wrapper.find('g').attributes('pointer-events')).toBe('none')
+
     wrapper.unmount()
   })
 })

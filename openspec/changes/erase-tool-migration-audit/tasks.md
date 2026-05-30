@@ -34,7 +34,7 @@
 
 實作 "EraseCursor does not intercept pointer events"（spec: erase-tool-handler），依設計決策「EraseCursor 行為契約」。
 
-- [ ] 4.1 [EraseCursor does not intercept pointer events] 在 `EraseCursor.vue` 的 `<g>` 根元素加上 `pointer-events="none"`，游標圓圈不攔截底層 SVG 的 pointer 事件。驗證：`npm run typecheck` 零錯誤；`hexCanvas.test.ts` 或手動確認游標層不攔截事件。
+- [x] 4.1 [EraseCursor does not intercept pointer events] 在 `EraseCursor.vue` 的 `<g>` 根元素加上 `pointer-events="none"`，游標圓圈不攔截底層 SVG 的 pointer 事件。驗證：`npm run typecheck` 零錯誤；`hexCanvas.test.ts` 或手動確認游標層不攔截事件。
 
 ## 5. eraseTool.ts — 補 preventDefault
 
